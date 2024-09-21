@@ -1,31 +1,27 @@
 from app import db
-from sqlalchemy import Integer, String, Boolean, Table, Column, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-book_list = Table(
-    "book_list",
-    db.metadata,
-    Column("book_id", Integer, ForeignKey("book.id")),
-    Column("list_id", Integer, ForeignKey("list.id"))
-)
 
 class Book(db.Model):
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
-    author_id: Mapped[int] = mapped_column(Integer, ForeignKey("author.id"), nullable=False)
-    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('author.id'), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
 
-    author: Mapped["Author"] = relationship("Author", back_populates="books")
-    lists: Mapped[list["List"]] = relationship(secondary=book_list, back_populates="books")
+    author = db.relationship('Author', back_populates='books')
+    lists = db.relationship('List', secondary='book_list', back_populates='books')
 
 class Author(db.Model):
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
 
-    books: Mapped[list["Book"]] = relationship("Book", back_populates="author")
+    books = db.relationship('Book', back_populates='author')
 
 class List(db.Model):
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
 
-    books: Mapped[list["Book"]] = relationship(secondary=book_list, back_populates="lists")
+    books = db.relationship('Book', secondary='book_list', back_populates='lists')
+
+book_list = db.Table('book_list',
+    db.Column('book_id', db.Integer, db.ForeignKey('book.id'), primary_key=True),
+    db.Column('list_id', db.Integer, db.ForeignKey('list.id'), primary_key=True)
+)

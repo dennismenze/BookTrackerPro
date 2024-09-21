@@ -18,26 +18,53 @@ def create_app():
     app.logger.setLevel(logging.DEBUG)
     
     # Database configuration
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-    if not app.config["SQLALCHEMY_DATABASE_URI"]:
+    database_url = os.environ.get('DATABASE_URL')
+    app.logger.info(f"Raw DATABASE_URL: {database_url}")
+    
+    if database_url:
+        try:
+            parsed_url = urlparse(database_url)
+            app.logger.info(f"Parsed URL: scheme={parsed_url.scheme}, hostname={parsed_url.hostname}, port={parsed_url.port}, path={parsed_url.path}")
+            
+            # Ensure the port is a valid integer
+            port = parsed_url.port if parsed_url.port else 5432  # Default PostgreSQL port
+            
+            database_url = f'{parsed_url.scheme}://{parsed_url.hostname}:{port}{parsed_url.path}'
+            app.logger.info(f"Formatted DATABASE_URL: {database_url}")
+        except Exception as e:
+            app.logger.error(f"Error parsing DATABASE_URL: {str(e)}")
+            database_url = None
+    else:
         app.logger.error("DATABASE_URL environment variable is not set")
-        raise ValueError("DATABASE_URL must be set")
-    
-    # Log the database URL (without exposing sensitive information)
-    parsed_url = urlparse(app.config["SQLALCHEMY_DATABASE_URI"])
-    app.logger.info(f"Using database: {parsed_url.scheme}://{parsed_url.hostname}:{parsed_url.port}{parsed_url.path}")
-    
+
+    if database_url:
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    else:
+        app.logger.error("Unable to configure database. The application may not function correctly.")
+
     db.init_app(app)
     
-    try:
-        from routes import book_routes, author_routes, list_routes
-        app.register_blueprint(book_routes.bp)
-        app.register_blueprint(author_routes.bp)
-        app.register_blueprint(list_routes.bp)
-        app.logger.info("Blueprints registered successfully")
-    except Exception as e:
-        app.logger.error(f"Error registering blueprints: {str(e)}")
-        raise
+    with app.app_context():
+        try:
+            app.logger.info("Initializing database...")
+            import models
+            db.create_all()
+            app.logger.info("Database tables created successfully")
+
+            app.logger.info("Registering blueprints...")
+            from routes import book_routes, author_routes, list_routes
+            app.register_blueprint(book_routes.bp)
+            app.register_blueprint(author_routes.bp)
+            app.register_blueprint(list_routes.bp)
+            app.logger.info("Blueprints registered successfully")
+
+            app.logger.info("Adding sample data...")
+            add_sample_data()
+            app.logger.info("Sample data added successfully")
+        except Exception as e:
+            app.logger.error(f"Error during app initialization: {str(e)}")
+            # Don't raise the exception here, as we want the app to start even if there are issues
 
     @app.route('/')
     def index():
@@ -59,15 +86,32 @@ def create_app():
     def list_detail(id):
         return render_template('list/detail.html')
 
-    with app.app_context():
-        try:
-            db.create_all()
-            app.logger.info("Database tables created successfully")
-        except Exception as e:
-            app.logger.error(f"Error creating database tables: {str(e)}")
-            raise
-
     return app
+
+def add_sample_data():
+    from models import Author, Book, List
+    
+    # Check if data already exists
+    if Author.query.first() is not None:
+        return  # Data already exists, no need to add sample data
+
+    # Create authors
+    author1 = Author(name='Jane Austen')
+    author2 = Author(name='George Orwell')
+    db.session.add_all([author1, author2])
+    db.session.commit()
+
+    # Create books
+    book1 = Book(title='Pride and Prejudice', author=author1, is_read=True)
+    book2 = Book(title='1984', author=author2, is_read=False)
+    db.session.add_all([book1, book2])
+    db.session.commit()
+
+    # Create lists
+    list1 = List(name='Classics')
+    list1.books.extend([book1, book2])
+    db.session.add(list1)
+    db.session.commit()
 
 if __name__ == "__main__":
     app = create_app()
