@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Authors - Book Tracker{% endblock %}
+
+{% block content %}
+<h1>Authors</h1>
+<div id="author-list"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/author.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAuthorList();
+    });
+</script>
+{% endblock %}

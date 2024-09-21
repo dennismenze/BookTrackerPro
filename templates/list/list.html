@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Lists - Book Tracker{% endblock %}
+
+{% block content %}
+<h1>Reading Lists</h1>
+<div id="list-list"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/list.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadListList();
+    });
+</script>
+{% endblock %}

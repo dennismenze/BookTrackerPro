@@ -1,18 +1,14 @@
-function loadListDetails(listId) {
-    fetch(`/api/lists/${listId}`)
+function loadListList() {
+    fetch('/api/lists')
         .then(response => response.json())
-        .then(list => {
-            const listDetails = document.getElementById('list-details');
-            listDetails.innerHTML = `
-                <h2>${list.name}</h2>
-                <p>Books: ${list.books.length}</p>
-                <p>Read Percentage: ${list.read_percentage.toFixed(2)}%</p>
-                <ul>
-                    ${list.books.map(book => `
-                        <li>
-                            ${book.title} by ${book.author}
-                            <input type="checkbox" ${book.is_read ? 'checked' : ''} 
-                                onchange="updateBookStatus(${book.id}, this.checked)">
+        .then(lists => {
+            const listList = document.getElementById('list-list');
+            listList.innerHTML = `
+                <ul class="list-group">
+                    ${lists.map(list => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="/list/${list.id}">${list.name}</a>
+                            <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                         </li>
                     `).join('')}
                 </ul>
@@ -20,18 +16,4 @@ function loadListDetails(listId) {
         });
 }
 
-function updateBookStatus(bookId, isRead) {
-    fetch(`/api/books/${bookId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_read: isRead }),
-    })
-    .then(response => response.json())
-    .then(() => {
-        // Reload the list details to update the statistics
-        const listId = new URLSearchParams(window.location.search).get('id');
-        loadListDetails(listId);
-    });
-}
+// Keep the existing loadListDetails function

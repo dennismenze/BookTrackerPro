@@ -51,6 +51,14 @@ def create_app():
     def lists():
         return render_template('list/list.html')
 
+    @app.route('/author/<int:id>')
+    def author_detail(id):
+        return render_template('author/detail.html')
+
+    @app.route('/list/<int:id>')
+    def list_detail(id):
+        return render_template('list/detail.html')
+
     with app.app_context():
         try:
             db.create_all()
