@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Author Details - Book Tracker{% endblock %}
+
+{% block content %}
+<div id="author-details"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/author.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const authorId = new URLSearchParams(window.location.search).get('id');
+        loadAuthorDetails(authorId);
+    });
+</script>
+{% endblock %}

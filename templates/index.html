@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Book Tracker{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">My Book Library</h1>
+
+<div class="mb-8">
+    <h2 class="text-2xl font-bold mb-4">Add a New Book</h2>
+    <form id="add-book-form" class="space-y-4">
+        <div>
+            <label for="book-title" class="block">Title:</label>
+            <input type="text" id="book-title" name="title" required class="w-full p-2 border rounded">
+        </div>
+        <div>
+            <label for="book-author" class="block">Author:</label>
+            <input type="text" id="book-author" name="author" required class="w-full p-2 border rounded">
+        </div>
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Add Book</button>
+    </form>
+</div>
+
+<div>
+    <h2 class="text-2xl font-bold mb-4">My Books</h2>
+    <ul id="book-list" class="space-y-2"></ul>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

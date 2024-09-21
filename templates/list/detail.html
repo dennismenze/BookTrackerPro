@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}List Details - Book Tracker{% endblock %}
+
+{% block content %}
+<div id="list-details"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/list.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const listId = new URLSearchParams(window.location.search).get('id');
+        loadListDetails(listId);
+    });
+</script>
+{% endblock %}
