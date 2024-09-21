@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from models import db, List, Book
+from app import db
+from models import List, Book
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
 

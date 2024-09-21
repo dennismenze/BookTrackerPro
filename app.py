@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 class Base(DeclarativeBase):
     pass
 
+db = SQLAlchemy(model_class=Base)
+
 def create_app():
     app = Flask(__name__)
     
@@ -41,7 +43,6 @@ def create_app():
     else:
         app.logger.error("Unable to configure database. The application may not function correctly.")
 
-    db = SQLAlchemy(model_class=Base)
     db.init_app(app)
     
     with app.app_context():
@@ -59,7 +60,7 @@ def create_app():
             app.logger.info("Blueprints registered successfully")
 
             app.logger.info("Adding sample data...")
-            add_sample_data(db)
+            add_sample_data()
             app.logger.info("Sample data added successfully")
         except Exception as e:
             app.logger.error(f"Error during app initialization: {str(e)}")
@@ -87,7 +88,7 @@ def create_app():
 
     return app
 
-def add_sample_data(db):
+def add_sample_data():
     from models import Author, Book, List
     
     # Check if data already exists

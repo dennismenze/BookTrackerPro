@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from models import db, Author, Book
+from app import db
+from models import Author, Book
 
 bp = Blueprint('author', __name__, url_prefix='/api/authors')
 
