@@ -1,11 +1,11 @@
 from flask import Blueprint, jsonify, request
 from app import db
-from models import List, Book
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
 @bp.route('/', methods=['GET'])
 def get_lists():
+    List = db.Model._decl_class_registry['List']
     lists = List.query.all()
     return jsonify([{
         'id': list.id,
@@ -16,6 +16,7 @@ def get_lists():
 
 @bp.route('/<int:id>', methods=['GET'])
 def get_list(id):
+    List = db.Model._decl_class_registry['List']
     list = List.query.get_or_404(id)
     return jsonify({
         'id': list.id,
@@ -31,6 +32,7 @@ def get_list(id):
 
 @bp.route('/', methods=['POST'])
 def create_list():
+    List = db.Model._decl_class_registry['List']
     data = request.json
     new_list = List(name=data['name'])
     db.session.add(new_list)
@@ -39,6 +41,7 @@ def create_list():
 
 @bp.route('/<int:id>', methods=['PUT'])
 def update_list(id):
+    List = db.Model._decl_class_registry['List']
     list = List.query.get_or_404(id)
     data = request.json
     list.name = data.get('name', list.name)
@@ -47,6 +50,7 @@ def update_list(id):
 
 @bp.route('/<int:id>', methods=['DELETE'])
 def delete_list(id):
+    List = db.Model._decl_class_registry['List']
     list = List.query.get_or_404(id)
     db.session.delete(list)
     db.session.commit()
@@ -54,6 +58,8 @@ def delete_list(id):
 
 @bp.route('/<int:id>/books', methods=['POST'])
 def add_book_to_list(id):
+    List = db.Model._decl_class_registry['List']
+    Book = db.Model._decl_class_registry['Book']
     list = List.query.get_or_404(id)
     data = request.json
     book = Book.query.get_or_404(data['book_id'])
@@ -63,6 +69,8 @@ def add_book_to_list(id):
 
 @bp.route('/<int:id>/books/<int:book_id>', methods=['DELETE'])
 def remove_book_from_list(id, book_id):
+    List = db.Model._decl_class_registry['List']
+    Book = db.Model._decl_class_registry['Book']
     list = List.query.get_or_404(id)
     book = Book.query.get_or_404(book_id)
     if book in list.books:

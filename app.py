@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 import logging
 from urllib.parse import urlparse
+from models import init_models
 
 class Base(DeclarativeBase):
     pass
@@ -48,7 +49,7 @@ def create_app():
     with app.app_context():
         try:
             app.logger.info("Initializing database...")
-            import models
+            Book, Author, List, book_list = init_models(db)
             db.create_all()
             app.logger.info("Database tables created successfully")
 
@@ -60,7 +61,7 @@ def create_app():
             app.logger.info("Blueprints registered successfully")
 
             app.logger.info("Adding sample data...")
-            add_sample_data()
+            add_sample_data(Book, Author, List)
             app.logger.info("Sample data added successfully")
         except Exception as e:
             app.logger.error(f"Error during app initialization: {str(e)}")
@@ -88,9 +89,7 @@ def create_app():
 
     return app
 
-def add_sample_data():
-    from models import Author, Book, List
-    
+def add_sample_data(Book, Author, List):
     # Check if data already exists
     if Author.query.first() is not None:
         return  # Data already exists, no need to add sample data

@@ -1,11 +1,11 @@
 from flask import Blueprint, jsonify, request
 from app import db
-from models import Author, Book
 
 bp = Blueprint('author', __name__, url_prefix='/api/authors')
 
 @bp.route('/', methods=['GET'])
 def get_authors():
+    Author = db.Model._decl_class_registry['Author']
     authors = Author.query.all()
     return jsonify([{
         'id': author.id,
@@ -16,6 +16,7 @@ def get_authors():
 
 @bp.route('/<int:id>', methods=['GET'])
 def get_author(id):
+    Author = db.Model._decl_class_registry['Author']
     author = Author.query.get_or_404(id)
     return jsonify({
         'id': author.id,
@@ -30,6 +31,7 @@ def get_author(id):
 
 @bp.route('/', methods=['POST'])
 def create_author():
+    Author = db.Model._decl_class_registry['Author']
     data = request.json
     author = Author(name=data['name'])
     db.session.add(author)
@@ -38,6 +40,7 @@ def create_author():
 
 @bp.route('/<int:id>', methods=['PUT'])
 def update_author(id):
+    Author = db.Model._decl_class_registry['Author']
     author = Author.query.get_or_404(id)
     data = request.json
     author.name = data.get('name', author.name)
@@ -46,6 +49,7 @@ def update_author(id):
 
 @bp.route('/<int:id>', methods=['DELETE'])
 def delete_author(id):
+    Author = db.Model._decl_class_registry['Author']
     author = Author.query.get_or_404(id)
     db.session.delete(author)
     db.session.commit()
