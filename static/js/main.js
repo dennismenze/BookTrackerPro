@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded');
     loadBooks();
     setupEventListeners();
 });
@@ -22,9 +23,11 @@ function loadBooks() {
 }
 
 function setupEventListeners() {
+    console.log('Setting up event listeners');
     const addBookForm = document.getElementById('add-book-form');
     addBookForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        console.log('Form submitted');
         const title = document.getElementById('book-title').value;
         const author = document.getElementById('book-author').value;
         addBook(title, author);
@@ -32,6 +35,7 @@ function setupEventListeners() {
 }
 
 function addBook(title, author) {
+    console.log('Attempting to add book:', title, 'by', author);
     fetch('/api/books', {
         method: 'POST',
         headers: {
@@ -39,10 +43,20 @@ function addBook(title, author) {
         },
         body: JSON.stringify({ title, author }),
     })
-    .then(response => response.json())
-    .then(() => {
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Book added successfully:', data);
         loadBooks();
         document.getElementById('add-book-form').reset();
+    })
+    .catch(error => {
+        console.error('Error adding book:', error);
+        alert('Failed to add book. Please try again.');
     });
 }
 
