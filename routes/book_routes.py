@@ -1,14 +1,16 @@
 from flask import Blueprint, jsonify, request, current_app
+from flask_login import login_required, current_user
 from models import db, Book, Author, List
 import logging
 
 bp = Blueprint('book', __name__, url_prefix='/api/books')
 
 @bp.route('/', methods=['GET'])
+@login_required
 def get_books():
     try:
         current_app.logger.debug(f"Database URI: {current_app.config['SQLALCHEMY_DATABASE_URI']}")
-        books = Book.query.all()
+        books = Book.query.filter_by(user_id=current_user.id).all()
         return jsonify([{
             'id': book.id,
             'title': book.title,
@@ -20,8 +22,9 @@ def get_books():
         return jsonify({'error': 'An error occurred while fetching books'}), 500
 
 @bp.route('/<int:id>', methods=['GET'])
+@login_required
 def get_book(id):
-    book = Book.query.get_or_404(id)
+    book = Book.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     return jsonify({
         'id': book.id,
         'title': book.title,
@@ -32,32 +35,46 @@ def get_book(id):
     })
 
 @bp.route('/', methods=['POST'])
+@login_required
 def create_book():
-    data = request.json
+    data = request.get_json()
+    if not data or 'title' not in data or 'author' not in data:
+        return jsonify({'error': 'Invalid request data'}), 400
+
     author = Author.query.filter_by(name=data['author']).first()
     if not author:
-        author = Author(name=data['author'])
+        author = Author()
+        author.name = data['author']
         db.session.add(author)
-    existing_book = Book.query.filter_by(title=data['title'], author=author).first()
+
+    existing_book = Book.query.filter_by(title=data['title'], author=author, user_id=current_user.id).first()
     if existing_book:
         return jsonify({
             'id': existing_book.id,
             'message': 'Book already exists'
         }), 200
-    book = Book(title=data['title'], author=author)
+
+    book = Book()
+    book.title = data['title']
+    book.author = author
+    book.user_id = current_user.id
     db.session.add(book)
     db.session.commit()
+
     return jsonify({
         'id': book.id,
         'message': 'Book created successfully'
     }), 201
 
 @bp.route('/<int:id>', methods=['PUT'])
+@login_required
 def update_book(id):
-    book = Book.query.get_or_404(id)
-    data = request.json
-    book.title = data.get('title', book.title)
-    book.is_read = data.get('is_read', book.is_read)
+    book = Book.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    data = request.get_json()
+    if data and 'title' in data:
+        book.title = data['title']
+    if data and 'is_read' in data:
+        book.is_read = data['is_read']
     db.session.commit()
     return jsonify({
         'id': book.id,
@@ -68,8 +85,9 @@ def update_book(id):
     })
 
 @bp.route('/<int:id>', methods=['DELETE'])
+@login_required
 def delete_book(id):
-    book = Book.query.get_or_404(id)
+    book = Book.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     db.session.delete(book)
     db.session.commit()
     return jsonify({'message': 'Book deleted successfully'})

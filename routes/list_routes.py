@@ -1,12 +1,13 @@
 from flask import Blueprint, jsonify, request, current_app
-from app import db
-from models import Book, Author, List
+from flask_login import login_required, current_user
+from models import db, Book, Author, List
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
 @bp.route('/', methods=['GET'])
+@login_required
 def get_lists():
-    lists = List.query.all()
+    lists = List.query.filter_by(user_id=current_user.id).all()
     return jsonify([{
         'id': list.id,
         'name': list.name,
@@ -15,9 +16,10 @@ def get_lists():
     } for list in lists])
 
 @bp.route('/<int:id>', methods=['GET'])
+@login_required
 def get_list(id):
     current_app.logger.info(f"Fetching list with id: {id}")
-    list = List.query.get_or_404(id)
+    list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     current_app.logger.info(f"List found: {list.name}")
     books = [{
         'id': book.id,
@@ -37,9 +39,15 @@ def get_list(id):
     })
 
 @bp.route('/', methods=['POST'])
+@login_required
 def create_list():
-    data = request.json
-    new_list = List(name=data['name'])
+    data = request.get_json()
+    if not data or 'name' not in data:
+        return jsonify({'error': 'Invalid request data'}), 400
+
+    new_list = List()
+    new_list.name = data['name']
+    new_list.user_id = current_user.id
     db.session.add(new_list)
     db.session.commit()
     return jsonify({
@@ -48,33 +56,41 @@ def create_list():
     }), 201
 
 @bp.route('/<int:id>', methods=['PUT'])
+@login_required
 def update_list(id):
-    list = List.query.get_or_404(id)
-    data = request.json
-    list.name = data.get('name', list.name)
+    list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    data = request.get_json()
+    if data and 'name' in data:
+        list.name = data['name']
     db.session.commit()
     return jsonify({'message': 'List updated successfully'})
 
 @bp.route('/<int:id>', methods=['DELETE'])
+@login_required
 def delete_list(id):
-    list = List.query.get_or_404(id)
+    list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     db.session.delete(list)
     db.session.commit()
     return jsonify({'message': 'List deleted successfully'})
 
 @bp.route('/<int:id>/books', methods=['POST'])
+@login_required
 def add_book_to_list(id):
-    list = List.query.get_or_404(id)
-    data = request.json
-    book = Book.query.get_or_404(data['book_id'])
+    list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    data = request.get_json()
+    if not data or 'book_id' not in data:
+        return jsonify({'error': 'Invalid request data'}), 400
+
+    book = Book.query.filter_by(id=data['book_id'], user_id=current_user.id).first_or_404()
     list.books.append(book)
     db.session.commit()
     return jsonify({'message': 'Book added to list successfully'})
 
 @bp.route('/<int:id>/books/<int:book_id>', methods=['DELETE'])
+@login_required
 def remove_book_from_list(id, book_id):
-    list = List.query.get_or_404(id)
-    book = Book.query.get_or_404(book_id)
+    list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    book = Book.query.filter_by(id=book_id, user_id=current_user.id).first_or_404()
     if book in list.books:
         list.books.remove(book)
         db.session.commit()
