@@ -28,7 +28,7 @@ def get_book(id):
         'author': book.author.name,
         'author_id': book.author_id,
         'is_read': book.is_read,
-        'lists': [list.name for list in book.lists]
+        'lists': [{'id': list.id, 'name': list.name} for list in book.lists]
     })
 
 @bp.route('/', methods=['POST'])

@@ -5,10 +5,10 @@ function loadBookDetails(bookId) {
             const bookDetails = document.getElementById('book-details');
             bookDetails.innerHTML = `
                 <h2>${book.title}</h2>
-                <p>Author: ${book.author}</p>
+                <p>Author: <a href='/author/${book.author_id}'>${book.author}</a></p>
                 <p>Status: ${book.is_read ? 'Read' : 'Unread'}</p>
-                <p>Lists: ${book.lists.join(', ')}</p>
-                <button onclick="toggleReadStatus(${book.id}, ${!book.is_read})">
+                <p>Lists: ${book.lists.map(list => `<a href='/list/${list.id}'>${list.name}</a>`).join(', ') || 'Not in any list'}</p>
+                <button onclick='toggleReadStatus(${book.id}, ${!book.is_read})'>
                     Mark as ${book.is_read ? 'Unread' : 'Read'}
                 </button>
             `;
