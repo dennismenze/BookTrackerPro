@@ -22,15 +22,24 @@ def create_app():
     if not database_url:
         app.logger.error("DATABASE_URL is not set in the environment variables.")
         raise ValueError("DATABASE_URL is not set")
-    
-    # Parse the database URL to remove sensitive information
+
+    # Parse the database URL
     parsed_url = urlparse(database_url)
-    safe_db_url = f"{parsed_url.scheme}://{parsed_url.hostname}:{parsed_url.port}/{parsed_url.path}"
-    
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    username = parsed_url.username
+    password = parsed_url.password
+    hostname = parsed_url.hostname
+    port = parsed_url.port or 5432  # Use default PostgreSQL port if not specified
+    database = parsed_url.path[1:]  # Remove the leading '/'
+
+    # Construct the SQLAlchemy database URI
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{username}:{password}@{hostname}:{port}/{database}"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Log a safe version of the database URL (without credentials)
+    safe_db_url = f"postgresql://{hostname}:{port}/{database}"
     app.logger.info(f"Database connection: {safe_db_url}")
     
+    # Initialize SQLAlchemy
     db.init_app(app)
 
     with app.app_context():
