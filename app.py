@@ -28,6 +28,7 @@ def create_app():
     safe_db_url = f"{parsed_url.scheme}://{parsed_url.hostname}:{parsed_url.port}/{parsed_url.path}"
     
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.logger.info(f"Database connection: {safe_db_url}")
     
     db.init_app(app)
