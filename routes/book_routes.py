@@ -26,6 +26,7 @@ def get_book(id):
         'id': book.id,
         'title': book.title,
         'author': book.author.name,
+        'author_id': book.author_id,
         'is_read': book.is_read,
         'lists': [list.name for list in book.lists]
     })
