@@ -52,7 +52,7 @@ function setupEventListeners() {
 }
 
 function addBook(title, author) {
-    console.log('Attempting to add book:', title, 'by', author);
+    console.log('Adding book:', title, 'by', author);
     fetch('https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books', {
         method: 'POST',
         headers: {
@@ -67,7 +67,7 @@ function addBook(title, author) {
         return response.json();
     })
     .then(data => {
-        console.log('Book added successfully:', data);
+        console.log('API response:', data);
         loadBooks();
         document.getElementById('add-book-form').reset();
     })
