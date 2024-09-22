@@ -37,6 +37,12 @@ def create_book():
     if not author:
         author = Author(name=data['author'])
         db.session.add(author)
+    existing_book = Book.query.filter_by(title=data['title'], author=author).first()
+    if existing_book:
+        return jsonify({
+            'id': existing_book.id,
+            'message': 'Book already exists'
+        }), 200
     book = Book(title=data['title'], author=author)
     db.session.add(book)
     db.session.commit()
