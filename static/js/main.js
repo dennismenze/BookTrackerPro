@@ -109,7 +109,7 @@ function showBookDetails(id) {
             const detailsDiv = document.getElementById('book-details');
             detailsDiv.innerHTML = `
                 <h3>${book.title}</h3>
-                <p>Author: <a href="/author/${book.author_id}">${book.author}</a></p>
+                <p>Author: <a href="/author/${book.author_id}?id=${book.author_id}">${book.author}</a></p>
                 <p>Status: ${book.is_read ? 'Read' : 'Unread'}</p>
                 <p>Lists: ${book.lists.join(', ') || 'None'}</p>
                 <button onclick="updateBookStatus(${book.id}, ${!book.is_read})">
