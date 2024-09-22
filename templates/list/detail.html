@@ -3,15 +3,23 @@
 {% block title %}List Details - Book Tracker{% endblock %}
 
 {% block content %}
-<div id="list-details"></div>
+<div id="list-details" class="container mx-auto mt-8">
+    <!-- List details will be dynamically inserted here by JavaScript -->
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/list.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const listId = new URLSearchParams(window.location.search).get('id');
-        loadListDetails(listId);
+        const urlParams = new URLSearchParams(window.location.search);
+        const listId = urlParams.get('id');
+        if (listId) {
+            loadListDetails(listId);
+        } else {
+            console.error('List ID not found in URL parameters');
+            document.getElementById('list-details').innerHTML = '<p>Error: List ID not provided. Please go back and try again.</p>';
+        }
     });
 </script>
 {% endblock %}

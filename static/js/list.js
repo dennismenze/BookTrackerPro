@@ -18,9 +18,17 @@ function loadListList() {
 }
 
 function loadListDetails(listId) {
+    console.log('Loading list details for id:', listId);
     fetch(`/api/lists/${listId}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(list => {
+            console.log('Received list details:', list);
             const listDetails = document.getElementById('list-details');
             listDetails.innerHTML = `
                 <h2>${list.name}</h2>
@@ -30,7 +38,7 @@ function loadListDetails(listId) {
                 <ul class="list-group">
                     ${list.books.map(book => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${book.title} by ${book.author}
+                            <a href="/book/${book.id}?id=${book.id}">${book.title}</a> by ${book.author}
                             <span class="badge ${book.is_read ? 'bg-success' : 'bg-secondary'} rounded-pill">
                                 ${book.is_read ? 'Read' : 'Unread'}
                             </span>
@@ -38,5 +46,10 @@ function loadListDetails(listId) {
                     `).join('')}
                 </ul>
             `;
+        })
+        .catch(error => {
+            console.error('Error fetching list details:', error);
+            const listDetails = document.getElementById('list-details');
+            listDetails.innerHTML = `<p>Error loading list details: ${error.message}. Please try again.</p>`;
         });
 }

@@ -1,9 +1,8 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from app import db
 from models import Book, Author, List
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
-
 
 @bp.route('/', methods=['GET'])
 def get_lists():
@@ -15,25 +14,26 @@ def get_lists():
         'read_percentage': calculate_read_percentage(list.books)
     } for list in lists])
 
-
 @bp.route('/<int:id>', methods=['GET'])
 def get_list(id):
+    current_app.logger.info(f"Fetching list with id: {id}")
     list = List.query.get_or_404(id)
+    current_app.logger.info(f"List found: {list.name}")
+    books = [{
+        'id': book.id,
+        'title': book.title,
+        'author': book.author.name,
+        'is_read': book.is_read
+    } for book in list.books]
+    current_app.logger.info(f"Number of books in list: {len(books)}")
+    read_percentage = calculate_read_percentage(list.books)
+    current_app.logger.info(f"Read percentage: {read_percentage}")
     return jsonify({
-        'id':
-        list.id,
-        'name':
-        list.name,
-        'books': [{
-            'id': book.id,
-            'title': book.title,
-            'author': book.author.name,
-            'is_read': book.is_read
-        } for book in list.books],
-        'read_percentage':
-        calculate_read_percentage(list.books)
+        'id': list.id,
+        'name': list.name,
+        'books': books,
+        'read_percentage': read_percentage
     })
-
 
 @bp.route('/', methods=['POST'])
 def create_list():
@@ -46,7 +46,6 @@ def create_list():
         'message': 'List created successfully'
     }), 201
 
-
 @bp.route('/<int:id>', methods=['PUT'])
 def update_list(id):
     list = List.query.get_or_404(id)
@@ -55,14 +54,12 @@ def update_list(id):
     db.session.commit()
     return jsonify({'message': 'List updated successfully'})
 
-
 @bp.route('/<int:id>', methods=['DELETE'])
 def delete_list(id):
     list = List.query.get_or_404(id)
     db.session.delete(list)
     db.session.commit()
     return jsonify({'message': 'List deleted successfully'})
-
 
 @bp.route('/<int:id>/books', methods=['POST'])
 def add_book_to_list(id):
@@ -73,7 +70,6 @@ def add_book_to_list(id):
     db.session.commit()
     return jsonify({'message': 'Book added to list successfully'})
 
-
 @bp.route('/<int:id>/books/<int:book_id>', methods=['DELETE'])
 def remove_book_from_list(id, book_id):
     list = List.query.get_or_404(id)
@@ -83,7 +79,6 @@ def remove_book_from_list(id, book_id):
         db.session.commit()
         return jsonify({'message': 'Book removed from list successfully'})
     return jsonify({'message': 'Book not in list'}), 404
-
 
 def calculate_read_percentage(books):
     if not books:
