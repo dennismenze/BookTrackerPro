@@ -15,16 +15,22 @@ def get_authors():
 
 @bp.route('/<int:id>', methods=['GET'])
 def get_author(id):
+    current_app.logger.info(f"Fetching author with id: {id}")
     author = Author.query.get_or_404(id)
+    current_app.logger.info(f"Author found: {author.name}")
+    books = [{
+        'id': book.id,
+        'title': book.title,
+        'is_read': book.is_read
+    } for book in author.books]
+    current_app.logger.info(f"Number of books for author: {len(books)}")
+    read_percentage = calculate_read_percentage(author.books)
+    current_app.logger.info(f"Read percentage: {read_percentage}")
     return jsonify({
         'id': author.id,
         'name': author.name,
-        'books': [{
-            'id': book.id,
-            'title': book.title,
-            'is_read': book.is_read
-        } for book in author.books],
-        'read_percentage': calculate_read_percentage(author.books)
+        'books': books,
+        'read_percentage': read_percentage
     })
 
 @bp.route('/', methods=['POST'])

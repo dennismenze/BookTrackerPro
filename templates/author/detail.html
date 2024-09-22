@@ -3,14 +3,17 @@
 {% block title %}Author Details - Book Tracker{% endblock %}
 
 {% block content %}
-<div id="author-details"></div>
+<div id="author-details" class="container mx-auto mt-8">
+    <!-- Author details will be dynamically inserted here by JavaScript -->
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/author.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const authorId = new URLSearchParams(window.location.search).get('id');
+        const urlParams = new URLSearchParams(window.location.search);
+        const authorId = urlParams.get('id') || {{ author_id }};
         loadAuthorDetails(authorId);
     });
 </script>
