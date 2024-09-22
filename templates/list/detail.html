@@ -12,12 +12,11 @@
 <script src="{{ url_for('static', filename='js/list.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const listId = urlParams.get('id');
+        const listId = {{ list_id }};
         if (listId) {
             loadListDetails(listId);
         } else {
-            console.error('List ID not found in URL parameters');
+            console.error('List ID not found');
             document.getElementById('list-details').innerHTML = '<p>Error: List ID not provided. Please go back and try again.</p>';
         }
     });

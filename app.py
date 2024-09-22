@@ -54,6 +54,10 @@ def create_app():
     def lists():
         return render_template('list/list.html')
 
+    @app.route('/list/<int:id>')
+    def list_detail(id):
+        return render_template('list/detail.html', list_id=id)
+
     @app.route('/db-info')
     def db_info():
         return f'Database connection: {app.config["SQLALCHEMY_DATABASE_URI"]}'
