@@ -4,6 +4,7 @@ from models import db, Book, Author, List, User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
 from sqlalchemy import text
+from flask_migrate import Migrate
 
 def create_app():
     app = Flask(__name__)
@@ -20,6 +21,9 @@ def create_app():
     # Initialize SQLAlchemy
     db.init_app(app)
 
+    # Initialize Flask-Migrate
+    migrate = Migrate(app, db)
+
     # Initialize Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -30,15 +34,6 @@ def create_app():
         return User.query.get(int(user_id))
 
     app.logger.debug(f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-
-    # Create tables
-    with app.app_context():
-        try:
-            db.create_all()
-            app.logger.info("Database tables created successfully")
-        except Exception as e:
-            app.logger.error(f"Error creating database tables: {str(e)}")
-            raise
 
     # Register blueprints
     from routes import book_routes, author_routes, list_routes
