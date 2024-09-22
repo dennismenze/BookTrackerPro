@@ -3,6 +3,7 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from models import db, Book, Author, List, User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
+from sqlalchemy import text
 
 def create_app():
     app = Flask(__name__)
@@ -119,6 +120,13 @@ def create_app():
     @login_required
     def list_detail(id):
         return render_template('list/detail.html', list_id=id)
+
+    @app.route('/db-info')
+    def db_info():
+        with db.engine.connect() as conn:
+            result = conn.execute(text("SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'users'"))
+            columns = [dict(row) for row in result]
+        return jsonify(columns)
 
     return app
 
