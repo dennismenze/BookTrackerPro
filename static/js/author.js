@@ -1,5 +1,5 @@
 function loadAuthorList() {
-    fetch('/api/authors')
+    fetch('https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/authors')
         .then(response => response.json())
         .then(authors => {
             const authorList = document.getElementById('author-list');
@@ -14,13 +14,20 @@ function loadAuthorList() {
                     `).join('')}
                 </ul>
             `;
+        })
+        .catch(error => {
+            console.error('Error fetching author list:', error);
+            const authorList = document.getElementById('author-list');
+            authorList.innerHTML = '<p>Error loading author list. Please try again.</p>';
         });
 }
 
 function loadAuthorDetails(authorId) {
-    fetch(`/api/authors/${authorId}`)
+    console.log('Loading author details for id:', authorId);
+    fetch(`https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/authors/${authorId}`)
         .then(response => response.json())
         .then(author => {
+            console.log('Received author details:', author);
             const authorDetails = document.getElementById('author-details');
             authorDetails.innerHTML = `
                 <h2>${author.name}</h2>
@@ -30,7 +37,7 @@ function loadAuthorDetails(authorId) {
                 <ul class="list-group">
                     ${author.books.map(book => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${book.title}
+                            <a href="/book/${book.id}">${book.title}</a>
                             <span class="badge ${book.is_read ? 'bg-success' : 'bg-secondary'} rounded-pill">
                                 ${book.is_read ? 'Read' : 'Unread'}
                             </span>
@@ -38,5 +45,10 @@ function loadAuthorDetails(authorId) {
                     `).join('')}
                 </ul>
             `;
+        })
+        .catch(error => {
+            console.error('Error fetching author details:', error);
+            const authorDetails = document.getElementById('author-details');
+            authorDetails.innerHTML = '<p>Error loading author details. Please try again.</p>';
         });
 }

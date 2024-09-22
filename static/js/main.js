@@ -101,16 +101,26 @@ function deleteBook(id) {
 }
 
 function showBookDetails(id) {
+    console.log('Showing book details for id:', id);
     fetch(`https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books/${id}`)
         .then(response => response.json())
         .then(book => {
+            console.log('Received book details:', book);
             const detailsDiv = document.getElementById('book-details');
             detailsDiv.innerHTML = `
                 <h3>${book.title}</h3>
-                <p>Author: ${book.author}</p>
+                <p>Author: <a href="/author/${book.author_id}">${book.author}</a></p>
                 <p>Status: ${book.is_read ? 'Read' : 'Unread'}</p>
                 <p>Lists: ${book.lists.join(', ') || 'None'}</p>
+                <button onclick="updateBookStatus(${book.id}, ${!book.is_read})">
+                    Mark as ${book.is_read ? 'Unread' : 'Read'}
+                </button>
             `;
+        })
+        .catch(error => {
+            console.error('Error fetching book details:', error);
+            const detailsDiv = document.getElementById('book-details');
+            detailsDiv.innerHTML = '<p>Error loading book details. Please try again.</p>';
         });
 }
 

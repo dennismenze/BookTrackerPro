@@ -42,6 +42,14 @@ def create_app():
     def authors():
         return render_template('author/list.html')
 
+    @app.route('/author/<int:id>')
+    def author_detail(id):
+        return render_template('author/detail.html', author_id=id)
+
+    @app.route('/book/<int:id>')
+    def book_detail(id):
+        return render_template('book/detail.html', book_id=id)
+
     @app.route('/lists')
     def lists():
         return render_template('list/list.html')
