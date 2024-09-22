@@ -41,7 +41,7 @@ function loadListDetails(listId) {
                 <ul class="list-group">
                     ${list.books.map(book => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="/book/${book.id}?id=${book.id}">${book.title}</a> by ${book.author}
+                            <a href="/book/${book.id}?id=${book.id}">${book.title}</a> by <a href="/author/${book.author_id}">${book.author}</a>
                             <button onclick="toggleReadStatus(${book.id}, ${!book.is_read})" class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'}">
                                 Mark as ${book.is_read ? 'Unread' : 'Read'}
                             </button>

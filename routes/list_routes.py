@@ -23,6 +23,7 @@ def get_list(id):
         'id': book.id,
         'title': book.title,
         'author': book.author.name,
+        'author_id': book.author.id,
         'is_read': book.is_read
     } for book in list.books]
     current_app.logger.info(f"Number of books in list: {len(books)}")
