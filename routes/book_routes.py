@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, current_app
-from models import Book, Author, List
+from models import db, Book, Author, List
 import logging
 
 bp = Blueprint('book', __name__, url_prefix='/api/books')
@@ -36,10 +36,10 @@ def create_book():
     author = Author.query.filter_by(name=data['author']).first()
     if not author:
         author = Author(name=data['author'])
-        current_app.extensions['sqlalchemy'].db.session.add(author)
+        db.session.add(author)
     book = Book(title=data['title'], author=author)
-    current_app.extensions['sqlalchemy'].db.session.add(book)
-    current_app.extensions['sqlalchemy'].db.session.commit()
+    db.session.add(book)
+    db.session.commit()
     return jsonify({
         'id': book.id,
         'message': 'Book created successfully'
@@ -51,12 +51,12 @@ def update_book(id):
     data = request.json
     book.title = data.get('title', book.title)
     book.is_read = data.get('is_read', book.is_read)
-    current_app.extensions['sqlalchemy'].db.session.commit()
+    db.session.commit()
     return jsonify({'message': 'Book updated successfully'})
 
 @bp.route('/<int:id>', methods=['DELETE'])
 def delete_book(id):
     book = Book.query.get_or_404(id)
-    current_app.extensions['sqlalchemy'].db.session.delete(book)
-    current_app.extensions['sqlalchemy'].db.session.commit()
+    db.session.delete(book)
+    db.session.commit()
     return jsonify({'message': 'Book deleted successfully'})
