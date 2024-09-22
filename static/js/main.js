@@ -39,20 +39,24 @@ function setupEventListeners() {
     console.log('Setting up event listeners');
     const addBookForm = document.getElementById('add-book-form');
     if (addBookForm) {
-        addBookForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            console.log('Form submitted');
-            const title = document.getElementById('book-title').value;
-            const author = document.getElementById('book-author').value;
-            addBook(title, author);
-        });
+        console.log('Attaching event listener to add book form');
+        addBookForm.removeEventListener('submit', handleAddBookSubmit);
+        addBookForm.addEventListener('submit', handleAddBookSubmit);
     } else {
         console.error('Add book form not found');
     }
 }
 
+function handleAddBookSubmit(e) {
+    e.preventDefault();
+    console.log('Form submitted');
+    const title = document.getElementById('book-title').value;
+    const author = document.getElementById('book-author').value;
+    addBook(title, author);
+}
+
 function addBook(title, author) {
-    console.log('Adding book:', title, 'by', author);
+    console.log('addBook function called:', title, 'by', author);
     fetch('https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books', {
         method: 'POST',
         headers: {
