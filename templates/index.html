@@ -20,9 +20,15 @@
     </form>
 </div>
 
-<div>
-    <h2 class="text-2xl font-bold mb-4">My Books</h2>
-    <ul id="book-list" class="space-y-2"></ul>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div>
+        <h2 class="text-2xl font-bold mb-4">My Books</h2>
+        <ul id="book-list" class="space-y-2"></ul>
+    </div>
+    <div>
+        <h2 class="text-2xl font-bold mb-4">Book Details</h2>
+        <div id="book-details" class="border p-4 rounded"></div>
+    </div>
 </div>
 {% endblock %}
 
