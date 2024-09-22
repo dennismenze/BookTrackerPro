@@ -7,9 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadBooks() {
     console.log('Loading books...');
-    fetch('/api/books')
-        .then(response => response.json())
+    fetch('https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books')
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
         .then(books => {
+            console.log('Received books:', books);
             const bookList = document.getElementById('book-list');
             bookList.innerHTML = '';
             books.forEach(book => {
@@ -25,6 +29,9 @@ function loadBooks() {
                 `;
                 bookList.appendChild(li);
             });
+        })
+        .catch(error => {
+            console.error('Error loading books:', error);
         });
 }
 
@@ -46,7 +53,7 @@ function setupEventListeners() {
 
 function addBook(title, author) {
     console.log('Attempting to add book:', title, 'by', author);
-    fetch('/api/books', {
+    fetch('https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -71,7 +78,7 @@ function addBook(title, author) {
 }
 
 function updateBookStatus(id, isRead) {
-    fetch(`/api/books/${id}`, {
+    fetch(`https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -83,14 +90,14 @@ function updateBookStatus(id, isRead) {
 }
 
 function deleteBook(id) {
-    fetch(`/api/books/${id}`, {
+    fetch(`https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books/${id}`, {
         method: 'DELETE',
     })
     .then(() => loadBooks());
 }
 
 function showBookDetails(id) {
-    fetch(`/api/books/${id}`)
+    fetch(`https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/books/${id}`)
         .then(response => response.json())
         .then(book => {
             const detailsDiv = document.getElementById('book-details');
@@ -104,7 +111,7 @@ function showBookDetails(id) {
 }
 
 function loadLists() {
-    fetch('/api/lists')
+    fetch('https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/lists')
         .then(response => response.json())
         .then(lists => {
             const listSelects = document.querySelectorAll('select');
@@ -121,7 +128,7 @@ function loadLists() {
 
 function addBookToList(bookId, listId) {
     if (!listId) return;
-    fetch(`/api/lists/${listId}/books`, {
+    fetch(`https://c3e4260a-6536-436d-a00a-a2ad1e9344db-00-1gx8hgbvt0nyh.picard.replit.dev/api/lists/${listId}/books`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

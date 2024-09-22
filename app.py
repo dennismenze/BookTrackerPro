@@ -1,14 +1,7 @@
 import os
 from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
+from models import db, Book, Author, List
 import logging
-from urllib.parse import urlparse
-
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
 
 def create_app():
     app = Flask(__name__)
@@ -18,30 +11,15 @@ def create_app():
     app.logger.setLevel(logging.DEBUG)
     
     # Database configuration
-    database_url = os.environ.get('DATABASE_URL')
-    if not database_url:
-        app.logger.error("DATABASE_URL is not set in the environment variables.")
-        raise ValueError("DATABASE_URL is not set")
-
-    # Parse the database URL
-    parsed_url = urlparse(database_url)
-    username = parsed_url.username
-    password = parsed_url.password
-    hostname = parsed_url.hostname
-    port = parsed_url.port or 5432  # Use default PostgreSQL port if not specified
-    database = parsed_url.path[1:]  # Remove the leading '/'
-
-    # Construct the SQLAlchemy database URI
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{username}:{password}@{hostname}:{port}/{database}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    # Log a safe version of the database URL (without credentials)
-    safe_db_url = f"postgresql://{hostname}:{port}/{database}"
-    app.logger.info(f"Database connection: {safe_db_url}")
     
     # Initialize SQLAlchemy
     db.init_app(app)
 
+    app.logger.debug(f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+    # Create tables
     with app.app_context():
         try:
             db.create_all()
@@ -50,6 +28,7 @@ def create_app():
             app.logger.error(f"Error creating database tables: {str(e)}")
             raise
 
+    # Register blueprints
     from routes import book_routes, author_routes, list_routes
     app.register_blueprint(book_routes.bp)
     app.register_blueprint(author_routes.bp)
@@ -69,14 +48,35 @@ def create_app():
 
     @app.route('/db-info')
     def db_info():
-        return f'Database connection: {safe_db_url}'
+        return f'Database connection: {app.config["SQLALCHEMY_DATABASE_URI"]}'
 
     return app
 
+def add_sample_data(app):
+    with app.app_context():
+        # Check if the database is empty
+        if Book.query.count() == 0:
+            try:
+                # Add sample authors
+                author1 = Author(name="J.K. Rowling")
+                author2 = Author(name="George Orwell")
+                author3 = Author(name="Jane Austen")
+                db.session.add_all([author1, author2, author3])
+                db.session.commit()
+
+                # Add sample books
+                book1 = Book(title="Harry Potter and the Philosopher's Stone", author=author1, is_read=True)
+                book2 = Book(title="1984", author=author2, is_read=False)
+                book3 = Book(title="Pride and Prejudice", author=author3, is_read=True)
+                db.session.add_all([book1, book2, book3])
+                db.session.commit()
+
+                app.logger.info("Sample data added successfully")
+            except Exception as e:
+                app.logger.error(f"Error adding sample data: {str(e)}")
+                db.session.rollback()
+
 if __name__ == '__main__':
-    try:
-        app = create_app()
-        app.logger.info("Starting Flask application")
-        app.run(host='0.0.0.0', port=5000, debug=True)
-    except Exception as e:
-        logging.error(f"Failed to start the application: {str(e)}")
+    app = create_app()
+    add_sample_data(app)
+    app.run(host='0.0.0.0', port=5000, debug=True)
