@@ -59,7 +59,13 @@ def update_book(id):
     book.title = data.get('title', book.title)
     book.is_read = data.get('is_read', book.is_read)
     db.session.commit()
-    return jsonify({'message': 'Book updated successfully'})
+    return jsonify({
+        'id': book.id,
+        'title': book.title,
+        'author': book.author.name,
+        'is_read': book.is_read,
+        'message': 'Book updated successfully'
+    })
 
 @bp.route('/<int:id>', methods=['DELETE'])
 def delete_book(id):

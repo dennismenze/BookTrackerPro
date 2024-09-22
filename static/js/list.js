@@ -17,7 +17,10 @@ function loadListList() {
         });
 }
 
+let currentListId;
+
 function loadListDetails(listId) {
+    currentListId = listId;
     console.log('Loading list details for id:', listId);
     fetch(`/api/lists/${listId}`)
         .then(response => {
@@ -39,9 +42,9 @@ function loadListDetails(listId) {
                     ${list.books.map(book => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <a href="/book/${book.id}?id=${book.id}">${book.title}</a> by ${book.author}
-                            <span class="badge ${book.is_read ? 'bg-success' : 'bg-secondary'} rounded-pill">
-                                ${book.is_read ? 'Read' : 'Unread'}
-                            </span>
+                            <button onclick="toggleReadStatus(${book.id}, ${!book.is_read})" class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'}">
+                                Mark as ${book.is_read ? 'Unread' : 'Read'}
+                            </button>
                         </li>
                     `).join('')}
                 </ul>
@@ -52,4 +55,20 @@ function loadListDetails(listId) {
             const listDetails = document.getElementById('list-details');
             listDetails.innerHTML = `<p>Error loading list details: ${error.message}. Please try again.</p>`;
         });
+}
+
+function toggleReadStatus(bookId, isRead) {
+    fetch(`/api/books/${bookId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_read: isRead }),
+    })
+    .then(response => response.json())
+    .then(() => loadListDetails(currentListId))
+    .catch(error => {
+        console.error('Error updating book read status:', error);
+        alert('Failed to update book status. Please try again.');
+    });
 }
