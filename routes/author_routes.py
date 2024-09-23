@@ -20,13 +20,16 @@ def check_auth():
 def get_authors():
     current_app.logger.debug("get_authors function called")
     search_query = request.args.get('search', '')
+    
+    query = Author.query.join(Book).filter(Book.users.any(id=current_user.id))
     if search_query:
-        authors = Author.query.join(Book).filter(
-            Book.users.any(id=current_user.id),
-            func.lower(Author.name).contains(func.lower(search_query))
-        ).distinct().all()
-    else:
-        authors = Author.query.join(Book).filter(Book.users.any(id=current_user.id)).distinct().all()
+        query = query.filter(func.lower(Author.name).contains(func.lower(search_query)))
+    query = query.distinct()
+    
+    current_app.logger.debug(f"SQL Query: {query}")
+    
+    authors = query.all()
+    current_app.logger.debug(f"Raw authors from database: {authors}")
     
     result = [{
         'id': author.id,
@@ -35,8 +38,9 @@ def get_authors():
         'read_percentage': calculate_read_percentage([book for book in author.books if any(user.id == current_user.id for user in book.users)])
     } for author in authors]
     
+    current_app.logger.debug(f"Processed authors: {result}")
     current_app.logger.debug(f"Returning {len(result)} authors")
-    current_app.logger.debug(f"Author data: {result}")
+    
     return jsonify(result)
 
 @bp.route('/<int:id>', methods=['GET'])
