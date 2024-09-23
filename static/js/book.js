@@ -25,13 +25,18 @@ function loadBooks(searchQuery = '') {
             books.forEach(book => {
                 const li = document.createElement('li');
                 li.innerHTML = `
-                    <span>${book.title} by ${book.author}</span>
-                    <input type="checkbox" ${book.is_read ? 'checked' : ''} onchange="updateBookStatus(${book.id}, this.checked)">
-                    <button onclick="showBookDetails(${book.id})">Details</button>
-                    <button onclick="deleteBook(${book.id})">Delete</button>
-                    <select onchange="addBookToList(${book.id}, this.value)">
-                        <option value="">Add to list</option>
-                    </select>
+                    <div class="book-item">
+                        <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="book-cover">
+                        <div class="book-info">
+                            <span>${book.title} by ${book.author}</span>
+                            <input type="checkbox" ${book.is_read ? 'checked' : ''} onchange="updateBookStatus(${book.id}, this.checked)">
+                            <button onclick="showBookDetails(${book.id})">Details</button>
+                            <button onclick="deleteBook(${book.id})">Delete</button>
+                            <select onchange="addBookToList(${book.id}, this.value)">
+                                <option value="">Add to list</option>
+                            </select>
+                        </div>
+                    </div>
                 `;
                 bookList.appendChild(li);
             });
@@ -93,7 +98,28 @@ function deleteBook(id) {
 }
 
 function showBookDetails(id) {
-    window.location.href = `/book/${id}?id=${id}`;
+    fetch(`/api/books/${id}`, {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(handleUnauthorized)
+    .then(response => response.json())
+    .then(book => {
+        const bookDetails = document.getElementById('book-details');
+        bookDetails.innerHTML = `
+            <h2>${book.title}</h2>
+            <p>Author: ${book.author}</p>
+            <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="book-cover">
+            <p>ISBN: ${book.isbn || 'N/A'}</p>
+            <p>Page Count: ${book.page_count || 'N/A'}</p>
+            <p>Published Date: ${book.published_date || 'N/A'}</p>
+            <p>Description: ${book.description || 'No description available.'}</p>
+            <p>Status: ${book.is_read ? 'Read' : 'Unread'}</p>
+        `;
+    })
+    .catch(error => {
+        console.error('Error fetching book details:', error);
+    });
 }
 
 function loadLists() {

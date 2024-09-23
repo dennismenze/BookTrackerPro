@@ -47,6 +47,13 @@ class Book(db.Model):
     lists = db.relationship('List',
                             secondary='book_list',
                             back_populates='books')
+    
+    # New fields for Google Books API integration
+    isbn = db.Column(db.String(20))
+    description = db.Column(db.Text)
+    cover_image_url = db.Column(db.String(255))
+    page_count = db.Column(db.Integer)
+    published_date = db.Column(db.String(20))
 
 
 class Author(db.Model):

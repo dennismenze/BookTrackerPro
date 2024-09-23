@@ -31,7 +31,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
     <div>
         <h2 class="text-2xl font-bold mb-4">My Books</h2>
-        <ul id="book-list" class="space-y-2"></ul>
+        <ul id="book-list" class="space-y-4"></ul>
     </div>
     <div>
         <h2 class="text-2xl font-bold mb-4">Book Details</h2>
@@ -47,6 +47,13 @@
     document.addEventListener('DOMContentLoaded', () => {
         loadBooks();
         loadLists();
+        const addBookForm = document.getElementById('add-book-form');
+        addBookForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('book-title').value;
+            const author = document.getElementById('book-author').value;
+            addBook(title, author);
+        });
     });
 </script>
 {% endblock %}

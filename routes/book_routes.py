@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
 from models import db, Book, Author, List
 from sqlalchemy import or_
+import requests
 
 bp = Blueprint('book', __name__, url_prefix='/api/books')
 
@@ -35,7 +36,8 @@ def get_books():
             'id': book.id,
             'title': book.title,
             'author': book.author.name,
-            'is_read': book.is_read
+            'is_read': book.is_read,
+            'cover_image_url': book.cover_image_url
         } for book in books])
     except Exception as e:
         current_app.logger.error(f"Error in get_books: {str(e)}")
@@ -51,6 +53,11 @@ def get_book(id):
         'author': book.author.name,
         'author_id': book.author_id,
         'is_read': book.is_read,
+        'isbn': book.isbn,
+        'description': book.description,
+        'cover_image_url': book.cover_image_url,
+        'page_count': book.page_count,
+        'published_date': book.published_date,
         'lists': [{'id': list.id, 'name': list.name} for list in book.lists if list.user_id == current_user.id]
     })
 
@@ -73,7 +80,18 @@ def create_book():
             'message': 'Book already exists'
         }), 200
 
-    book = Book(title=data['title'], author=author)
+    # Fetch book information from Google Books API
+    google_books_info = fetch_google_books_info(data['title'], data['author'])
+
+    book = Book(
+        title=data['title'],
+        author=author,
+        isbn=google_books_info.get('isbn'),
+        description=google_books_info.get('description'),
+        cover_image_url=google_books_info.get('cover_image_url'),
+        page_count=google_books_info.get('page_count'),
+        published_date=google_books_info.get('published_date')
+    )
     book.users.append(current_user)
     db.session.add(book)
     db.session.commit()
@@ -108,3 +126,23 @@ def delete_book(id):
     current_user.books.remove(book)
     db.session.commit()
     return jsonify({'message': 'Book deleted successfully'})
+
+def fetch_google_books_info(title, author):
+    try:
+        query = f"{title} {author}".replace(" ", "+")
+        response = requests.get(f"https://www.googleapis.com/books/v1/volumes?q={query}")
+        data = response.json()
+
+        if 'items' in data and len(data['items']) > 0:
+            book_info = data['items'][0]['volumeInfo']
+            return {
+                'isbn': book_info.get('industryIdentifiers', [{}])[0].get('identifier', ''),
+                'description': book_info.get('description', ''),
+                'cover_image_url': book_info.get('imageLinks', {}).get('thumbnail', ''),
+                'page_count': book_info.get('pageCount', 0),
+                'published_date': book_info.get('publishedDate', '')
+            }
+        return {}
+    except Exception as e:
+        current_app.logger.error(f"Error fetching Google Books info: {str(e)}")
+        return {}
