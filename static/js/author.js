@@ -3,6 +3,11 @@ function loadAuthorList() {
     fetch('/api/authors')
         .then(response => {
             console.log('Author list response status:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                });
+            }
             return response.json();
         })
         .then(authors => {
@@ -23,7 +28,7 @@ function loadAuthorList() {
         .catch(error => {
             console.error('Error fetching author list:', error);
             const authorList = document.getElementById('author-list');
-            authorList.innerHTML = '<p>Error loading author list. Please try again.</p>';
+            authorList.innerHTML = `<p>Error loading author list: ${error.message}. Please try again.</p>`;
         });
 }
 
@@ -33,7 +38,9 @@ function loadAuthorDetails(authorId) {
         .then(response => {
             console.log('Author details response status:', response.status);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                });
             }
             return response.json();
         })
