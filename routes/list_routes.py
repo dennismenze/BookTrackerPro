@@ -45,9 +45,7 @@ def create_list():
     if not data or 'name' not in data:
         return jsonify({'error': 'Invalid request data'}), 400
 
-    new_list = List()
-    new_list.name = data['name']
-    new_list.user_id = current_user.id
+    new_list = List(name=data['name'], user_id=current_user.id)
     db.session.add(new_list)
     db.session.commit()
     return jsonify({

@@ -43,8 +43,7 @@ def create_author():
     if not data or 'name' not in data:
         return jsonify({'error': 'Invalid request data'}), 400
 
-    author = Author()
-    author.name = data['name']
+    author = Author(name=data['name'])
     db.session.add(author)
     db.session.commit()
     return jsonify({

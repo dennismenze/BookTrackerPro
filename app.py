@@ -5,6 +5,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 import logging
 from sqlalchemy import text
 from flask_migrate import Migrate
+from flask_talisman import Talisman
 
 def create_app():
     app = Flask(__name__)
@@ -29,6 +30,9 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'login'
 
+    # Initialize Talisman for HTTPS
+    Talisman(app, content_security_policy=None)
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
@@ -48,41 +52,52 @@ def create_app():
     @app.route('/register', methods=['GET', 'POST'])
     def register():
         if request.method == 'POST':
-            username = request.form['username']
-            email = request.form['email']
-            password = request.form['password']
-            
-            user = User.query.filter_by(username=username).first()
-            if user:
-                flash('Username already exists')
-                return redirect(url_for('register'))
-            
-            user = User.query.filter_by(email=email).first()
-            if user:
-                flash('Email already exists')
-                return redirect(url_for('register'))
-            
-            new_user = User(username=username, email=email)
-            new_user.set_password(password)
-            db.session.add(new_user)
-            db.session.commit()
-            
-            flash('Registration successful')
-            return redirect(url_for('login'))
+            try:
+                username = request.form['username']
+                email = request.form['email']
+                password = request.form['password']
+                
+                user = User.query.filter_by(username=username).first()
+                if user:
+                    flash('Username already exists')
+                    return redirect(url_for('register'))
+                
+                user = User.query.filter_by(email=email).first()
+                if user:
+                    flash('Email already exists')
+                    return redirect(url_for('register'))
+                
+                new_user = User(username=username, email=email)
+                new_user.set_password(password)
+                db.session.add(new_user)
+                db.session.commit()
+                
+                flash('Registration successful')
+                return redirect(url_for('login'))
+            except Exception as e:
+                db.session.rollback()
+                app.logger.error(f'Error during registration: {str(e)}')
+                flash('An error occurred during registration. Please try again.')
         
         return render_template('register.html')
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
-            username = request.form['username']
-            password = request.form['password']
-            user = User.query.filter_by(username=username).first()
-            if user and user.check_password(password):
-                login_user(user)
-                return redirect(url_for('index'))
-            else:
-                flash('Invalid username or password')
+            try:
+                username = request.form['username']
+                password = request.form['password']
+                user = User.query.filter_by(username=username).first()
+                if user and user.check_password(password):
+                    login_user(user)
+                    app.logger.info(f"User logged in: {username}")
+                    return redirect(url_for('index'))
+                else:
+                    app.logger.warning(f"Failed login attempt for username: {username}")
+                    flash('Invalid username or password')
+            except Exception as e:
+                app.logger.error(f"Error during login: {str(e)}")
+                flash('An error occurred during login. Please try again.')
         return render_template('login.html')
 
     @app.route('/logout')
@@ -117,6 +132,7 @@ def create_app():
         return render_template('list/detail.html', list_id=id)
 
     @app.route('/db-info')
+    @login_required
     def db_info():
         with db.engine.connect() as conn:
             result = conn.execute(text("SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'users'"))

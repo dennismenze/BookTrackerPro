@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
 from flask_login import login_required, current_user
 from models import db, Book, Author, List
-import logging
 
 bp = Blueprint('book', __name__, url_prefix='/api/books')
 
@@ -43,8 +42,7 @@ def create_book():
 
     author = Author.query.filter_by(name=data['author']).first()
     if not author:
-        author = Author()
-        author.name = data['author']
+        author = Author(name=data['author'])
         db.session.add(author)
 
     existing_book = Book.query.filter_by(title=data['title'], author=author, user_id=current_user.id).first()
@@ -54,10 +52,7 @@ def create_book():
             'message': 'Book already exists'
         }), 200
 
-    book = Book()
-    book.title = data['title']
-    book.author = author
-    book.user_id = current_user.id
+    book = Book(title=data['title'], author=author, user_id=current_user.id)
     db.session.add(book)
     db.session.commit()
 
