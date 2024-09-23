@@ -5,9 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
     loadLists();
 });
 
+function handleUnauthorized(response) {
+    if (response.status === 401) {
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+        throw new Error('Unauthorized');
+    }
+    return response;
+}
+
 function loadBooks() {
     console.log('Loading books...');
     fetch('/api/books')
+        .then(handleUnauthorized)
         .then(response => {
             console.log('Response status:', response.status);
             return response.json();
@@ -64,6 +73,7 @@ function addBook(title, author) {
         },
         body: JSON.stringify({ title, author }),
     })
+    .then(handleUnauthorized)
     .then(response => {
         if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -89,6 +99,7 @@ function updateBookStatus(id, isRead) {
         },
         body: JSON.stringify({ is_read: isRead }),
     })
+    .then(handleUnauthorized)
     .then(response => response.json())
     .then(() => loadBooks());
 }
@@ -97,6 +108,7 @@ function deleteBook(id) {
     fetch(`/api/books/${id}`, {
         method: 'DELETE',
     })
+    .then(handleUnauthorized)
     .then(() => loadBooks());
 }
 
@@ -106,6 +118,7 @@ function showBookDetails(id) {
 
 function loadLists() {
     fetch('/api/lists')
+        .then(handleUnauthorized)
         .then(response => response.json())
         .then(lists => {
             const listSelects = document.querySelectorAll('select');
@@ -129,6 +142,7 @@ function addBookToList(bookId, listId) {
         },
         body: JSON.stringify({ book_id: bookId }),
     })
+    .then(handleUnauthorized)
     .then(response => response.json())
     .then(() => {
         alert('Book added to list successfully');

@@ -1,11 +1,12 @@
 import os
-from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session
 from models import db, Book, Author, List, User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
 from sqlalchemy import text
 from flask_migrate import Migrate
 from flask_talisman import Talisman
+from urllib.parse import urlparse
 
 def create_app():
     app = Flask(__name__)
@@ -46,11 +47,14 @@ def create_app():
     app.register_blueprint(list_routes.bp)
 
     @app.route('/')
+    @login_required
     def index():
         return render_template('index.html')
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
         if request.method == 'POST':
             try:
                 username = request.form['username']
@@ -83,6 +87,8 @@ def create_app():
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
         if request.method == 'POST':
             try:
                 username = request.form['username']
@@ -90,8 +96,12 @@ def create_app():
                 user = User.query.filter_by(username=username).first()
                 if user and user.check_password(password):
                     login_user(user)
+                    session['user_id'] = user.id  # Set a session cookie
                     app.logger.info(f"User logged in: {username}")
-                    return redirect(url_for('index'))
+                    next_page = request.args.get('next')
+                    if not next_page or urlparse(next_page).netloc != '':
+                        next_page = url_for('index')
+                    return redirect(next_page)
                 else:
                     app.logger.warning(f"Failed login attempt for username: {username}")
                     flash('Invalid username or password')

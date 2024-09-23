@@ -1,8 +1,13 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
 from models import db, Author, Book
 
 bp = Blueprint('author', __name__, url_prefix='/api/authors')
+
+@bp.before_request
+def check_auth():
+    if 'user_id' not in session:
+        abort(401)  # Unauthorized
 
 @bp.route('/', methods=['GET'])
 @login_required

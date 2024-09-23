@@ -1,6 +1,15 @@
+function handleUnauthorized(response) {
+    if (response.status === 401) {
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+        throw new Error('Unauthorized');
+    }
+    return response;
+}
+
 function loadAuthorList() {
     console.log('Loading author list...');
     fetch('/api/authors')
+        .then(handleUnauthorized)
         .then(response => {
             console.log('Author list response status:', response.status);
             if (!response.ok) {
@@ -35,6 +44,7 @@ function loadAuthorList() {
 function loadAuthorDetails(authorId) {
     console.log('Loading author details for id:', authorId);
     fetch(`/api/authors/${authorId}`)
+        .then(handleUnauthorized)
         .then(response => {
             console.log('Author details response status:', response.status);
             if (!response.ok) {
