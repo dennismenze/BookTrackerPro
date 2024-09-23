@@ -45,10 +45,12 @@
 <script src="{{ url_for('static', filename='js/book.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOMContentLoaded event fired');
         loadBooks();
         loadLists();
         const addBookForm = document.getElementById('add-book-form');
         addBookForm.addEventListener('submit', (e) => {
+            console.log('Form submit event triggered');
             e.preventDefault();
             const title = document.getElementById('book-title').value;
             const author = document.getElementById('book-author').value;

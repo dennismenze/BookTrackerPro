@@ -49,9 +49,13 @@ function loadBooks(searchQuery = '') {
 let isSubmitting = false;
 
 function addBook(title, author) {
-    if (isSubmitting) return;
+    console.log('addBook function called:', title, 'by', author);
+    if (isSubmitting) {
+        console.log('Submission already in progress, aborting');
+        return;
+    }
     isSubmitting = true;
-    console.log('Adding book:', title, 'by', author);
+    console.log('Starting book submission');
     fetch('/api/books', {
         method: 'POST',
         headers: {
@@ -77,6 +81,7 @@ function addBook(title, author) {
         alert('Failed to add book. Please try again.');
     })
     .finally(() => {
+        console.log('Resetting isSubmitting flag');
         isSubmitting = false;
     });
 }
