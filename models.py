@@ -16,6 +16,14 @@ user_book = db.Table(
     db.Column('book_id', db.Integer, db.ForeignKey('books.id'), primary_key=True)
 )
 
+class UserBook(db.Model):
+    __tablename__ = 'user_books'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
+    is_read = db.Column(db.Boolean, default=False)
+    user = db.relationship("User", back_populates="user_books")
+    book = db.relationship("Book", back_populates="user_books")
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -23,6 +31,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255))
     books = db.relationship('Book', secondary=user_book, back_populates='users')
+    user_books = db.relationship("UserBook", back_populates="user")
     lists = db.relationship('List', backref='user', lazy='dynamic')
 
     def set_password(self, password):
@@ -40,15 +49,14 @@ class Book(db.Model):
     author_id = db.Column(db.Integer,
                           db.ForeignKey('authors.id'),
                           nullable=False)
-    is_read = db.Column(db.Boolean, default=False)
     users = db.relationship('User', secondary=user_book, back_populates='books')
-
+    user_books = db.relationship("UserBook", back_populates="book")
     author = db.relationship('Author', back_populates='books')
     lists = db.relationship('List',
                             secondary='book_list',
                             back_populates='books')
     
-    # New fields for Google Books API integration
+    # Fields for Google Books API integration
     isbn = db.Column(db.String(20))
     description = db.Column(db.Text)
     cover_image_url = db.Column(db.String(255))

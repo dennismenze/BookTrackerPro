@@ -31,6 +31,7 @@ function loadListList(searchQuery = '') {
                                 <a href="/list/${list.id}">${list.name}</a>
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
+                                <button onclick="toggleListVisibility(${list.id}, true)" class="btn btn-sm btn-outline-primary">Make Public</button>
                             </li>
                         `).join('')}
                     </ul>
@@ -43,6 +44,9 @@ function loadListList(searchQuery = '') {
                                 <a href="/list/${list.id}">${list.name}</a>
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
+                                ${list.user_id === null ? `
+                                    <button onclick="toggleListVisibility(${list.id}, false)" class="btn btn-sm btn-outline-secondary">Make Private</button>
+                                ` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -166,7 +170,12 @@ function toggleListVisibility(listId, isPublic) {
     })
     .then(handleUnauthorized)
     .then(response => response.json())
-    .then(() => loadListDetails(listId))
+    .then(() => {
+        loadListList();
+        if (currentListId) {
+            loadListDetails(currentListId);
+        }
+    })
     .catch(error => {
         console.error('Error updating list visibility:', error);
         alert('Failed to update list visibility. Please try again.');

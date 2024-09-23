@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
-from models import db, Book, Author, List
+from models import db, Book, Author, List, UserBook
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func, or_
 
@@ -40,7 +40,7 @@ def get_lists():
             'id': list.id,
             'name': list.name,
             'book_count': len(list.books),
-            'read_percentage': calculate_read_percentage(list.books),
+            'read_percentage': calculate_read_percentage(list.books, current_user.id),
             'is_public': list.is_public
         } for list in lists])
     except SQLAlchemyError as e:
@@ -61,10 +61,10 @@ def get_list(id):
             'title': book.title,
             'author': book.author.name,
             'author_id': book.author.id,
-            'is_read': book.is_read
+            'is_read': is_book_read(book, current_user.id)
         } for book in list.books]
         current_app.logger.info(f"Number of books in list: {len(books)}")
-        read_percentage = calculate_read_percentage(list.books)
+        read_percentage = calculate_read_percentage(list.books, current_user.id)
         current_app.logger.info(f"Read percentage: {read_percentage}")
         return jsonify({
             'id': list.id,
@@ -149,7 +149,7 @@ def add_book_to_list(id):
         if not data or 'book_id' not in data:
             return jsonify({'error': 'Invalid request data'}), 400
 
-        book = Book.query.filter(Book.id == data['book_id'], Book.users.any(id=current_user.id)).first_or_404()
+        book = Book.query.filter(Book.id == data['book_id']).first_or_404()
         if book not in list.books:
             list.books.append(book)
             db.session.commit()
@@ -168,7 +168,7 @@ def remove_book_from_list(id, book_id):
         list = List.query.filter(
             or_(List.id == id, List.user_id == current_user.id)
         ).first_or_404()
-        book = Book.query.filter(Book.id == book_id, Book.users.any(id=current_user.id)).first_or_404()
+        book = Book.query.filter_by(id=book_id).first_or_404()
         if book in list.books:
             list.books.remove(book)
             db.session.commit()
@@ -179,8 +179,12 @@ def remove_book_from_list(id, book_id):
         current_app.logger.error(f"Error removing book from list: {str(e)}")
         return jsonify({'error': 'An error occurred while removing the book from the list'}), 500
 
-def calculate_read_percentage(books):
+def calculate_read_percentage(books, user_id):
     if not books:
         return 0
-    read_books = sum(1 for book in books if book.is_read)
+    read_books = sum(1 for book in books if is_book_read(book, user_id))
     return (read_books / len(books)) * 100
+
+def is_book_read(book, user_id):
+    user_book = UserBook.query.filter_by(user_id=user_id, book_id=book.id).first()
+    return user_book.is_read if user_book else False
