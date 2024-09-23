@@ -9,7 +9,10 @@ function handleUnauthorized(response) {
 
 function loadAuthorList() {
     console.log('Loading author list...');
-    fetch('/api/authors')
+    fetch('/api/authors', {
+        method: 'GET',
+        credentials: 'include'
+    })
         .then(handleUnauthorized)
         .then(response => {
             console.log('Author list response status:', response.status);
@@ -44,7 +47,10 @@ function loadAuthorList() {
 
 function loadAuthorDetails(authorId) {
     console.log('Loading author details for id:', authorId);
-    fetch(`/api/authors/${authorId}`)
+    fetch(`/api/authors/${authorId}`, {
+        method: 'GET',
+        credentials: 'include'
+    })
         .then(handleUnauthorized)
         .then(response => {
             console.log('Author details response status:', response.status);

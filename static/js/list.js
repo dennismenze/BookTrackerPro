@@ -9,7 +9,10 @@ function handleUnauthorized(response) {
 
 function loadListList() {
     console.log('Loading list list...');
-    fetch('/api/lists')
+    fetch('/api/lists', {
+        method: 'GET',
+        credentials: 'include'
+    })
         .then(handleUnauthorized)
         .then(response => {
             console.log('List list response status:', response.status);
@@ -64,6 +67,7 @@ function createList() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name: listName }),
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => {
@@ -86,7 +90,10 @@ let currentListId;
 function loadListDetails(listId) {
     currentListId = listId;
     console.log('Loading list details for id:', listId);
-    fetch(`/api/lists/${listId}`)
+    fetch(`/api/lists/${listId}`, {
+        method: 'GET',
+        credentials: 'include'
+    })
         .then(handleUnauthorized)
         .then(response => {
             console.log('List details response status:', response.status);
@@ -131,6 +138,7 @@ function toggleReadStatus(bookId, isRead) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ is_read: isRead }),
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => response.json())
@@ -144,6 +152,7 @@ function toggleReadStatus(bookId, isRead) {
 function removeBookFromList(bookId) {
     fetch(`/api/lists/${currentListId}/books/${bookId}`, {
         method: 'DELETE',
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => response.json())
@@ -181,7 +190,10 @@ function searchBooks() {
     const query = document.getElementById('book-search').value;
     if (query.length < 2) return;
 
-    fetch(`/api/books?search=${encodeURIComponent(query)}`)
+    fetch(`/api/books?search=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        credentials: 'include'
+    })
         .then(handleUnauthorized)
         .then(response => response.json())
         .then(books => {
@@ -206,6 +218,7 @@ function addBookToList(bookId) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ book_id: bookId }),
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => response.json())

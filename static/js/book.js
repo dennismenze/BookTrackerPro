@@ -9,7 +9,10 @@ function handleUnauthorized(response) {
 
 function loadBooks() {
     console.log('Loading books...');
-    fetch('/api/books')
+    fetch('/api/books', {
+        method: 'GET',
+        credentials: 'include'
+    })
         .then(handleUnauthorized)
         .then(response => {
             console.log('Response status:', response.status);
@@ -46,6 +49,7 @@ function addBook(title, author) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ title, author }),
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => {
@@ -72,6 +76,7 @@ function updateBookStatus(id, isRead) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ is_read: isRead }),
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => response.json())
@@ -81,6 +86,7 @@ function updateBookStatus(id, isRead) {
 function deleteBook(id) {
     fetch(`/api/books/${id}`, {
         method: 'DELETE',
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(() => loadBooks());
@@ -91,7 +97,10 @@ function showBookDetails(id) {
 }
 
 function loadLists() {
-    fetch('/api/lists')
+    fetch('/api/lists', {
+        method: 'GET',
+        credentials: 'include'
+    })
         .then(handleUnauthorized)
         .then(response => response.json())
         .then(lists => {
@@ -115,6 +124,7 @@ function addBookToList(bookId, listId) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ book_id: bookId }),
+        credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => response.json())
