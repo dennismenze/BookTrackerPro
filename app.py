@@ -88,6 +88,9 @@ def create_app():
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         app.logger.debug("Login route accessed")
+        if 'user_id' in session:
+            app.logger.debug("User already in session, redirecting to index")
+            return redirect(url_for('index'))
         if current_user.is_authenticated:
             app.logger.debug("User already authenticated, redirecting to index")
             return redirect(url_for('index'))
@@ -99,7 +102,7 @@ def create_app():
                 user = User.query.filter_by(username=username).first()
                 if user and user.check_password(password):
                     login_user(user)
-                    session['user_id'] = user.id  # Set a session cookie
+                    session['user_id'] = user.id
                     app.logger.info(f"User logged in successfully: {username}")
                     next_page = request.args.get('next')
                     if not next_page or urlparse(next_page).netloc != '':
@@ -119,6 +122,7 @@ def create_app():
     @login_required
     def logout():
         logout_user()
+        session.clear()
         return redirect(url_for('index'))
 
     @app.route('/authors')
