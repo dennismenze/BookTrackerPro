@@ -7,7 +7,8 @@ bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
 @bp.before_request
 def check_auth():
-    current_app.logger.debug(f"Checking auth. Session: {session}")
+    current_app.logger.debug(f"check_auth called. Session: {session}")
+    current_app.logger.debug(f"current_user.is_authenticated: {current_user.is_authenticated}")
     if 'user_id' not in session:
         current_app.logger.warning(f"User not authenticated. Session: {session}")
         abort(401)  # Unauthorized

@@ -49,6 +49,11 @@ def create_app():
     app.register_blueprint(author_routes.bp)
     app.register_blueprint(list_routes.bp)
 
+    @app.before_request
+    def log_request_info():
+        app.logger.debug(f"Request path: {request.path}")
+        app.logger.debug(f"Session: {session}")
+
     @app.route('/')
     @login_required
     def index():
@@ -110,6 +115,7 @@ def create_app():
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         app.logger.debug("Login route accessed")
+        app.logger.debug(f"Session before login: {session}")
 
         if current_user.is_authenticated:
             app.logger.debug("User already authenticated, redirecting to index")
