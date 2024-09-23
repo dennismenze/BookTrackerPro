@@ -87,20 +87,24 @@ def create_app():
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        app.logger.debug("Login route accessed")
         if current_user.is_authenticated:
+            app.logger.debug("User already authenticated, redirecting to index")
             return redirect(url_for('index'))
         if request.method == 'POST':
             try:
                 username = request.form['username']
                 password = request.form['password']
+                app.logger.debug(f"Login attempt for username: {username}")
                 user = User.query.filter_by(username=username).first()
                 if user and user.check_password(password):
                     login_user(user)
                     session['user_id'] = user.id  # Set a session cookie
-                    app.logger.info(f"User logged in: {username}")
+                    app.logger.info(f"User logged in successfully: {username}")
                     next_page = request.args.get('next')
                     if not next_page or urlparse(next_page).netloc != '':
                         next_page = url_for('index')
+                    app.logger.debug(f"Redirecting to: {next_page}")
                     return redirect(next_page)
                 else:
                     app.logger.warning(f"Failed login attempt for username: {username}")
@@ -108,6 +112,7 @@ def create_app():
             except Exception as e:
                 app.logger.error(f"Error during login: {str(e)}")
                 flash('An error occurred during login. Please try again.')
+        app.logger.debug("Rendering login template")
         return render_template('login.html')
 
     @app.route('/logout')
