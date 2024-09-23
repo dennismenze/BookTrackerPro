@@ -34,4 +34,11 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/book.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadBooks();
+        loadLists();
+    });
+</script>
 {% endblock %}
