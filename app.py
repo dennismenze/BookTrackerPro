@@ -53,37 +53,43 @@ def create_app():
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
+        app.logger.debug("Register route accessed")
         if current_user.is_authenticated:
+            app.logger.debug("Authenticated user accessing register page, redirecting to index")
             return redirect(url_for('index'))
         if request.method == 'POST':
+            app.logger.debug("Processing POST request for registration")
             try:
                 username = request.form['username']
                 email = request.form['email']
                 password = request.form['password']
-
+                
                 user = User.query.filter_by(username=username).first()
                 if user:
+                    app.logger.warning(f"Registration attempt with existing username: {username}")
                     flash('Username already exists')
                     return redirect(url_for('register'))
-
+                
                 user = User.query.filter_by(email=email).first()
                 if user:
+                    app.logger.warning(f"Registration attempt with existing email: {email}")
                     flash('Email already exists')
                     return redirect(url_for('register'))
-
+                
                 new_user = User(username=username, email=email)
                 new_user.set_password(password)
                 db.session.add(new_user)
                 db.session.commit()
-
+                
+                app.logger.info(f"New user registered successfully: {username}")
                 flash('Registration successful')
                 return redirect(url_for('login'))
             except Exception as e:
                 db.session.rollback()
                 app.logger.error(f'Error during registration: {str(e)}')
-                flash(
-                    'An error occurred during registration. Please try again.')
-
+                flash('An error occurred during registration. Please try again.')
+        
+        app.logger.debug("Rendering registration template")
         return render_template('register.html')
 
     @app.route('/login', methods=['GET', 'POST'])
