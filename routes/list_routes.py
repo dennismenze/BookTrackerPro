@@ -103,12 +103,21 @@ def create_list():
 @login_required
 def update_list(id):
     try:
-        list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+        list = List.query.filter(
+            (List.id == id) & 
+            ((List.user_id == current_user.id) | (List.user_id == None))
+        ).first_or_404()
+        
         data = request.get_json()
         if data and 'name' in data:
             list.name = data['name']
+        
         if 'is_public' in data:
-            list.user_id = None if data['is_public'] else current_user.id
+            if data['is_public']:
+                list.user_id = None
+            else:
+                list.user_id = current_user.id
+        
         db.session.commit()
         return jsonify({'message': 'List updated successfully'})
     except SQLAlchemyError as e:
