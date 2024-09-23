@@ -29,8 +29,8 @@ def get_authors():
     return jsonify([{
         'id': author.id,
         'name': author.name,
-        'book_count': len([book for book in author.books if book.users.any(id=current_user.id)]),
-        'read_percentage': calculate_read_percentage([book for book in author.books if book.users.any(id=current_user.id)])
+        'book_count': sum(1 for book in author.books if any(user.id == current_user.id for user in book.users)),
+        'read_percentage': calculate_read_percentage([book for book in author.books if any(user.id == current_user.id for user in book.users)])
     } for author in authors])
 
 @bp.route('/<int:id>', methods=['GET'])
@@ -43,9 +43,9 @@ def get_author(id):
         'id': book.id,
         'title': book.title,
         'is_read': book.is_read
-    } for book in author.books if book.users.any(id=current_user.id)]
+    } for book in author.books if any(user.id == current_user.id for user in book.users)]
     current_app.logger.info(f"Number of books for author: {len(books)}")
-    read_percentage = calculate_read_percentage([book for book in author.books if book.users.any(id=current_user.id)])
+    read_percentage = calculate_read_percentage([book for book in author.books if any(user.id == current_user.id for user in book.users)])
     current_app.logger.info(f"Read percentage: {read_percentage}")
     return jsonify({
         'id': author.id,
