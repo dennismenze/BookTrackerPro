@@ -7,87 +7,63 @@ function handleUnauthorized(response) {
     return response;
 }
 
-function loadBooks(searchQuery = '') {
-    console.log('Loading books...');
-    fetch(`/api/books?search=${encodeURIComponent(searchQuery)}`, {
+function loadBookDetails(bookId) {
+    console.log('Loading book details for id:', bookId);
+    fetch(`/api/books/${bookId}`, {
         method: 'GET',
-        credentials: 'include'
-    })
-        .then(handleUnauthorized)
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-        })
-        .then(books => {
-            console.log('Received books:', books);
-            const bookList = document.getElementById('book-list');
-            bookList.innerHTML = '';
-            books.forEach(book => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="book-item">
-                        <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="book-cover">
-                        <div class="book-info">
-                            <span>${book.title} by ${book.author}</span>
-                            <input type="checkbox" ${book.is_read ? 'checked' : ''} onchange="updateBookStatus(${book.id}, this.checked)">
-                            <button onclick="showBookDetails(${book.id})">Details</button>
-                            <button onclick="deleteBook(${book.id})">Delete</button>
-                            <select onchange="addBookToList(${book.id}, this.value)">
-                                <option value="">Add to list</option>
-                            </select>
-                        </div>
-                    </div>
-                `;
-                bookList.appendChild(li);
-            });
-        })
-        .catch(error => {
-            console.error('Error loading books:', error);
-        });
-}
-
-let isSubmitting = false;
-
-function addBook(title, author) {
-    console.log('addBook function called:', title, 'by', author);
-    if (isSubmitting) {
-        console.log('Submission already in progress, aborting');
-        return;
-    }
-    isSubmitting = true;
-    console.log('Starting book submission');
-    fetch('/api/books', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title, author }),
         credentials: 'include'
     })
     .then(handleUnauthorized)
     .then(response => {
+        console.log('Book details response status:', response.status);
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
     })
-    .then(data => {
-        console.log('API response:', data);
-        loadBooks();
-        document.getElementById('add-book-form').reset();
+    .then(book => {
+        console.log('Received book details:', book);
+        const bookDetails = document.getElementById('book-details');
+        bookDetails.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">${book.title}</h2>
+            <div class="flex flex-col md:flex-row">
+                <div class="md:w-1/3 mb-4 md:mb-0">
+                    <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="w-full rounded-lg shadow-lg">
+                </div>
+                <div class="md:w-2/3 md:pl-6">
+                    <p><strong>Author:</strong> <a href="/author/${book.author_id}" class="text-blue-500 hover:underline">${book.author}</a></p>
+                    <p><strong>ISBN:</strong> ${book.isbn || 'N/A'}</p>
+                    <p><strong>Page Count:</strong> ${book.page_count || 'N/A'}</p>
+                    <p><strong>Published Date:</strong> ${book.published_date || 'N/A'}</p>
+                    <p><strong>Status:</strong> ${book.is_read ? 'Read' : 'Unread'}</p>
+                    <div class="mt-4">
+                        <h3 class="text-xl font-semibold mb-2">Description:</h3>
+                        <p>${book.description || 'No description available.'}</p>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-xl font-semibold mb-2">Lists:</h3>
+                        <ul>
+                            ${book.lists.map(list => `<li>${list.name}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="toggleReadStatus(${book.id}, ${!book.is_read})" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            Mark as ${book.is_read ? 'Unread' : 'Read'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     })
     .catch(error => {
-        console.error('Error adding book:', error);
-        alert('Failed to add book. Please try again.');
-    })
-    .finally(() => {
-        console.log('Resetting isSubmitting flag');
-        isSubmitting = false;
+        console.error('Error fetching book details:', error);
+        const bookDetails = document.getElementById('book-details');
+        bookDetails.innerHTML = `<p class="text-red-500">Error loading book details: ${error.message}. Please try again.</p>`;
     });
 }
 
-function updateBookStatus(id, isRead) {
-    fetch(`/api/books/${id}`, {
+function toggleReadStatus(bookId, isRead) {
+    fetch(`/api/books/${bookId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -97,86 +73,11 @@ function updateBookStatus(id, isRead) {
     })
     .then(handleUnauthorized)
     .then(response => response.json())
-    .then(() => loadBooks());
-}
-
-function deleteBook(id) {
-    fetch(`/api/books/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-    })
-    .then(handleUnauthorized)
-    .then(() => loadBooks());
-}
-
-function showBookDetails(id) {
-    fetch(`/api/books/${id}`, {
-        method: 'GET',
-        credentials: 'include'
-    })
-    .then(handleUnauthorized)
-    .then(response => response.json())
-    .then(book => {
-        const bookDetails = document.getElementById('book-details');
-        bookDetails.innerHTML = `
-            <h2>${book.title}</h2>
-            <p>Author: ${book.author}</p>
-            <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="book-cover">
-            <p>ISBN: ${book.isbn || 'N/A'}</p>
-            <p>Page Count: ${book.page_count || 'N/A'}</p>
-            <p>Published Date: ${book.published_date || 'N/A'}</p>
-            <p>Description: ${book.description || 'No description available.'}</p>
-            <p>Status: ${book.is_read ? 'Read' : 'Unread'}</p>
-        `;
-    })
-    .catch(error => {
-        console.error('Error fetching book details:', error);
-    });
-}
-
-function loadLists() {
-    fetch('/api/lists', {
-        method: 'GET',
-        credentials: 'include'
-    })
-        .then(handleUnauthorized)
-        .then(response => response.json())
-        .then(lists => {
-            const listSelects = document.querySelectorAll('select');
-            lists.forEach(list => {
-                listSelects.forEach(select => {
-                    const option = document.createElement('option');
-                    option.value = list.id;
-                    option.textContent = list.name;
-                    select.appendChild(option);
-                });
-            });
-        });
-}
-
-function addBookToList(bookId, listId) {
-    if (!listId) return;
-    fetch(`/api/lists/${listId}/books`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ book_id: bookId }),
-        credentials: 'include'
-    })
-    .then(handleUnauthorized)
-    .then(response => response.json())
     .then(() => {
-        alert('Book added to list successfully');
-        loadBooks();
+        loadBookDetails(bookId);
     })
     .catch(error => {
-        console.error('Error adding book to list:', error);
-        alert('Failed to add book to list. Please try again.');
+        console.error('Error updating book status:', error);
+        alert('Failed to update book status. Please try again.');
     });
-}
-
-function searchBooks() {
-    const searchQuery = document.getElementById('book-search').value;
-    loadBooks(searchQuery);
 }

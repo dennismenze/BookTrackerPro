@@ -3,15 +3,24 @@
 {% block title %}Book Details - Book Tracker{% endblock %}
 
 {% block content %}
-<div id="book-details"></div>
+<div id="book-details" class="container mx-auto mt-8 p-4">
+    <!-- Book details will be dynamically inserted here by JavaScript -->
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/book.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const bookId = new URLSearchParams(window.location.search).get('id');
-        loadBookDetails(bookId);
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookId = urlParams.get('id');
+        if (bookId) {
+            loadBookDetails(bookId);
+        } else {
+            console.error('Book ID not found');
+            document.getElementById('book-details').innerHTML = '<p class="text-red-500">Error: Book ID not provided. Please go back and try again.</p>';
+        }
     });
 </script>
 {% endblock %}
