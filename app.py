@@ -49,6 +49,7 @@ def create_app():
     @app.route('/')
     @login_required
     def index():
+        app.logger.debug(f"Index route accessed. User authenticated: {current_user.is_authenticated}")
         return render_template('index.html')
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -113,8 +114,10 @@ def create_app():
                     if user.check_password(password):
                         app.logger.debug("Password check successful")
                         login_user(user)
+                        app.logger.debug(f"login_user called for user: {username}")
                         session.clear()  # Clear any existing session data
                         session['user_id'] = user.id
+                        app.logger.debug(f"Session set for user_id: {user.id}")
                         app.logger.info(f"User logged in successfully: {username}")
                         next_page = request.args.get('next')
                         if not next_page or urlparse(next_page).netloc != '':
