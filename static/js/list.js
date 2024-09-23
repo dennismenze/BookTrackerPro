@@ -4,6 +4,7 @@ function loadListList() {
         .then(lists => {
             const listList = document.getElementById('list-list');
             listList.innerHTML = `
+                <h2>Your Reading Lists</h2>
                 <ul class="list-group">
                     ${lists.map(list => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -13,8 +14,50 @@ function loadListList() {
                         </li>
                     `).join('')}
                 </ul>
+                <button onclick="showCreateListForm()" class="btn btn-primary mt-3">Create New List</button>
             `;
+        })
+        .catch(error => {
+            console.error('Error fetching list list:', error);
+            const listList = document.getElementById('list-list');
+            listList.innerHTML = '<p>Error loading list list. Please try again.</p>';
         });
+}
+
+function showCreateListForm() {
+    const listList = document.getElementById('list-list');
+    listList.innerHTML += `
+        <div id="create-list-form" class="mt-3">
+            <h3>Create New List</h3>
+            <input type="text" id="new-list-name" class="form-control" placeholder="Enter list name">
+            <button onclick="createList()" class="btn btn-success mt-2">Create List</button>
+        </div>
+    `;
+}
+
+function createList() {
+    const listName = document.getElementById('new-list-name').value;
+    if (!listName) {
+        alert('Please enter a list name');
+        return;
+    }
+
+    fetch('/api/lists', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: listName }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        loadListList();
+    })
+    .catch(error => {
+        console.error('Error creating list:', error);
+        alert('Failed to create list. Please try again.');
+    });
 }
 
 let currentListId;
@@ -45,9 +88,11 @@ function loadListDetails(listId) {
                             <button onclick="toggleReadStatus(${book.id}, ${!book.is_read})" class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'}">
                                 Mark as ${book.is_read ? 'Unread' : 'Read'}
                             </button>
+                            <button onclick="removeBookFromList(${book.id})" class="btn btn-sm btn-danger">Remove</button>
                         </li>
                     `).join('')}
                 </ul>
+                <button onclick="showAddBookForm()" class="btn btn-primary mt-3">Add Book to List</button>
             `;
         })
         .catch(error => {
@@ -70,5 +115,80 @@ function toggleReadStatus(bookId, isRead) {
     .catch(error => {
         console.error('Error updating book read status:', error);
         alert('Failed to update book status. Please try again.');
+    });
+}
+
+function removeBookFromList(bookId) {
+    fetch(`/api/lists/${currentListId}/books/${bookId}`, {
+        method: 'DELETE',
+    })
+    .then(response => response.json())
+    .then(() => loadListDetails(currentListId))
+    .catch(error => {
+        console.error('Error removing book from list:', error);
+        alert('Failed to remove book from list. Please try again.');
+    });
+}
+
+function showAddBookForm() {
+    const listDetails = document.getElementById('list-details');
+    listDetails.innerHTML += `
+        <div id="add-book-form" class="mt-3">
+            <h3>Add Book to List</h3>
+            <input type="text" id="book-search" class="form-control" placeholder="Search for a book">
+            <ul id="book-search-results" class="list-group mt-2"></ul>
+        </div>
+    `;
+
+    document.getElementById('book-search').addEventListener('input', debounce(searchBooks, 300));
+}
+
+function debounce(func, delay) {
+    let debounceTimer;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    }
+}
+
+function searchBooks() {
+    const query = document.getElementById('book-search').value;
+    if (query.length < 2) return;
+
+    fetch(`/api/books?search=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(books => {
+            const searchResults = document.getElementById('book-search-results');
+            searchResults.innerHTML = books.map(book => `
+                <li class="list-group-item">
+                    ${book.title} by ${book.author}
+                    <button onclick="addBookToList(${book.id})" class="btn btn-sm btn-primary float-end">Add</button>
+                </li>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error searching books:', error);
+            alert('Failed to search books. Please try again.');
+        });
+}
+
+function addBookToList(bookId) {
+    fetch(`/api/lists/${currentListId}/books`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ book_id: bookId }),
+    })
+    .then(response => response.json())
+    .then(() => {
+        alert('Book added to list successfully');
+        loadListDetails(currentListId);
+    })
+    .catch(error => {
+        console.error('Error adding book to list:', error);
+        alert('Failed to add book to list. Please try again.');
     });
 }
