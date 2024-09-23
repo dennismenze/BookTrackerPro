@@ -7,8 +7,12 @@ bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
 @bp.before_request
 def check_auth():
+    current_app.logger.debug(f"Checking auth. Session: {session}")
     if 'user_id' not in session:
+        current_app.logger.warning(f"User not authenticated. Session: {session}")
         abort(401)  # Unauthorized
+    else:
+        current_app.logger.debug(f"User authenticated. User ID: {session['user_id']}")
 
 @bp.route('/', methods=['GET'])
 @login_required

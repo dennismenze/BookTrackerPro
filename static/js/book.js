@@ -1,3 +1,12 @@
+function handleUnauthorized(response) {
+    if (response.status === 401) {
+        console.log('Unauthorized access, redirecting to login');
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+        throw new Error('Unauthorized');
+    }
+    return response;
+}
+
 function loadBooks() {
     console.log('Loading books...');
     fetch('/api/books')

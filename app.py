@@ -3,11 +3,12 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from models import db, Book, Author, List, User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
-from sqlalchemy import text
+from sqlalchemy import text, true
 from flask_migrate import Migrate
 from flask_talisman import Talisman
 from urllib.parse import urlparse
 from functools import wraps
+
 
 def create_app():
     app = Flask(__name__)
@@ -19,8 +20,10 @@ def create_app():
     # Database configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
-    app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}...")  # Log only the first 5 characters for security
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY",
+                                              "fallback_secret_key")
+    app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}..."
+                     )  # Log only the first 5 characters for security
 
     # Initialize SQLAlchemy
     db.init_app(app)
@@ -31,7 +34,7 @@ def create_app():
     login_manager.login_view = 'login'
 
     # Initialize Talisman for HTTPS
-    Talisman(app, content_security_policy=None)
+    Talisman(app, content_security_policy=None, force_https=False)
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -40,21 +43,6 @@ def create_app():
     app.logger.debug(
         f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
-    # Custom login_required decorator
-    def custom_login_required(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            app.logger.debug(f"custom_login_required: current_user = {current_user}")
-            app.logger.debug(f"custom_login_required: current_user.is_authenticated = {current_user.is_authenticated}")
-            app.logger.debug(f"custom_login_required: session = {session}")
-            app.logger.debug(f"custom_login_required: request.endpoint = {request.endpoint}")
-            if not current_user.is_authenticated:
-                app.logger.debug("User not authenticated, redirecting to login")
-                return redirect(url_for('login', next=request.url))
-            app.logger.debug("User authenticated, proceeding to requested page")
-            return f(*args, **kwargs)
-        return decorated_function
-
     # Register blueprints
     from routes import book_routes, author_routes, list_routes
     app.register_blueprint(book_routes.bp)
@@ -62,10 +50,12 @@ def create_app():
     app.register_blueprint(list_routes.bp)
 
     @app.route('/')
-    @custom_login_required
+    @login_required
     def index():
         app.logger.debug(f"Index route: current_user = {current_user}")
-        app.logger.debug(f"Index route: current_user.is_authenticated = {current_user.is_authenticated}")
+        app.logger.debug(
+            f"Index route: current_user.is_authenticated = {current_user.is_authenticated}"
+        )
         app.logger.debug(f"Index route: session = {session}")
         return render_template('index.html')
 
@@ -73,7 +63,9 @@ def create_app():
     def register():
         app.logger.debug("Register route accessed")
         if current_user.is_authenticated:
-            app.logger.debug("Authenticated user accessing register page, redirecting to index")
+            app.logger.debug(
+                "Authenticated user accessing register page, redirecting to index"
+            )
             return redirect(url_for('index'))
         if request.method == 'POST':
             app.logger.debug("Processing POST request for registration")
@@ -81,60 +73,65 @@ def create_app():
                 username = request.form['username']
                 email = request.form['email']
                 password = request.form['password']
-                
+
                 user = User.query.filter_by(username=username).first()
                 if user:
-                    app.logger.warning(f"Registration attempt with existing username: {username}")
+                    app.logger.warning(
+                        f"Registration attempt with existing username: {username}"
+                    )
                     flash('Username already exists')
                     return redirect(url_for('register'))
-                
+
                 user = User.query.filter_by(email=email).first()
                 if user:
-                    app.logger.warning(f"Registration attempt with existing email: {email}")
+                    app.logger.warning(
+                        f"Registration attempt with existing email: {email}")
                     flash('Email already exists')
                     return redirect(url_for('register'))
-                
+
                 new_user = User(username=username, email=email)
                 new_user.set_password(password)
                 db.session.add(new_user)
                 db.session.commit()
-                
-                app.logger.info(f"New user registered successfully: {username}")
+
+                app.logger.info(
+                    f"New user registered successfully: {username}")
                 flash('Registration successful')
                 return redirect(url_for('login'))
             except Exception as e:
                 db.session.rollback()
                 app.logger.error(f'Error during registration: {str(e)}')
-                flash('An error occurred during registration. Please try again.')
-        
+                flash(
+                    'An error occurred during registration. Please try again.')
+
         app.logger.debug("Rendering registration template")
         return render_template('register.html')
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         app.logger.debug("Login route accessed")
-        
+
         if current_user.is_authenticated:
             app.logger.debug("User already authenticated, redirecting to index")
             return redirect(url_for('index'))
-        
+
         if request.method == 'POST':
             app.logger.debug("Processing POST request")
             try:
                 username = request.form['username']
                 password = request.form['password']
                 app.logger.debug(f"Login attempt for username: {username}")
-                
+
                 user = User.query.filter_by(username=username).first()
                 if user:
                     app.logger.debug(f"User found: {username}")
                     if user.check_password(password):
                         app.logger.debug("Password check successful")
                         login_user(user)
+                        app.logger.debug(f"Current user: {current_user.is_authenticated}")
                         app.logger.debug(f"login_user called for user: {username}")
-                        session.clear()  # Clear any existing session data
+
                         session['user_id'] = user.id
-                        app.logger.debug(f"Session set for user_id: {user.id}")
                         app.logger.debug(f"Session after login: {session}")
                         app.logger.info(f"User logged in successfully: {username}")
                         next_page = request.args.get('next')
@@ -151,39 +148,39 @@ def create_app():
             except Exception as e:
                 app.logger.error(f"Error during login: {str(e)}")
                 flash('An error occurred during login. Please try again.')
-        
+
         app.logger.debug("Rendering login template")
         return render_template('login.html')
 
     @app.route('/logout')
-    @custom_login_required
+    @login_required
     def logout():
         logout_user()
         session.clear()
         return redirect(url_for('index'))
 
     @app.route('/authors')
-    @custom_login_required
+    @login_required
     def authors():
         return render_template('author/list.html')
 
     @app.route('/author/<int:id>')
-    @custom_login_required
+    @login_required
     def author_detail(id):
         return render_template('author/detail.html', author_id=id)
 
     @app.route('/book/<int:id>')
-    @custom_login_required
+    @login_required
     def book_detail(id):
         return render_template('book/detail.html', book_id=id)
 
     @app.route('/lists')
-    @custom_login_required
+    @login_required
     def lists():
         return render_template('list/list.html')
 
     @app.route('/list/<int:id>')
-    @custom_login_required
+    @login_required
     def list_detail(id):
         return render_template('list/detail.html', list_id=id)
 

@@ -1,9 +1,7 @@
 function handleUnauthorized(response) {
     if (response.status === 401) {
-        // Check if we're already on the login page to prevent infinite loops
-        if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
-        }
+        console.log('Unauthorized access, redirecting to login');
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
         throw new Error('Unauthorized');
     }
     return response;
