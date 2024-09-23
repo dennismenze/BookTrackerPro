@@ -8,23 +8,22 @@ from flask_migrate import Migrate
 from flask_talisman import Talisman
 from urllib.parse import urlparse
 
+
 def create_app():
     app = Flask(__name__)
-    
+
     # Configure logging
     logging.basicConfig(level=logging.DEBUG)
     app.logger.setLevel(logging.DEBUG)
-    
+
     # Database configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
-    
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY",
+                                              "fallback_secret_key")
+
     # Initialize SQLAlchemy
     db.init_app(app)
-
-    # Initialize Flask-Migrate
-    migrate = Migrate(app, db)
 
     # Initialize Flask-Login
     login_manager = LoginManager()
@@ -38,7 +37,8 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    app.logger.debug(f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    app.logger.debug(
+        f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     # Register blueprints
     from routes import book_routes, author_routes, list_routes
@@ -60,39 +60,41 @@ def create_app():
                 username = request.form['username']
                 email = request.form['email']
                 password = request.form['password']
-                
+
                 user = User.query.filter_by(username=username).first()
                 if user:
                     flash('Username already exists')
                     return redirect(url_for('register'))
-                
+
                 user = User.query.filter_by(email=email).first()
                 if user:
                     flash('Email already exists')
                     return redirect(url_for('register'))
-                
+
                 new_user = User(username=username, email=email)
                 new_user.set_password(password)
                 db.session.add(new_user)
                 db.session.commit()
-                
+
                 flash('Registration successful')
                 return redirect(url_for('login'))
             except Exception as e:
                 db.session.rollback()
                 app.logger.error(f'Error during registration: {str(e)}')
-                flash('An error occurred during registration. Please try again.')
-        
+                flash(
+                    'An error occurred during registration. Please try again.')
+
         return render_template('register.html')
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         app.logger.debug("Login route accessed")
-        
+
         if current_user.is_authenticated:
-            app.logger.debug("User already authenticated, redirecting to index")
+            app.logger.debug(
+                "User already authenticated, redirecting to index")
             return redirect(url_for('index'))
-        
+
         if request.method == 'POST':
             app.logger.debug("Processing POST request")
             try:
@@ -112,12 +114,13 @@ def create_app():
                     app.logger.debug(f"Redirecting to: {next_page}")
                     return redirect(next_page)
                 else:
-                    app.logger.warning(f"Failed login attempt for username: {username}")
+                    app.logger.warning(
+                        f"Failed login attempt for username: {username}")
                     flash('Invalid username or password')
             except Exception as e:
                 app.logger.error(f"Error during login: {str(e)}")
                 flash('An error occurred during login. Please try again.')
-        
+
         app.logger.debug("Rendering login template")
         return render_template('login.html')
 
@@ -153,15 +156,8 @@ def create_app():
     def list_detail(id):
         return render_template('list/detail.html', list_id=id)
 
-    @app.route('/db-info')
-    @login_required
-    def db_info():
-        with db.engine.connect() as conn:
-            result = conn.execute(text("SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'users'"))
-            columns = [dict(row) for row in result]
-        return jsonify(columns)
-
     return app
+
 
 if __name__ == '__main__':
     app = create_app()

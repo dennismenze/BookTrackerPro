@@ -1,6 +1,18 @@
+function handleUnauthorized(response) {
+    if (response.status === 401) {
+        // Check if we're already on the login page to prevent infinite loops
+        if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+        }
+        throw new Error('Unauthorized');
+    }
+    return response;
+}
+
 function loadListList() {
     console.log('Loading list list...');
     fetch('/api/lists')
+        .then(handleUnauthorized)
         .then(response => {
             console.log('List list response status:', response.status);
             return response.json();
@@ -55,6 +67,7 @@ function createList() {
         },
         body: JSON.stringify({ name: listName }),
     })
+    .then(handleUnauthorized)
     .then(response => {
         console.log('Create list response status:', response.status);
         return response.json();
@@ -76,6 +89,7 @@ function loadListDetails(listId) {
     currentListId = listId;
     console.log('Loading list details for id:', listId);
     fetch(`/api/lists/${listId}`)
+        .then(handleUnauthorized)
         .then(response => {
             console.log('List details response status:', response.status);
             if (!response.ok) {
@@ -120,6 +134,7 @@ function toggleReadStatus(bookId, isRead) {
         },
         body: JSON.stringify({ is_read: isRead }),
     })
+    .then(handleUnauthorized)
     .then(response => response.json())
     .then(() => loadListDetails(currentListId))
     .catch(error => {
@@ -132,6 +147,7 @@ function removeBookFromList(bookId) {
     fetch(`/api/lists/${currentListId}/books/${bookId}`, {
         method: 'DELETE',
     })
+    .then(handleUnauthorized)
     .then(response => response.json())
     .then(() => loadListDetails(currentListId))
     .catch(error => {
@@ -168,6 +184,7 @@ function searchBooks() {
     if (query.length < 2) return;
 
     fetch(`/api/books?search=${encodeURIComponent(query)}`)
+        .then(handleUnauthorized)
         .then(response => response.json())
         .then(books => {
             const searchResults = document.getElementById('book-search-results');
@@ -192,6 +209,7 @@ function addBookToList(bookId) {
         },
         body: JSON.stringify({ book_id: bookId }),
     })
+    .then(handleUnauthorized)
     .then(response => response.json())
     .then(() => {
         alert('Book added to list successfully');
