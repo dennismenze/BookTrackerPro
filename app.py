@@ -44,12 +44,14 @@ def create_app():
     def custom_login_required(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            app.logger.debug(f"custom_login_required: current_user = {current_user}")
             app.logger.debug(f"custom_login_required: current_user.is_authenticated = {current_user.is_authenticated}")
             app.logger.debug(f"custom_login_required: session = {session}")
-            app.logger.debug(f"custom_login_required: current_user.id = {current_user.id if current_user.is_authenticated else 'Not authenticated'}")
+            app.logger.debug(f"custom_login_required: request.endpoint = {request.endpoint}")
             if not current_user.is_authenticated:
                 app.logger.debug("User not authenticated, redirecting to login")
                 return redirect(url_for('login', next=request.url))
+            app.logger.debug("User authenticated, proceeding to requested page")
             return f(*args, **kwargs)
         return decorated_function
 
@@ -62,7 +64,9 @@ def create_app():
     @app.route('/')
     @custom_login_required
     def index():
-        app.logger.debug(f"Accessing protected route. User authenticated: {current_user.is_authenticated}, Session: {session}")
+        app.logger.debug(f"Index route: current_user = {current_user}")
+        app.logger.debug(f"Index route: current_user.is_authenticated = {current_user.is_authenticated}")
+        app.logger.debug(f"Index route: session = {session}")
         return render_template('index.html')
 
     @app.route('/register', methods=['GET', 'POST'])
