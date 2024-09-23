@@ -44,9 +44,13 @@ def create_app():
     def custom_login_required(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            app.logger.debug(f"custom_login_required: current_user.is_authenticated = {current_user.is_authenticated}")
+            app.logger.debug(f"custom_login_required: session = {session}")
+            app.logger.debug(f"custom_login_required: current_user.id = {current_user.id if current_user.is_authenticated else 'Not authenticated'}")
             if not current_user.is_authenticated:
-                app.logger.debug(f"Login required. User authenticated: {current_user.is_authenticated}, Session: {session}")
-            return login_required(f)(*args, **kwargs)
+                app.logger.debug("User not authenticated, redirecting to login")
+                return redirect(url_for('login', next=request.url))
+            return f(*args, **kwargs)
         return decorated_function
 
     # Register blueprints
