@@ -7,7 +7,7 @@ from sqlalchemy import text
 from flask_migrate import Migrate
 from flask_talisman import Talisman
 from urllib.parse import urlparse
-
+from functools import wraps
 
 def create_app():
     app = Flask(__name__)
@@ -19,8 +19,8 @@ def create_app():
     # Database configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY",
-                                              "fallback_secret_key")
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
+    app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}...")  # Log only the first 5 characters for security
 
     # Initialize SQLAlchemy
     db.init_app(app)
@@ -40,6 +40,15 @@ def create_app():
     app.logger.debug(
         f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
+    # Custom login_required decorator
+    def custom_login_required(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                app.logger.debug(f"Login required. User authenticated: {current_user.is_authenticated}, Session: {session}")
+            return login_required(f)(*args, **kwargs)
+        return decorated_function
+
     # Register blueprints
     from routes import book_routes, author_routes, list_routes
     app.register_blueprint(book_routes.bp)
@@ -47,9 +56,9 @@ def create_app():
     app.register_blueprint(list_routes.bp)
 
     @app.route('/')
-    @login_required
+    @custom_login_required
     def index():
-        app.logger.debug(f"Index route accessed. User authenticated: {current_user.is_authenticated}")
+        app.logger.debug(f"Accessing protected route. User authenticated: {current_user.is_authenticated}, Session: {session}")
         return render_template('index.html')
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -118,6 +127,7 @@ def create_app():
                         session.clear()  # Clear any existing session data
                         session['user_id'] = user.id
                         app.logger.debug(f"Session set for user_id: {user.id}")
+                        app.logger.debug(f"Session after login: {session}")
                         app.logger.info(f"User logged in successfully: {username}")
                         next_page = request.args.get('next')
                         if not next_page or urlparse(next_page).netloc != '':
@@ -138,34 +148,34 @@ def create_app():
         return render_template('login.html')
 
     @app.route('/logout')
-    @login_required
+    @custom_login_required
     def logout():
         logout_user()
         session.clear()
         return redirect(url_for('index'))
 
     @app.route('/authors')
-    @login_required
+    @custom_login_required
     def authors():
         return render_template('author/list.html')
 
     @app.route('/author/<int:id>')
-    @login_required
+    @custom_login_required
     def author_detail(id):
         return render_template('author/detail.html', author_id=id)
 
     @app.route('/book/<int:id>')
-    @login_required
+    @custom_login_required
     def book_detail(id):
         return render_template('book/detail.html', book_id=id)
 
     @app.route('/lists')
-    @login_required
+    @custom_login_required
     def lists():
         return render_template('list/list.html')
 
     @app.route('/list/<int:id>')
-    @login_required
+    @custom_login_required
     def list_detail(id):
         return render_template('list/detail.html', list_id=id)
 
