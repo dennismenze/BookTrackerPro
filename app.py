@@ -28,6 +28,9 @@ def create_app():
     # Initialize SQLAlchemy
     db.init_app(app)
 
+    # Initialize Flask-Migrate
+    migrate = Migrate(app, db)
+
     # Initialize Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
