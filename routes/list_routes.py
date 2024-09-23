@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
 from models import db, Book, Author, List
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
@@ -23,16 +23,25 @@ def get_lists():
         search_query = request.args.get('search', '')
         if search_query:
             lists = List.query.filter(
-                List.user_id == current_user.id,
+                or_(
+                    List.user_id == current_user.id,
+                    List.user_id == None
+                ),
                 func.lower(List.name).contains(func.lower(search_query))
             ).all()
         else:
-            lists = List.query.filter_by(user_id=current_user.id).all()
+            lists = List.query.filter(
+                or_(
+                    List.user_id == current_user.id,
+                    List.user_id == None
+                )
+            ).all()
         return jsonify([{
             'id': list.id,
             'name': list.name,
             'book_count': len(list.books),
-            'read_percentage': calculate_read_percentage(list.books)
+            'read_percentage': calculate_read_percentage(list.books),
+            'is_public': list.is_public
         } for list in lists])
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error fetching lists: {str(e)}")
@@ -43,7 +52,9 @@ def get_lists():
 def get_list(id):
     try:
         current_app.logger.info(f"Fetching list with id: {id}")
-        list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+        list = List.query.filter(
+            or_(List.id == id, List.user_id == current_user.id)
+        ).first_or_404()
         current_app.logger.info(f"List found: {list.name}")
         books = [{
             'id': book.id,
@@ -59,7 +70,8 @@ def get_list(id):
             'id': list.id,
             'name': list.name,
             'books': books,
-            'read_percentage': read_percentage
+            'read_percentage': read_percentage,
+            'is_public': list.is_public
         })
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error fetching list details: {str(e)}")
@@ -73,7 +85,9 @@ def create_list():
         if not data or 'name' not in data:
             return jsonify({'error': 'Invalid request data'}), 400
 
-        new_list = List(name=data['name'], user_id=current_user.id)
+        is_public = data.get('is_public', False)
+        user_id = None if is_public else current_user.id
+        new_list = List(name=data['name'], user_id=user_id)
         db.session.add(new_list)
         db.session.commit()
         return jsonify({
@@ -93,6 +107,8 @@ def update_list(id):
         data = request.get_json()
         if data and 'name' in data:
             list.name = data['name']
+        if 'is_public' in data:
+            list.user_id = None if data['is_public'] else current_user.id
         db.session.commit()
         return jsonify({'message': 'List updated successfully'})
     except SQLAlchemyError as e:
@@ -117,7 +133,9 @@ def delete_list(id):
 @login_required
 def add_book_to_list(id):
     try:
-        list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+        list = List.query.filter(
+            or_(List.id == id, List.user_id == current_user.id)
+        ).first_or_404()
         data = request.get_json()
         if not data or 'book_id' not in data:
             return jsonify({'error': 'Invalid request data'}), 400
@@ -138,7 +156,9 @@ def add_book_to_list(id):
 @login_required
 def remove_book_from_list(id, book_id):
     try:
-        list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+        list = List.query.filter(
+            or_(List.id == id, List.user_id == current_user.id)
+        ).first_or_404()
         book = Book.query.filter(Book.id == book_id, Book.users.any(id=current_user.id)).first_or_404()
         if book in list.books:
             list.books.remove(book)

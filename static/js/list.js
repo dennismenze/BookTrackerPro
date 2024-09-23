@@ -23,15 +23,30 @@ function loadListList(searchQuery = '') {
             const listList = document.getElementById('list-list');
             listList.innerHTML = `
                 <h2>Your Reading Lists</h2>
-                <ul class="list-group">
-                    ${lists.map(list => `
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="/list/${list.id}">${list.name}</a>
-                            <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
-                            <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
-                        </li>
-                    `).join('')}
-                </ul>
+                <div id="private-lists">
+                    <h3>Private Lists</h3>
+                    <ul class="list-group">
+                        ${lists.filter(list => !list.is_public).map(list => `
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="/list/${list.id}">${list.name}</a>
+                                <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
+                                <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div id="public-lists">
+                    <h3>Public Lists</h3>
+                    <ul class="list-group">
+                        ${lists.filter(list => list.is_public).map(list => `
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="/list/${list.id}">${list.name}</a>
+                                <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
+                                <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
                 <button onclick="showCreateListForm()" class="btn btn-primary mt-3">Create New List</button>
             `;
         })
@@ -48,6 +63,10 @@ function showCreateListForm() {
         <div id="create-list-form" class="mt-3">
             <h3>Create New List</h3>
             <input type="text" id="new-list-name" class="form-control" placeholder="Enter list name">
+            <div class="form-check mt-2">
+                <input type="checkbox" id="new-list-public" class="form-check-input">
+                <label for="new-list-public" class="form-check-label">Make list public</label>
+            </div>
             <button onclick="createList()" class="btn btn-success mt-2">Create List</button>
         </div>
     `;
@@ -55,18 +74,19 @@ function showCreateListForm() {
 
 function createList() {
     const listName = document.getElementById('new-list-name').value;
+    const isPublic = document.getElementById('new-list-public').checked;
     if (!listName) {
         alert('Please enter a list name');
         return;
     }
 
-    console.log('Creating new list:', listName);
+    console.log('Creating new list:', listName, 'Public:', isPublic);
     fetch('/api/lists', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: listName }),
+        body: JSON.stringify({ name: listName, is_public: isPublic }),
         credentials: 'include'
     })
     .then(handleUnauthorized)
@@ -109,6 +129,10 @@ function loadListDetails(listId) {
                 <h2>${list.name}</h2>
                 <p>Books: ${list.books.length}</p>
                 <p>Read Percentage: ${list.read_percentage.toFixed(1)}%</p>
+                <p>Status: ${list.is_public ? 'Public' : 'Private'}</p>
+                <button onclick="toggleListVisibility(${list.id}, ${!list.is_public})" class="btn btn-sm ${list.is_public ? 'btn-warning' : 'btn-success'}">
+                    Make ${list.is_public ? 'Private' : 'Public'}
+                </button>
                 <h3>Books:</h3>
                 <ul class="list-group">
                     ${list.books.map(book => `
@@ -129,6 +153,24 @@ function loadListDetails(listId) {
             const listDetails = document.getElementById('list-details');
             listDetails.innerHTML = `<p>Error loading list details: ${error.message}. Please try again.</p>`;
         });
+}
+
+function toggleListVisibility(listId, isPublic) {
+    fetch(`/api/lists/${listId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_public: isPublic }),
+        credentials: 'include'
+    })
+    .then(handleUnauthorized)
+    .then(response => response.json())
+    .then(() => loadListDetails(listId))
+    .catch(error => {
+        console.error('Error updating list visibility:', error);
+        alert('Failed to update list visibility. Please try again.');
+    });
 }
 
 function toggleReadStatus(bookId, isRead) {

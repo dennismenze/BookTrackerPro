@@ -74,6 +74,10 @@ class List(db.Model):
                             secondary='book_list',
                             back_populates='lists')
 
+    @property
+    def is_public(self):
+        return self.user_id is None
+
 
 book_list = db.Table(
     'book_list',
