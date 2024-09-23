@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
 from models import db, Book, Author, List
+from sqlalchemy import or_
 
 bp = Blueprint('book', __name__, url_prefix='/api/books')
 
@@ -19,7 +20,17 @@ def check_auth():
 def get_books():
     try:
         current_app.logger.debug(f"Database URI: {current_app.config['SQLALCHEMY_DATABASE_URI']}")
-        books = Book.query.filter(Book.users.any(id=current_user.id)).all()
+        search_query = request.args.get('search', '')
+        if search_query:
+            books = Book.query.join(Author).filter(
+                Book.users.any(id=current_user.id),
+                or_(
+                    Book.title.ilike(f'%{search_query}%'),
+                    Author.name.ilike(f'%{search_query}%')
+                )
+            ).all()
+        else:
+            books = Book.query.filter(Book.users.any(id=current_user.id)).all()
         return jsonify([{
             'id': book.id,
             'title': book.title,

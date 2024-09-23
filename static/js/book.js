@@ -7,9 +7,9 @@ function handleUnauthorized(response) {
     return response;
 }
 
-function loadBooks() {
+function loadBooks(searchQuery = '') {
     console.log('Loading books...');
-    fetch('/api/books', {
+    fetch(`/api/books?search=${encodeURIComponent(searchQuery)}`, {
         method: 'GET',
         credentials: 'include'
     })
@@ -136,4 +136,9 @@ function addBookToList(bookId, listId) {
         console.error('Error adding book to list:', error);
         alert('Failed to add book to list. Please try again.');
     });
+}
+
+function searchBooks() {
+    const searchQuery = document.getElementById('book-search').value;
+    loadBooks(searchQuery);
 }

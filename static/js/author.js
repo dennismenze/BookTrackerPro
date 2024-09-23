@@ -7,9 +7,9 @@ function handleUnauthorized(response) {
     return response;
 }
 
-function loadAuthorList() {
+function loadAuthorList(searchQuery = '') {
     console.log('Loading author list...');
-    fetch('/api/authors', {
+    fetch(`/api/authors?search=${encodeURIComponent(searchQuery)}`, {
         method: 'GET',
         credentials: 'include'
     })
@@ -86,4 +86,9 @@ function loadAuthorDetails(authorId) {
             const authorDetails = document.getElementById('author-details');
             authorDetails.innerHTML = `<p>Error loading author details: ${error.message}. Please try again.</p>`;
         });
+}
+
+function searchAuthors() {
+    const searchQuery = document.getElementById('author-search').value;
+    loadAuthorList(searchQuery);
 }

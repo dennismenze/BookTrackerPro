@@ -4,6 +4,13 @@
 
 {% block content %}
 <h1>Authors</h1>
+<div class="mb-8">
+    <h2 class="text-2xl font-bold mb-4">Search Authors</h2>
+    <div class="flex space-x-2">
+        <input type="text" id="author-search" name="author-search" placeholder="Search authors..." class="w-full p-2 border rounded">
+        <button onclick="searchAuthors()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Search</button>
+    </div>
+</div>
 <div id="author-list"></div>
 {% endblock %}
 

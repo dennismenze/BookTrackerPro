@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
 from models import db, Book, Author, List
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
@@ -19,7 +20,14 @@ def check_auth():
 @login_required
 def get_lists():
     try:
-        lists = List.query.filter_by(user_id=current_user.id).all()
+        search_query = request.args.get('search', '')
+        if search_query:
+            lists = List.query.filter(
+                List.user_id == current_user.id,
+                func.lower(List.name).contains(func.lower(search_query))
+            ).all()
+        else:
+            lists = List.query.filter_by(user_id=current_user.id).all()
         return jsonify([{
             'id': list.id,
             'name': list.name,

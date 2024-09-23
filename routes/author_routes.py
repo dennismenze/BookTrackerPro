@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
 from models import db, Author, Book
+from sqlalchemy import func
 
 bp = Blueprint('author', __name__, url_prefix='/api/authors')
 
@@ -17,12 +18,19 @@ def check_auth():
 @bp.route('/', methods=['GET'])
 @login_required
 def get_authors():
-    authors = Author.query.join(Book).filter(Book.user_id == current_user.id).distinct().all()
+    search_query = request.args.get('search', '')
+    if search_query:
+        authors = Author.query.join(Book).filter(
+            Book.users.any(id=current_user.id),
+            func.lower(Author.name).contains(func.lower(search_query))
+        ).distinct().all()
+    else:
+        authors = Author.query.join(Book).filter(Book.users.any(id=current_user.id)).distinct().all()
     return jsonify([{
         'id': author.id,
         'name': author.name,
-        'book_count': len([book for book in author.books if book.user_id == current_user.id]),
-        'read_percentage': calculate_read_percentage([book for book in author.books if book.user_id == current_user.id])
+        'book_count': len([book for book in author.books if book.users.any(id=current_user.id)]),
+        'read_percentage': calculate_read_percentage([book for book in author.books if book.users.any(id=current_user.id)])
     } for author in authors])
 
 @bp.route('/<int:id>', methods=['GET'])
@@ -35,9 +43,9 @@ def get_author(id):
         'id': book.id,
         'title': book.title,
         'is_read': book.is_read
-    } for book in author.books if book.user_id == current_user.id]
+    } for book in author.books if book.users.any(id=current_user.id)]
     current_app.logger.info(f"Number of books for author: {len(books)}")
-    read_percentage = calculate_read_percentage([book for book in author.books if book.user_id == current_user.id])
+    read_percentage = calculate_read_percentage([book for book in author.books if book.users.any(id=current_user.id)])
     current_app.logger.info(f"Read percentage: {read_percentage}")
     return jsonify({
         'id': author.id,
