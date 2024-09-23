@@ -68,17 +68,23 @@ def create_book():
     if not data or 'title' not in data or 'author' not in data:
         return jsonify({'error': 'Invalid request data'}), 400
 
+    # Check if the book already exists for the current user
+    existing_book = Book.query.filter(
+        Book.title == data['title'],
+        Book.author.has(name=data['author']),
+        Book.users.any(id=current_user.id)
+    ).first()
+
+    if existing_book:
+        return jsonify({
+            'id': existing_book.id,
+            'message': 'Book already exists for this user'
+        }), 200
+
     author = Author.query.filter_by(name=data['author']).first()
     if not author:
         author = Author(name=data['author'])
         db.session.add(author)
-
-    existing_book = Book.query.filter(Book.title == data['title'], Book.author == author, Book.users.any(id=current_user.id)).first()
-    if existing_book:
-        return jsonify({
-            'id': existing_book.id,
-            'message': 'Book already exists'
-        }), 200
 
     # Fetch book information from Google Books API
     google_books_info = fetch_google_books_info(data['title'], data['author'])
