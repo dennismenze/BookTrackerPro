@@ -10,6 +10,11 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
+user_book = db.Table(
+    'user_book',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('book_id', db.Integer, db.ForeignKey('books.id'), primary_key=True)
+)
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -17,7 +22,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255))
-    books = db.relationship('Book', backref='user', lazy='dynamic')
+    books = db.relationship('Book', secondary=user_book, back_populates='users')
     lists = db.relationship('List', backref='user', lazy='dynamic')
 
     def set_password(self, password):
@@ -36,7 +41,7 @@ class Book(db.Model):
                           db.ForeignKey('authors.id'),
                           nullable=False)
     is_read = db.Column(db.Boolean, default=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    users = db.relationship('User', secondary=user_book, back_populates='books')
 
     author = db.relationship('Author', back_populates='books')
     lists = db.relationship('List',
@@ -56,7 +61,7 @@ class List(db.Model):
     __tablename__ = 'lists'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     books = db.relationship('Book',
                             secondary='book_list',

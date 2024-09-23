@@ -114,7 +114,7 @@ def add_book_to_list(id):
         if not data or 'book_id' not in data:
             return jsonify({'error': 'Invalid request data'}), 400
 
-        book = Book.query.filter_by(id=data['book_id'], user_id=current_user.id).first_or_404()
+        book = Book.query.filter(Book.id == data['book_id'], Book.users.any(id=current_user.id)).first_or_404()
         if book not in list.books:
             list.books.append(book)
             db.session.commit()
@@ -131,7 +131,7 @@ def add_book_to_list(id):
 def remove_book_from_list(id, book_id):
     try:
         list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-        book = Book.query.filter_by(id=book_id, user_id=current_user.id).first_or_404()
+        book = Book.query.filter(Book.id == book_id, Book.users.any(id=current_user.id)).first_or_404()
         if book in list.books:
             list.books.remove(book)
             db.session.commit()
