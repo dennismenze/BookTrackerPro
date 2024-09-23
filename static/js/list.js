@@ -1,7 +1,12 @@
 function loadListList() {
+    console.log('Loading list list...');
     fetch('/api/lists')
-        .then(response => response.json())
+        .then(response => {
+            console.log('List list response status:', response.status);
+            return response.json();
+        })
         .then(lists => {
+            console.log('Received lists:', lists);
             const listList = document.getElementById('list-list');
             listList.innerHTML = `
                 <h2>Your Reading Lists</h2>
@@ -42,6 +47,7 @@ function createList() {
         return;
     }
 
+    console.log('Creating new list:', listName);
     fetch('/api/lists', {
         method: 'POST',
         headers: {
@@ -49,8 +55,12 @@ function createList() {
         },
         body: JSON.stringify({ name: listName }),
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Create list response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Create list response:', data);
         alert(data.message);
         loadListList();
     })
@@ -67,7 +77,7 @@ function loadListDetails(listId) {
     console.log('Loading list details for id:', listId);
     fetch(`/api/lists/${listId}`)
         .then(response => {
-            console.log('Response status:', response.status);
+            console.log('List details response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

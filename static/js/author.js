@@ -1,7 +1,12 @@
 function loadAuthorList() {
+    console.log('Loading author list...');
     fetch('/api/authors')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Author list response status:', response.status);
+            return response.json();
+        })
         .then(authors => {
+            console.log('Received authors:', authors);
             const authorList = document.getElementById('author-list');
             authorList.innerHTML = `
                 <ul class="list-group">
@@ -26,6 +31,7 @@ function loadAuthorDetails(authorId) {
     console.log('Loading author details for id:', authorId);
     fetch(`/api/authors/${authorId}`)
         .then(response => {
+            console.log('Author details response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
