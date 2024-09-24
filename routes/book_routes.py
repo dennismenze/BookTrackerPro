@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app, session, abort
 from flask_login import login_required, current_user
-from models import db, Book, Author, List
+from models import db, Book, Author, List, UserBook
 from sqlalchemy import or_
 import requests
 
@@ -48,13 +48,11 @@ def get_books():
 def get_book(id):
     try:
         current_app.logger.info(f"Fetching book with id: {id}")
-        book = Book.query.filter(Book.id == id, Book.users.any(id=current_user.id)).first()
-        
-        if not book:
-            current_app.logger.warning(f"Book with id {id} not found for user {current_user.id}")
-            return jsonify({'error': 'Book not found'}), 404
+        book = Book.query.get_or_404(id)
         
         current_app.logger.info(f"Book found: {book.title}")
+        
+        user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
         
         # Check if the book is in any of the user's lists
         user_lists = [list for list in book.lists if list.user_id == current_user.id]
@@ -64,13 +62,14 @@ def get_book(id):
             'title': book.title,
             'author': book.author.name,
             'author_id': book.author_id,
-            'is_read': book.is_read,
+            'is_read': user_book.is_read if user_book else False,
             'isbn': book.isbn,
             'description': book.description,
             'cover_image_url': book.cover_image_url,
             'page_count': book.page_count,
             'published_date': book.published_date,
-            'lists': [{'id': list.id, 'name': list.name} for list in user_lists]
+            'lists': [{'id': list.id, 'name': list.name} for list in user_lists],
+            'in_user_collection': user_book is not None
         }
         
         current_app.logger.debug(f"Returning book data: {book_data}")

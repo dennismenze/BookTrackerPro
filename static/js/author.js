@@ -24,8 +24,14 @@ function loadAuthorList(searchQuery = '') {
             return response.json();
         })
         .then(data => {
-            console.log('Received authors:', data);
+            console.log('Received authors data:', data);
+            if (!data || !data.user_authors || !data.all_authors) {
+                throw new Error('Invalid data structure received from server');
+            }
             const authorList = document.getElementById('author-list');
+            if (!authorList) {
+                throw new Error('Author list element not found in the DOM');
+            }
             authorList.innerHTML = `
                 <h2 class="text-2xl font-bold mb-4">Your Authors</h2>
                 <ul class="list-group mb-8">
@@ -51,7 +57,11 @@ function loadAuthorList(searchQuery = '') {
         .catch(error => {
             console.error('Error fetching author list:', error);
             const authorList = document.getElementById('author-list');
-            authorList.innerHTML = `<p>Error loading author list: ${error.message}. Please try again.</p>`;
+            if (authorList) {
+                authorList.innerHTML = `<p class="text-red-500">Error loading author list: ${error.message}. Please try again.</p>`;
+            } else {
+                console.error('Author list element not found in the DOM');
+            }
         });
 }
 

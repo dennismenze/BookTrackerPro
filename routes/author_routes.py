@@ -1,19 +1,18 @@
-from flask import Blueprint, jsonify, request, current_app, session, abort
+from flask import Blueprint, jsonify, request, current_app, abort
 from flask_login import login_required, current_user
 from models import db, Author, Book
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 bp = Blueprint('author', __name__, url_prefix='/api/authors')
 
 @bp.before_request
 def check_auth():
-    current_app.logger.debug(f"check_auth called. Session: {session}")
-    current_app.logger.debug(f"current_user.is_authenticated: {current_user.is_authenticated}")
-    if 'user_id' not in session:
-        current_app.logger.warning(f"User not authenticated. Session: {session}")
+    current_app.logger.debug(f"check_auth called. current_user.is_authenticated: {current_user.is_authenticated}")
+    if not current_user.is_authenticated:
+        current_app.logger.warning(f"User not authenticated.")
         abort(401)  # Unauthorized
     else:
-        current_app.logger.debug(f"User authenticated. User ID: {session['user_id']}")
+        current_app.logger.debug(f"User authenticated. User ID: {current_user.id}")
 
 @bp.route('/', methods=['GET'])
 @login_required
