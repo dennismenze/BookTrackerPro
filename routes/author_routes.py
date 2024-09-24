@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app, abort
 from flask_login import login_required, current_user
-from models import db, Author, Book
+from models import db, Author, Book, UserBook
 from sqlalchemy import func, or_
 
 bp = Blueprint('author', __name__, url_prefix='/api/authors')
@@ -66,14 +66,19 @@ def get_author(id):
     all_books = author.books
     user_books = [book for book in all_books if any(user.id == current_user.id for user in book.users)]
     
-    books = [{
-        'id': book.id,
-        'title': book.title,
-        'is_read': any(user.id == current_user.id for user in book.users)
-    } for book in all_books]
+    books = []
+    for book in all_books:
+        user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
+        is_read = user_book.is_read if user_book else False
+        current_app.logger.info(f"Book: {book.title}, is_read: {is_read}")
+        books.append({
+            'id': book.id,
+            'title': book.title,
+            'is_read': is_read
+        })
     
     current_app.logger.info(f"Total number of books for author: {len(all_books)}")
-    current_app.logger.info(f"Number of books read by user: {len(user_books)}")
+    current_app.logger.info(f"Number of books read by user: {len([b for b in books if b['is_read']])}")
     
     read_percentage = calculate_read_percentage(user_books)
     current_app.logger.info(f"Read percentage: {read_percentage}")
@@ -83,7 +88,7 @@ def get_author(id):
         'name': author.name,
         'books': books,
         'total_books': len(all_books),
-        'read_books': len(user_books),
+        'read_books': len([b for b in books if b['is_read']]),
         'read_percentage': read_percentage
     })
 
