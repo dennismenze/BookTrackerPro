@@ -170,19 +170,24 @@ def delete_book(id):
 @login_required
 def update_read_status(id):
     try:
+        current_app.logger.info(f"Updating read status for book {id}")
         data = request.get_json()
         is_read = data.get('is_read', False)
+        current_app.logger.info(f"New read status: {is_read}")
         
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=id).first()
         if user_book:
+            current_app.logger.info(f"Existing user_book found, updating status")
             user_book.is_read = is_read
         else:
+            current_app.logger.info(f"No existing user_book found, creating new entry")
             book = Book.query.get_or_404(id)
             new_user_book = UserBook(user_id=current_user.id, book_id=id, is_read=is_read)
             db.session.add(new_user_book)
         
         db.session.commit()
-        return jsonify({'message': 'Read status updated successfully'})
+        current_app.logger.info(f"Read status updated successfully")
+        return jsonify({'message': 'Read status updated successfully', 'is_read': is_read})
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating read status: {str(e)}")

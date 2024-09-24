@@ -109,6 +109,7 @@ function loadAuthorDetails(authorId) {
 }
 
 function toggleReadStatus(bookId, isRead, authorId) {
+    console.log(`Toggling read status for book ${bookId} to ${isRead}`);
     fetch(`/api/books/${bookId}/read_status`, {
         method: 'PUT',
         headers: {
@@ -118,8 +119,14 @@ function toggleReadStatus(bookId, isRead, authorId) {
         credentials: 'include'
     })
     .then(handleUnauthorized)
-    .then(response => response.json())
-    .then(() => loadAuthorDetails(authorId))
+    .then(response => {
+        console.log(`Response status: ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        console.log(`Response data:`, data);
+        loadAuthorDetails(authorId);
+    })
     .catch(error => {
         console.error('Error updating book read status:', error);
         alert('Failed to update book status. Please try again.');
