@@ -40,22 +40,22 @@ def get_authors():
     user_authors = user_authors_query.all()
     all_authors = all_authors_query.all()
     
-    # Combine the results, giving priority to user's authors
-    authors = list(set(user_authors + all_authors))
+    current_app.logger.debug(f"Raw user authors from database: {user_authors}")
+    current_app.logger.debug(f"Raw all authors from database: {all_authors}")
     
-    current_app.logger.debug(f"Raw authors from database: {authors}")
-    
-    result = [{
-        'id': author.id,
-        'name': author.name,
-        'book_count': sum(1 for book in author.books if any(user.id == current_user.id for user in book.users)),
-        'read_percentage': calculate_read_percentage([book for book in author.books if any(user.id == current_user.id for user in book.users)])
-    } for author in authors]
-    
-    current_app.logger.debug(f"Processed authors: {result}")
-    current_app.logger.debug(f"Returning {len(result)} authors")
-    
-    return jsonify(result)
+    return jsonify({
+        'all_authors': [{
+            'id': author.id,
+            'name': author.name,
+            'book_count': len(author.books),
+        } for author in all_authors],
+        'user_authors': [{
+            'id': author.id,
+            'name': author.name,
+            'book_count': sum(1 for book in author.books if any(user.id == current_user.id for user in book.users)),
+            'read_percentage': calculate_read_percentage([book for book in author.books if any(user.id == current_user.id for user in book.users)])
+        } for author in user_authors]
+    })
 
 @bp.route('/<int:id>', methods=['GET'])
 @login_required

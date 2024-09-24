@@ -23,16 +23,26 @@ function loadAuthorList(searchQuery = '') {
             }
             return response.json();
         })
-        .then(authors => {
-            console.log('Received authors:', authors);
+        .then(data => {
+            console.log('Received authors:', data);
             const authorList = document.getElementById('author-list');
             authorList.innerHTML = `
-                <ul class="list-group">
-                    ${authors.map(author => `
+                <h2 class="text-2xl font-bold mb-4">Your Authors</h2>
+                <ul class="list-group mb-8">
+                    ${data.user_authors.map(author => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <a href="/author/${author.id}">${author.name}</a>
                             <span class="badge bg-primary rounded-pill">${author.book_count} books</span>
                             <span class="badge bg-success rounded-pill">${author.read_percentage.toFixed(1)}% read</span>
+                        </li>
+                    `).join('')}
+                </ul>
+                <h2 class="text-2xl font-bold mb-4">All Authors</h2>
+                <ul class="list-group">
+                    ${data.all_authors.map(author => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="/author/${author.id}">${author.name}</a>
+                            <span class="badge bg-primary rounded-pill">${author.book_count} books</span>
                         </li>
                     `).join('')}
                 </ul>
