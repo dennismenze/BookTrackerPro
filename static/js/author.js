@@ -14,15 +14,7 @@ function loadAuthorList(searchQuery = '') {
         credentials: 'include'
     })
         .then(handleUnauthorized)
-        .then(response => {
-            console.log('Author list response status:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
-                });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             console.log('Received authors data:', data);
             if (!data || !data.user_authors || !data.all_authors) {
@@ -165,7 +157,5 @@ function deleteAuthor(authorId) {
 }
 
 function isAdmin() {
-    // This function should return true if the current user is an admin
-    // You'll need to implement this based on your user authentication system
-    return true; // For testing purposes, always return true
+    return document.body.dataset.isAdmin === 'true';
 }

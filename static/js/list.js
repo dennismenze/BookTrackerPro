@@ -14,10 +14,7 @@ function loadListList(searchQuery = '') {
         credentials: 'include'
     })
         .then(handleUnauthorized)
-        .then(response => {
-            console.log('List list response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(lists => {
             console.log('Received lists:', lists);
             const listList = document.getElementById('list-list');
@@ -32,7 +29,7 @@ function loadListList(searchQuery = '') {
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
                                 <button onclick="toggleListVisibility(${list.id}, true)" class="btn btn-sm btn-outline-primary">Make Public</button>
-                                <button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>
+                                ${isAdmin() || list.user_id === getUserId() ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -315,5 +312,9 @@ function deleteList(listId) {
 }
 
 function isAdmin() {
-    return true;
+    return document.body.dataset.isAdmin === 'true';
+}
+
+function getUserId() {
+    return parseInt(document.body.dataset.userId, 10);
 }
