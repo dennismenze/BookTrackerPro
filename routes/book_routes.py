@@ -22,21 +22,27 @@ def get_books():
     try:
         current_app.logger.debug(f"Database URI: {current_app.config['SQLALCHEMY_DATABASE_URI']}")
         search_query = request.args.get('search', '')
+        
+        # Query for books that the user has marked as read
+        books_query = Book.query.join(UserBook).filter(
+            UserBook.user_id == current_user.id,
+            UserBook.is_read == True
+        )
+        
         if search_query:
-            books = Book.query.join(Author).filter(
-                Book.users.any(id=current_user.id),
+            books_query = books_query.join(Author).filter(
                 or_(
                     Book.title.ilike(f'%{search_query}%'),
                     Author.name.ilike(f'%{search_query}%')
                 )
-            ).all()
-        else:
-            books = Book.query.filter(Book.users.any(id=current_user.id)).all()
+            )
+        
+        books = books_query.all()
+        
         return jsonify([{
             'id': book.id,
             'title': book.title,
             'author': book.author.name,
-            'is_read': book.is_read,
             'cover_image_url': book.cover_image_url
         } for book in books])
     except Exception as e:
