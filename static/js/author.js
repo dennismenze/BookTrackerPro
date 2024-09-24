@@ -93,9 +93,9 @@ function loadAuthorDetails(authorId) {
                     ${author.books.map(book => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <a href='/book/${book.id}?id=${book.id}'>${book.title}</a>
-                            <span class="badge ${book.is_read ? 'bg-success' : 'bg-secondary'} rounded-pill">
-                                ${book.is_read ? 'Read' : 'Unread'}
-                            </span>
+                            <button onclick="toggleReadStatus(${book.id}, ${!book.is_read}, ${authorId})" class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'}">
+                                Mark as ${book.is_read ? 'Unread' : 'Read'}
+                            </button>
                         </li>
                     `).join('')}
                 </ul>
@@ -106,6 +106,24 @@ function loadAuthorDetails(authorId) {
             const authorDetails = document.getElementById('author-details');
             authorDetails.innerHTML = `<p>Error loading author details: ${error.message}. Please try again.</p>`;
         });
+}
+
+function toggleReadStatus(bookId, isRead, authorId) {
+    fetch(`/api/books/${bookId}/read_status`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_read: isRead }),
+        credentials: 'include'
+    })
+    .then(handleUnauthorized)
+    .then(response => response.json())
+    .then(() => loadAuthorDetails(authorId))
+    .catch(error => {
+        console.error('Error updating book read status:', error);
+        alert('Failed to update book status. Please try again.');
+    });
 }
 
 function searchAuthors() {
