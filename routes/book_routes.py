@@ -124,20 +124,39 @@ def create_book():
 @bp.route('/<int:id>', methods=['PUT'])
 @login_required
 def update_book(id):
-    book = Book.query.filter(Book.id == id, Book.users.any(id=current_user.id)).first_or_404()
-    data = request.get_json()
-    if data and 'title' in data:
-        book.title = data['title']
-    if data and 'is_read' in data:
-        book.is_read = data['is_read']
-    db.session.commit()
-    return jsonify({
-        'id': book.id,
-        'title': book.title,
-        'author': book.author.name,
-        'is_read': book.is_read,
-        'message': 'Book updated successfully'
-    })
+    try:
+        current_app.logger.info(f"Updating book with id: {id}")
+        book = Book.query.get_or_404(id)
+        current_app.logger.info(f"Book found: {book.title}")
+
+        data = request.get_json()
+        current_app.logger.debug(f"Received data: {data}")
+
+        if data and 'title' in data:
+            book.title = data['title']
+        
+        if data and 'is_read' in data:
+            user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=id).first()
+            if user_book:
+                user_book.is_read = data['is_read']
+            else:
+                new_user_book = UserBook(user_id=current_user.id, book_id=id, is_read=data['is_read'])
+                db.session.add(new_user_book)
+
+        db.session.commit()
+        current_app.logger.info(f"Book updated successfully: {book.title}")
+
+        return jsonify({
+            'id': book.id,
+            'title': book.title,
+            'author': book.author.name,
+            'is_read': data.get('is_read', False),
+            'message': 'Book updated successfully'
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating book: {str(e)}")
+        return jsonify({'error': 'An error occurred while updating the book'}), 500
 
 @bp.route('/<int:id>', methods=['DELETE'])
 @login_required
