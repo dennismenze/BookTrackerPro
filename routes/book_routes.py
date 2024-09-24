@@ -1,11 +1,11 @@
-from flask import Blueprint, jsonify, request, current_app, session, abort
+from flask import Blueprint, jsonify, request, current_app, abort
 from flask_login import login_required, current_user
 from models import db, Book, Author, List, UserBook
-from sqlalchemy import or_
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func, or_
 import requests
 
 bp = Blueprint('book', __name__, url_prefix='/api/books')
-
 
 @bp.before_request
 def check_auth():
@@ -17,7 +17,6 @@ def check_auth():
         current_app.logger.debug(
             f"User authenticated. User ID: {current_user.id}")
 
-
 @bp.route('/', methods=['GET'])
 @login_required
 def get_books():
@@ -26,7 +25,6 @@ def get_books():
             f"Database URI: {current_app.config['SQLALCHEMY_DATABASE_URI']}")
         search_query = request.args.get('search', '')
 
-        # Query for books that the user has marked as read
         books_query = Book.query.join(UserBook).filter(
             UserBook.user_id == current_user.id, UserBook.is_read == True)
 
@@ -47,7 +45,6 @@ def get_books():
         current_app.logger.error(f"Error in get_books: {str(e)}")
         return jsonify({'error':
                         'An error occurred while fetching books'}), 500
-
 
 @bp.route('/<int:id>', methods=['GET'])
 @login_required
@@ -90,7 +87,6 @@ def get_book(id):
         return jsonify({'error':
                         'An error occurred while fetching the book'}), 500
 
-
 @bp.route('/', methods=['POST'])
 @login_required
 def create_book():
@@ -115,6 +111,9 @@ def create_book():
 
     google_books_info = fetch_google_books_info(data['title'], data['author'])
 
+    current_app.logger.debug(f"Google Books API response: {google_books_info}")
+    current_app.logger.debug(f"Cover image URL: {google_books_info.get('cover_image_url')}")
+
     book = Book(title=data['title'],
                 author=author,
                 isbn=google_books_info.get('isbn'),
@@ -130,7 +129,6 @@ def create_book():
         'id': book.id,
         'message': 'Book created successfully'
     }), 201
-
 
 @bp.route('/<int:id>', methods=['PUT'])
 @login_required
@@ -173,7 +171,6 @@ def update_book(id):
         return jsonify({'error':
                         'An error occurred while updating the book'}), 500
 
-
 @bp.route('/<int:id>', methods=['DELETE'])
 @login_required
 def delete_book(id):
@@ -182,7 +179,6 @@ def delete_book(id):
     current_user.books.remove(book)
     db.session.commit()
     return jsonify({'message': 'Book deleted successfully'})
-
 
 @bp.route('/<int:id>/read_status', methods=['PUT'])
 @login_required
@@ -220,7 +216,6 @@ def update_read_status(id):
         return jsonify(
             {'error': 'An error occurred while updating the read status'}), 500
 
-
 def fetch_google_books_info(title, author):
     try:
         query = f"{title} {author}".replace(" ", "+")
@@ -228,21 +223,19 @@ def fetch_google_books_info(title, author):
             f"https://www.googleapis.com/books/v1/volumes?q={query}")
         data = response.json()
 
+        current_app.logger.debug(f"Google Books API raw response: {data}")
+
         if 'items' in data and len(data['items']) > 0:
             book_info = data['items'][0]['volumeInfo']
-            return {
-                'isbn':
-                book_info.get('industryIdentifiers',
-                              [{}])[0].get('identifier', ''),
-                'description':
-                book_info.get('description', ''),
-                'cover_image_url':
-                book_info.get('imageLinks', {}).get('thumbnail', ''),
-                'page_count':
-                book_info.get('pageCount', 0),
-                'published_date':
-                book_info.get('publishedDate', '')
+            result = {
+                'isbn': book_info.get('industryIdentifiers', [{}])[0].get('identifier', ''),
+                'description': book_info.get('description', ''),
+                'cover_image_url': book_info.get('imageLinks', {}).get('thumbnail', ''),
+                'page_count': book_info.get('pageCount', 0),
+                'published_date': book_info.get('publishedDate', '')
             }
+            current_app.logger.debug(f"Extracted book info: {result}")
+            return result
         return {}
     except Exception as e:
         current_app.logger.error(f"Error fetching Google Books info: {str(e)}")
