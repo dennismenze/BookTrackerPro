@@ -26,9 +26,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/list.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        loadListList();
-    });
-</script>
+<script src="{{ url_for('static', filename='js/list_init.js') }}"></script>
 {% endblock %}
