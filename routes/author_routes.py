@@ -63,18 +63,28 @@ def get_author(id):
     current_app.logger.info(f"Fetching author with id: {id}")
     author = Author.query.get_or_404(id)
     current_app.logger.info(f"Author found: {author.name}")
+    
+    all_books = author.books
+    user_books = [book for book in all_books if any(user.id == current_user.id for user in book.users)]
+    
     books = [{
         'id': book.id,
         'title': book.title,
-        'is_read': book.is_read
-    } for book in author.books if any(user.id == current_user.id for user in book.users)]
-    current_app.logger.info(f"Number of books for author: {len(books)}")
-    read_percentage = calculate_read_percentage([book for book in author.books if any(user.id == current_user.id for user in book.users)])
+        'is_read': any(user.id == current_user.id for user in book.users)
+    } for book in all_books]
+    
+    current_app.logger.info(f"Total number of books for author: {len(all_books)}")
+    current_app.logger.info(f"Number of books read by user: {len(user_books)}")
+    
+    read_percentage = calculate_read_percentage(user_books)
     current_app.logger.info(f"Read percentage: {read_percentage}")
+    
     return jsonify({
         'id': author.id,
         'name': author.name,
         'books': books,
+        'total_books': len(all_books),
+        'read_books': len(user_books),
         'read_percentage': read_percentage
     })
 
@@ -114,5 +124,5 @@ def delete_author(id):
 def calculate_read_percentage(books):
     if not books:
         return 0
-    read_books = sum(1 for book in books if book.is_read)
+    read_books = sum(1 for book in books if any(user.id == current_user.id for user in book.users))
     return (read_books / len(books)) * 100
