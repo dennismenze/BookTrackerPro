@@ -29,7 +29,7 @@ function loadBookDetails(bookId) {
             <h2 class="text-2xl font-bold mb-4">${book.title}</h2>
             <div class="flex flex-col md:flex-row">
                 <div class="md:w-1/3 mb-4 md:mb-0">
-                    ${book.cover_image_url 
+                    ${book.cover_image_url && book.cover_image_url.trim() !== ''
                         ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="w-full rounded-lg shadow-lg">`
                         : `<div class="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg shadow-lg">
                                <span class="text-gray-500">No cover available</span>
