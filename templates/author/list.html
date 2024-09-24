@@ -18,7 +18,9 @@
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/author.js') }}"></script>
 <script>
+    console.log('Author list page loaded');
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM content loaded');
         loadAuthorList();
     });
 </script>
