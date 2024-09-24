@@ -42,7 +42,7 @@ function loadListList(searchQuery = '') {
                                 <a href="/list/${list.id}">${list.name}</a>
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
-                                ${list.user_id === null ? `
+                                ${list.user_id === getUserId() ? `
                                     <button onclick="toggleListVisibility(${list.id}, false)" class="btn btn-sm btn-outline-secondary">Make Private</button>
                                 ` : ''}
                                 ${isAdmin() ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
