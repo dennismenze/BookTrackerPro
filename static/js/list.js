@@ -183,7 +183,7 @@ function toggleListVisibility(listId, isPublic) {
 }
 
 function toggleReadStatus(bookId, isRead) {
-    fetch(`/api/books/${bookId}`, {
+    fetch(`/api/books/${bookId}/read_status`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',

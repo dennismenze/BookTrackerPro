@@ -54,7 +54,6 @@ def get_book(id):
         
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
         
-        # Check if the book is in any of the user's lists
         user_lists = [list for list in book.lists if list.user_id == current_user.id]
         
         book_data = {
@@ -85,7 +84,6 @@ def create_book():
     if not data or 'title' not in data or 'author' not in data:
         return jsonify({'error': 'Invalid request data'}), 400
 
-    # Check if the book already exists for the current user
     existing_book = Book.query.filter(
         Book.title == data['title'],
         Book.author.has(name=data['author']),
@@ -103,7 +101,6 @@ def create_book():
         author = Author(name=data['author'])
         db.session.add(author)
 
-    # Fetch book information from Google Books API
     google_books_info = fetch_google_books_info(data['title'], data['author'])
 
     book = Book(
@@ -149,6 +146,28 @@ def delete_book(id):
     current_user.books.remove(book)
     db.session.commit()
     return jsonify({'message': 'Book deleted successfully'})
+
+@bp.route('/<int:id>/read_status', methods=['PUT'])
+@login_required
+def update_read_status(id):
+    try:
+        data = request.get_json()
+        is_read = data.get('is_read', False)
+        
+        user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=id).first()
+        if user_book:
+            user_book.is_read = is_read
+        else:
+            book = Book.query.get_or_404(id)
+            new_user_book = UserBook(user_id=current_user.id, book_id=id, is_read=is_read)
+            db.session.add(new_user_book)
+        
+        db.session.commit()
+        return jsonify({'message': 'Read status updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating read status: {str(e)}")
+        return jsonify({'error': 'An error occurred while updating the read status'}), 500
 
 def fetch_google_books_info(title, author):
     try:
