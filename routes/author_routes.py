@@ -21,14 +21,28 @@ def get_authors():
     current_app.logger.debug("get_authors function called")
     search_query = request.args.get('search', '')
     
-    query = Author.query.join(Book).filter(Book.users.any(id=current_user.id))
+    # Query for authors of books the user has read
+    user_authors_query = Author.query.join(Book).filter(Book.users.any(id=current_user.id))
+    
+    # Query for all authors
+    all_authors_query = Author.query
+    
     if search_query:
-        query = query.filter(func.lower(Author.name).contains(func.lower(search_query)))
-    query = query.distinct()
+        user_authors_query = user_authors_query.filter(func.lower(Author.name).contains(func.lower(search_query)))
+        all_authors_query = all_authors_query.filter(func.lower(Author.name).contains(func.lower(search_query)))
     
-    current_app.logger.debug(f"SQL Query: {query}")
+    user_authors_query = user_authors_query.distinct()
+    all_authors_query = all_authors_query.distinct()
     
-    authors = query.all()
+    current_app.logger.debug(f"User Authors SQL Query: {user_authors_query}")
+    current_app.logger.debug(f"All Authors SQL Query: {all_authors_query}")
+    
+    user_authors = user_authors_query.all()
+    all_authors = all_authors_query.all()
+    
+    # Combine the results, giving priority to user's authors
+    authors = list(set(user_authors + all_authors))
+    
     current_app.logger.debug(f"Raw authors from database: {authors}")
     
     result = [{
