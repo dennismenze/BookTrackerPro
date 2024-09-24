@@ -75,9 +75,96 @@ function toggleReadStatus(bookId, isRead) {
     .then(response => response.json())
     .then(() => {
         loadBookDetails(bookId);
+        loadBooks(); // Reload the book list after updating the read status
     })
     .catch(error => {
         console.error('Error updating book status:', error);
         alert('Failed to update book status. Please try again.');
     });
 }
+
+function loadBooks() {
+    console.log('Loading books...');
+    fetch('/api/books', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(handleUnauthorized)
+    .then(response => {
+        console.log('Books response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(books => {
+        console.log('Received books:', books);
+        const bookList = document.getElementById('book-list');
+        if (books.length === 0) {
+            bookList.innerHTML = '<p>You have not read any books yet.</p>';
+        } else {
+            bookList.innerHTML = books.map(book => `
+                <li class="mb-4">
+                    <div class="flex items-center">
+                        <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">
+                        <div>
+                            <h3 class="text-lg font-semibold">${book.title}</h3>
+                            <p class="text-gray-600">${book.author}</p>
+                            <button onclick="loadBookDetails(${book.id})" class="text-blue-500 hover:underline">View Details</button>
+                        </div>
+                    </div>
+                </li>
+            `).join('');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching books:', error);
+        const bookList = document.getElementById('book-list');
+        bookList.innerHTML = `<p class="text-red-500">Error loading books: ${error.message}. Please try again.</p>`;
+    });
+}
+
+function searchBooks() {
+    const query = document.getElementById('book-search').value;
+    console.log('Searching books with query:', query);
+    fetch(`/api/books?search=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(handleUnauthorized)
+    .then(response => {
+        console.log('Search books response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(books => {
+        console.log('Received search results:', books);
+        const bookList = document.getElementById('book-list');
+        if (books.length === 0) {
+            bookList.innerHTML = '<p>No books found matching your search.</p>';
+        } else {
+            bookList.innerHTML = books.map(book => `
+                <li class="mb-4">
+                    <div class="flex items-center">
+                        <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">
+                        <div>
+                            <h3 class="text-lg font-semibold">${book.title}</h3>
+                            <p class="text-gray-600">${book.author}</p>
+                            <button onclick="loadBookDetails(${book.id})" class="text-blue-500 hover:underline">View Details</button>
+                        </div>
+                    </div>
+                </li>
+            `).join('');
+        }
+    })
+    .catch(error => {
+        console.error('Error searching books:', error);
+        const bookList = document.getElementById('book-list');
+        bookList.innerHTML = `<p class="text-red-500">Error searching books: ${error.message}. Please try again.</p>`;
+    });
+}
+
+// Call loadBooks when the page loads
+document.addEventListener('DOMContentLoaded', loadBooks);
