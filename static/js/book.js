@@ -29,7 +29,12 @@ function loadBookDetails(bookId) {
             <h2 class="text-2xl font-bold mb-4">${book.title}</h2>
             <div class="flex flex-col md:flex-row">
                 <div class="md:w-1/3 mb-4 md:mb-0">
-                    <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="w-full rounded-lg shadow-lg">
+                    ${book.cover_image_url 
+                        ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="w-full rounded-lg shadow-lg">`
+                        : `<div class="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg shadow-lg">
+                               <span class="text-gray-500">No cover available</span>
+                           </div>`
+                    }
                 </div>
                 <div class="md:w-2/3 md:pl-6">
                     <p><strong>Author:</strong> <a href="/author/${book.author_id}" class="text-blue-500 hover:underline">${book.author}</a></p>
@@ -108,7 +113,12 @@ function loadBooks() {
             bookList.innerHTML = books.map(book => `
                 <li class="mb-4">
                     <div class="flex items-center">
-                        <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">
+                        ${book.cover_image_url 
+                            ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">`
+                            : `<div class="w-16 h-24 bg-gray-200 flex items-center justify-center mr-4">
+                                   <span class="text-xs text-gray-500">No cover</span>
+                               </div>`
+                        }
                         <div>
                             <h3 class="text-lg font-semibold">${book.title}</h3>
                             <p class="text-gray-600">${book.author}</p>
@@ -150,7 +160,12 @@ function searchBooks() {
             bookList.innerHTML = books.map(book => `
                 <li class="mb-4">
                     <div class="flex items-center">
-                        <img src="${book.cover_image_url || '/static/images/default-cover.jpg'}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">
+                        ${book.cover_image_url 
+                            ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">`
+                            : `<div class="w-16 h-24 bg-gray-200 flex items-center justify-center mr-4">
+                                   <span class="text-xs text-gray-500">No cover</span>
+                               </div>`
+                        }
                         <div>
                             <h3 class="text-lg font-semibold">${book.title}</h3>
                             <p class="text-gray-600">${book.author}</p>

@@ -55,16 +55,10 @@ def create_app():
     @app.before_request
     def log_request_info():
         app.logger.debug(f"Request path: {request.path}")
-        app.logger.debug(f"Session: {session}")
 
     @app.route('/')
     @login_required
     def index():
-        app.logger.debug(f"Index route: current_user = {current_user}")
-        app.logger.debug(
-            f"Index route: current_user.is_authenticated = {current_user.is_authenticated}"
-        )
-        app.logger.debug(f"Index route: session = {session}")
         return render_template('index.html')
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -121,7 +115,8 @@ def create_app():
         app.logger.debug(f"Session before login: {session}")
 
         if current_user.is_authenticated:
-            app.logger.debug("User already authenticated, redirecting to index")
+            app.logger.debug(
+                "User already authenticated, redirecting to index")
             return redirect(url_for('index'))
 
         if request.method == 'POST':
@@ -137,19 +132,23 @@ def create_app():
                     if user.check_password(password):
                         app.logger.debug("Password check successful")
                         login_user(user)
-                        app.logger.debug(f"Current user: {current_user.is_authenticated}")
-                        app.logger.debug(f"login_user called for user: {username}")
+                        app.logger.debug(
+                            f"Current user: {current_user.is_authenticated}")
+                        app.logger.debug(
+                            f"login_user called for user: {username}")
 
                         session['user_id'] = user.id
                         app.logger.debug(f"Session after login: {session}")
-                        app.logger.info(f"User logged in successfully: {username}")
+                        app.logger.info(
+                            f"User logged in successfully: {username}")
                         next_page = request.args.get('next')
                         if not next_page or urlparse(next_page).netloc != '':
                             next_page = url_for('index')
                         app.logger.debug(f"Redirecting to: {next_page}")
                         return redirect(next_page)
                     else:
-                        app.logger.warning(f"Invalid password for username: {username}")
+                        app.logger.warning(
+                            f"Invalid password for username: {username}")
                         flash('Invalid username or password')
                 else:
                     app.logger.warning(f"User not found: {username}")
