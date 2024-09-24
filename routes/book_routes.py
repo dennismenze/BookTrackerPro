@@ -46,20 +46,38 @@ def get_books():
 @bp.route('/<int:id>', methods=['GET'])
 @login_required
 def get_book(id):
-    book = Book.query.filter(Book.id == id, Book.users.any(id=current_user.id)).first_or_404()
-    return jsonify({
-        'id': book.id,
-        'title': book.title,
-        'author': book.author.name,
-        'author_id': book.author_id,
-        'is_read': book.is_read,
-        'isbn': book.isbn,
-        'description': book.description,
-        'cover_image_url': book.cover_image_url,
-        'page_count': book.page_count,
-        'published_date': book.published_date,
-        'lists': [{'id': list.id, 'name': list.name} for list in book.lists if list.user_id == current_user.id]
-    })
+    try:
+        current_app.logger.info(f"Fetching book with id: {id}")
+        book = Book.query.filter(Book.id == id, Book.users.any(id=current_user.id)).first()
+        
+        if not book:
+            current_app.logger.warning(f"Book with id {id} not found for user {current_user.id}")
+            return jsonify({'error': 'Book not found'}), 404
+        
+        current_app.logger.info(f"Book found: {book.title}")
+        
+        # Check if the book is in any of the user's lists
+        user_lists = [list for list in book.lists if list.user_id == current_user.id]
+        
+        book_data = {
+            'id': book.id,
+            'title': book.title,
+            'author': book.author.name,
+            'author_id': book.author_id,
+            'is_read': book.is_read,
+            'isbn': book.isbn,
+            'description': book.description,
+            'cover_image_url': book.cover_image_url,
+            'page_count': book.page_count,
+            'published_date': book.published_date,
+            'lists': [{'id': list.id, 'name': list.name} for list in user_lists]
+        }
+        
+        current_app.logger.debug(f"Returning book data: {book_data}")
+        return jsonify(book_data)
+    except Exception as e:
+        current_app.logger.error(f"Error in get_book: {str(e)}")
+        return jsonify({'error': 'An error occurred while fetching the book'}), 500
 
 @bp.route('/', methods=['POST'])
 @login_required
