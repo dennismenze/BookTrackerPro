@@ -24,16 +24,16 @@ def get_lists():
         if search_query:
             lists = List.query.filter(
                 or_(
-                    List.user_id == current_user.id,
-                    List.user_id == None
+                    List.is_public == True,
+                    List.user_id == current_user.id
                 ),
                 func.lower(List.name).contains(func.lower(search_query))
             ).all()
         else:
             lists = List.query.filter(
                 or_(
-                    List.user_id == current_user.id,
-                    List.user_id == None
+                    List.is_public == True,
+                    List.user_id == current_user.id
                 )
             ).all()
         return jsonify([{
@@ -41,7 +41,8 @@ def get_lists():
             'name': list.name,
             'book_count': len(list.books),
             'read_percentage': calculate_read_percentage(list.books, current_user.id),
-            'is_public': list.is_public
+            'is_public': list.is_public,
+            'user_id': list.user_id
         } for list in lists])
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error fetching lists: {str(e)}")
@@ -86,8 +87,7 @@ def create_list():
             return jsonify({'error': 'Invalid request data'}), 400
 
         is_public = data.get('is_public', False)
-        user_id = None if is_public else current_user.id
-        new_list = List(name=data['name'], user_id=user_id)
+        new_list = List(name=data['name'], user_id=current_user.id, is_public=is_public)
         db.session.add(new_list)
         db.session.commit()
         return jsonify({
@@ -105,7 +105,7 @@ def update_list(id):
     try:
         list = List.query.filter(
             (List.id == id) & 
-            ((List.user_id == current_user.id) | (List.user_id == None))
+            ((List.user_id == current_user.id) | (List.is_public == True))
         ).first_or_404()
         
         data = request.get_json()
@@ -113,10 +113,7 @@ def update_list(id):
             list.name = data['name']
         
         if 'is_public' in data:
-            if data['is_public']:
-                list.user_id = None
-            else:
-                list.user_id = current_user.id
+            list.is_public = data['is_public']
         
         db.session.commit()
         return jsonify({'message': 'List updated successfully'})
@@ -131,7 +128,6 @@ def delete_list(id):
     try:
         list = List.query.get_or_404(id)
         
-        # Check if the user is an admin or the owner of the private list
         if current_user.is_admin or (list.user_id == current_user.id and not list.is_public):
             db.session.delete(list)
             db.session.commit()
