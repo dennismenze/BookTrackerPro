@@ -23,6 +23,7 @@ function loadBookDetails(bookId) {
     })
     .then(book => {
         console.log('Received book details:', book);
+        console.log('Cover image URL:', book.cover_image_url);
         const bookDetails = document.getElementById('book-details');
         bookDetails.innerHTML = `
             <h2 class="text-2xl font-bold mb-4">${book.title}</h2>
@@ -54,6 +55,7 @@ function loadBookDetails(bookId) {
                 </div>
             </div>
         `;
+        console.log('Book details HTML updated');
     })
     .catch(error => {
         console.error('Error fetching book details:', error);
@@ -75,7 +77,7 @@ function toggleReadStatus(bookId, isRead) {
     .then(response => response.json())
     .then(() => {
         loadBookDetails(bookId);
-        loadBooks(); // Reload the book list after updating the read status
+        loadBooks();
     })
     .catch(error => {
         console.error('Error updating book status:', error);
@@ -166,5 +168,4 @@ function searchBooks() {
     });
 }
 
-// Call loadBooks when the page loads
 document.addEventListener('DOMContentLoaded', loadBooks);
