@@ -28,7 +28,17 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'login'
 
-    Talisman(app, content_security_policy=None, force_https=False)
+    csp = {
+        'default-src': "'self'",
+        'script-src': ["'self'", "https://cdn.jsdelivr.net"],
+        'style-src': ["'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'"],
+        'img-src': ["'self'", "https:", "data:"],
+        'font-src': ["'self'", "https:", "data:"],
+        'connect-src': "'self'",
+        'upgrade-insecure-requests': ''
+    }
+
+    Talisman(app, content_security_policy=csp, force_https=True)
 
     @login_manager.user_loader
     def load_user(user_id):
