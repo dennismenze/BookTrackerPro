@@ -133,10 +133,18 @@ def update_author(id):
 @bp.route('/<int:id>', methods=['DELETE'])
 @login_required
 def delete_author(id):
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
+    
     author = Author.query.get_or_404(id)
-    db.session.delete(author)
-    db.session.commit()
-    return jsonify({'message': 'Author deleted successfully'})
+    try:
+        db.session.delete(author)
+        db.session.commit()
+        return jsonify({'message': 'Author deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting author: {str(e)}")
+        return jsonify({'error': 'An error occurred while deleting the author'}), 500
 
 def calculate_read_percentage(books, user_id):
     if not books:

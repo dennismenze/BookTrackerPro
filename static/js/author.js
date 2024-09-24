@@ -49,6 +49,7 @@ function loadAuthorList(searchQuery = '') {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <a href="/author/${author.id}">${author.name}</a>
                             <span class="badge bg-primary rounded-pill">${author.book_count} books</span>
+                            ${isAdmin() ? `<button onclick="deleteAuthor(${author.id})" class="btn btn-danger btn-sm">Delete</button>` : ''}
                         </li>
                     `).join('')}
                 </ul>
@@ -99,6 +100,7 @@ function loadAuthorDetails(authorId) {
                         </li>
                     `).join('')}
                 </ul>
+                ${isAdmin() ? `<button onclick="deleteAuthor(${author.id})" class="btn btn-danger mt-4">Delete Author</button>` : ''}
             `;
         })
         .catch(error => {
@@ -136,4 +138,34 @@ function toggleReadStatus(bookId, isRead, authorId) {
 function searchAuthors() {
     const searchQuery = document.getElementById('author-search').value;
     loadAuthorList(searchQuery);
+}
+
+function deleteAuthor(authorId) {
+    if (confirm('Are you sure you want to delete this author? This action cannot be undone.')) {
+        fetch(`/api/authors/${authorId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        })
+        .then(handleUnauthorized)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete author');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            window.location.href = '/authors';
+        })
+        .catch(error => {
+            console.error('Error deleting author:', error);
+            alert('Failed to delete author. Please try again.');
+        });
+    }
+}
+
+function isAdmin() {
+    // This function should return true if the current user is an admin
+    // You'll need to implement this based on your user authentication system
+    return true; // For testing purposes, always return true
 }

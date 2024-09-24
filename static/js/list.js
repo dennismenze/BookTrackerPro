@@ -32,6 +32,7 @@ function loadListList(searchQuery = '') {
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
                                 <button onclick="toggleListVisibility(${list.id}, true)" class="btn btn-sm btn-outline-primary">Make Public</button>
+                                <button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>
                             </li>
                         `).join('')}
                     </ul>
@@ -47,6 +48,7 @@ function loadListList(searchQuery = '') {
                                 ${list.user_id === null ? `
                                     <button onclick="toggleListVisibility(${list.id}, false)" class="btn btn-sm btn-outline-secondary">Make Private</button>
                                 ` : ''}
+                                ${isAdmin() ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -286,4 +288,32 @@ function addBookToList(bookId) {
 function searchLists() {
     const searchQuery = document.getElementById('list-search').value;
     loadListList(searchQuery);
+}
+
+function deleteList(listId) {
+    if (confirm('Are you sure you want to delete this list? This action cannot be undone.')) {
+        fetch(`/api/lists/${listId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        })
+        .then(handleUnauthorized)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete list');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            loadListList();
+        })
+        .catch(error => {
+            console.error('Error deleting list:', error);
+            alert('Failed to delete list. Please try again.');
+        });
+    }
+}
+
+function isAdmin() {
+    return true;
 }

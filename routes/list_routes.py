@@ -129,10 +129,15 @@ def update_list(id):
 @login_required
 def delete_list(id):
     try:
-        list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-        db.session.delete(list)
-        db.session.commit()
-        return jsonify({'message': 'List deleted successfully'})
+        list = List.query.get_or_404(id)
+        
+        # Check if the user is an admin or the owner of the private list
+        if current_user.is_admin or (list.user_id == current_user.id and not list.is_public):
+            db.session.delete(list)
+            db.session.commit()
+            return jsonify({'message': 'List deleted successfully'})
+        else:
+            return jsonify({'error': 'Unauthorized. You can only delete your own private lists.'}), 403
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger.error(f"Error deleting list: {str(e)}")
