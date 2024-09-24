@@ -17,44 +17,53 @@ def check_auth():
 @bp.route('/', methods=['GET'])
 @login_required
 def get_authors():
-    current_app.logger.debug("get_authors function called")
-    search_query = request.args.get('search', '')
-    
-    # Query for authors of books the user has read
-    user_authors_query = Author.query.join(Book).filter(Book.users.any(id=current_user.id))
-    
-    # Query for all authors
-    all_authors_query = Author.query
-    
-    if search_query:
-        user_authors_query = user_authors_query.filter(func.lower(Author.name).contains(func.lower(search_query)))
-        all_authors_query = all_authors_query.filter(func.lower(Author.name).contains(func.lower(search_query)))
-    
-    user_authors_query = user_authors_query.distinct()
-    all_authors_query = all_authors_query.distinct()
-    
-    current_app.logger.debug(f"User Authors SQL Query: {user_authors_query}")
-    current_app.logger.debug(f"All Authors SQL Query: {all_authors_query}")
-    
-    user_authors = user_authors_query.all()
-    all_authors = all_authors_query.all()
-    
-    current_app.logger.debug(f"Raw user authors from database: {user_authors}")
-    current_app.logger.debug(f"Raw all authors from database: {all_authors}")
-    
-    return jsonify({
-        'all_authors': [{
-            'id': author.id,
-            'name': author.name,
-            'book_count': len(author.books),
-        } for author in all_authors],
-        'user_authors': [{
-            'id': author.id,
-            'name': author.name,
-            'book_count': sum(1 for book in author.books if any(user.id == current_user.id for user in book.users)),
-            'read_percentage': calculate_read_percentage([book for book in author.books if any(user.id == current_user.id for user in book.users)])
-        } for author in user_authors]
-    })
+    try:
+        current_app.logger.debug(f"get_authors function called for user ID: {current_user.id}")
+        search_query = request.args.get('search', '')
+        
+        # Query for authors of books the user has read
+        user_authors_query = db.session.query(Author).join(Book).join(UserBook).filter(
+            UserBook.user_id == current_user.id,
+            UserBook.is_read == True
+        ).distinct()
+        
+        # Query for all authors
+        all_authors_query = Author.query
+        
+        current_app.logger.debug(f"Initial user authors query: {user_authors_query}")
+        current_app.logger.debug(f"Initial all authors query: {all_authors_query}")
+        
+        if search_query:
+            user_authors_query = user_authors_query.filter(func.lower(Author.name).contains(func.lower(search_query)))
+            all_authors_query = all_authors_query.filter(func.lower(Author.name).contains(func.lower(search_query)))
+            current_app.logger.debug(f"User authors query after search filter: {user_authors_query}")
+            current_app.logger.debug(f"All authors query after search filter: {all_authors_query}")
+        
+        user_authors = user_authors_query.all()
+        all_authors = all_authors_query.all()
+        
+        current_app.logger.debug(f"Number of user authors found: {len(user_authors)}")
+        current_app.logger.debug(f"Number of all authors found: {len(all_authors)}")
+        
+        result = {
+            'all_authors': [{
+                'id': author.id,
+                'name': author.name,
+                'book_count': len(author.books),
+            } for author in all_authors],
+            'user_authors': [{
+                'id': author.id,
+                'name': author.name,
+                'book_count': sum(1 for book in author.books if any(user_book.user_id == current_user.id and user_book.is_read for user_book in book.user_books)),
+                'read_percentage': calculate_read_percentage(author.books, current_user.id)
+            } for author in user_authors]
+        }
+        
+        current_app.logger.debug(f"Returning {len(result['all_authors'])} all authors and {len(result['user_authors'])} user authors")
+        return jsonify(result)
+    except Exception as e:
+        current_app.logger.error(f"Error in get_authors: {str(e)}")
+        return jsonify({'error': 'An error occurred while fetching authors'}), 500
 
 @bp.route('/<int:id>', methods=['GET'])
 @login_required
@@ -129,8 +138,8 @@ def delete_author(id):
     db.session.commit()
     return jsonify({'message': 'Author deleted successfully'})
 
-def calculate_read_percentage(books):
+def calculate_read_percentage(books, user_id):
     if not books:
         return 0
-    read_books = sum(1 for book in books if any(user.id == current_user.id for user in book.users))
+    read_books = sum(1 for book in books if any(user_book.user_id == user_id and user_book.is_read for user_book in book.user_books))
     return (read_books / len(books)) * 100
