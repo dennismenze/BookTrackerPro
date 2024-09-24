@@ -67,9 +67,12 @@ def get_author(id):
     user_books = [book for book in all_books if any(user.id == current_user.id for user in book.users)]
     
     books = []
+    read_books_count = 0
     for book in all_books:
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
         is_read = user_book.is_read if user_book else False
+        if is_read:
+            read_books_count += 1
         current_app.logger.info(f"Book: {book.title}, is_read: {is_read}")
         books.append({
             'id': book.id,
@@ -77,18 +80,19 @@ def get_author(id):
             'is_read': is_read
         })
     
-    current_app.logger.info(f"Total number of books for author: {len(all_books)}")
-    current_app.logger.info(f"Number of books read by user: {len([b for b in books if b['is_read']])}")
+    total_books = len(all_books)
+    current_app.logger.info(f"Total number of books for author: {total_books}")
+    current_app.logger.info(f"Number of books read by user: {read_books_count}")
     
-    read_percentage = calculate_read_percentage(user_books)
+    read_percentage = (read_books_count / total_books * 100) if total_books > 0 else 0
     current_app.logger.info(f"Read percentage: {read_percentage}")
     
     return jsonify({
         'id': author.id,
         'name': author.name,
         'books': books,
-        'total_books': len(all_books),
-        'read_books': len([b for b in books if b['is_read']]),
+        'total_books': total_books,
+        'read_books': read_books_count,
         'read_percentage': read_percentage
     })
 
