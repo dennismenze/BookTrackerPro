@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const listId = {{ list_id }};
+    const listId = document.getElementById('list-details').dataset.listId;
     if (listId) {
         loadListDetails(listId);
     } else {

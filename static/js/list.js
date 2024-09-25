@@ -32,8 +32,8 @@ function loadListList(searchQuery = '') {
                                 <a href="/list/${list.id}">${list.name}</a>
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
-                                <button onclick="toggleListVisibility(${list.id}, true)" class="btn btn-sm btn-outline-primary">Make Public</button>
-                                ${(isAdminUser || list.user_id === currentUserId) ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
+                                <button class="btn btn-sm btn-outline-primary toggle-visibility" data-list-id="${list.id}" data-is-public="true">Make Public</button>
+                                ${(isAdminUser || list.user_id === currentUserId) ? `<button class="btn btn-sm btn-danger delete-list" data-list-id="${list.id}">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -47,21 +47,46 @@ function loadListList(searchQuery = '') {
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
                                 ${list.user_id === null ? `
-                                    <button onclick="toggleListVisibility(${list.id}, false)" class="btn btn-sm btn-outline-secondary">Make Private</button>
+                                    <button class="btn btn-sm btn-outline-secondary toggle-visibility" data-list-id="${list.id}" data-is-public="false">Make Private</button>
                                 ` : ''}
-                                ${isAdminUser ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
+                                ${isAdminUser ? `<button class="btn btn-sm btn-danger delete-list" data-list-id="${list.id}">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
                 </div>
-                <button onclick="showCreateListForm()" class="btn btn-primary mt-3">Create New List</button>
+                <button id="create-list-btn" class="btn btn-primary mt-3">Create New List</button>
             `;
+            setupEventListeners();
         })
         .catch(error => {
             console.error('Error fetching list list:', error);
             const listList = document.getElementById('list-list');
             listList.innerHTML = '<p>Error loading list list. Please try again.</p>';
         });
+}
+
+function setupEventListeners() {
+    const createListBtn = document.getElementById('create-list-btn');
+    if (createListBtn) {
+        createListBtn.addEventListener('click', showCreateListForm);
+    }
+
+    const toggleVisibilityBtns = document.querySelectorAll('.toggle-visibility');
+    toggleVisibilityBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const listId = e.target.dataset.listId;
+            const isPublic = e.target.dataset.isPublic === 'true';
+            toggleListVisibility(listId, isPublic);
+        });
+    });
+
+    const deleteListBtns = document.querySelectorAll('.delete-list');
+    deleteListBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const listId = e.target.dataset.listId;
+            deleteList(listId);
+        });
+    });
 }
 
 function showCreateListForm() {
@@ -74,9 +99,10 @@ function showCreateListForm() {
                 <input type="checkbox" id="new-list-public" class="form-check-input">
                 <label for="new-list-public" class="form-check-label">Make list public</label>
             </div>
-            <button onclick="createList()" class="btn btn-success mt-2">Create List</button>
+            <button id="create-list-submit" class="btn btn-success mt-2">Create List</button>
         </div>
     `;
+    document.getElementById('create-list-submit').addEventListener('click', createList);
 }
 
 function createList() {
@@ -137,7 +163,7 @@ function loadListDetails(listId) {
                 <p>Books: ${list.books.length}</p>
                 <p>Read Percentage: ${list.read_percentage.toFixed(1)}%</p>
                 <p>Status: ${list.is_public ? 'Public' : 'Private'}</p>
-                <button onclick="toggleListVisibility(${list.id}, ${!list.is_public})" class="btn btn-sm ${list.is_public ? 'btn-warning' : 'btn-success'}">
+                <button id="toggle-visibility" class="btn btn-sm ${list.is_public ? 'btn-warning' : 'btn-success'}">
                     Make ${list.is_public ? 'Private' : 'Public'}
                 </button>
                 <h3>Books:</h3>
@@ -145,21 +171,43 @@ function loadListDetails(listId) {
                     ${list.books.map(book => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <a href="/book/${book.id}?id=${book.id}">${book.title}</a> by <a href="/author/${book.author_id}">${book.author}</a>
-                            <button onclick="toggleReadStatus(${book.id}, ${!book.is_read})" class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'}">
+                            <button class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'} toggle-read-status" data-book-id="${book.id}" data-is-read="${!book.is_read}">
                                 Mark as ${book.is_read ? 'Unread' : 'Read'}
                             </button>
-                            <button onclick="removeBookFromList(${book.id})" class="btn btn-sm btn-danger">Remove</button>
+                            <button class="btn btn-sm btn-danger remove-book" data-book-id="${book.id}">Remove</button>
                         </li>
                     `).join('')}
                 </ul>
-                <button onclick="showAddBookForm()" class="btn btn-primary mt-3">Add Book to List</button>
+                <button id="add-book-btn" class="btn btn-primary mt-3">Add Book to List</button>
             `;
+            setupListDetailsEventListeners(list);
         })
         .catch(error => {
             console.error('Error fetching list details:', error);
             const listDetails = document.getElementById('list-details');
             listDetails.innerHTML = `<p>Error loading list details: ${error.message}. Please try again.</p>`;
         });
+}
+
+function setupListDetailsEventListeners(list) {
+    document.getElementById('toggle-visibility').addEventListener('click', () => toggleListVisibility(list.id, !list.is_public));
+    
+    document.querySelectorAll('.toggle-read-status').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const bookId = e.target.dataset.bookId;
+            const isRead = e.target.dataset.isRead === 'true';
+            toggleReadStatus(bookId, isRead);
+        });
+    });
+
+    document.querySelectorAll('.remove-book').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const bookId = e.target.dataset.bookId;
+            removeBookFromList(bookId);
+        });
+    });
+
+    document.getElementById('add-book-btn').addEventListener('click', showAddBookForm);
 }
 
 function toggleListVisibility(listId, isPublic) {
@@ -255,14 +303,24 @@ function searchBooks() {
             searchResults.innerHTML = books.map(book => `
                 <li class="list-group-item">
                     ${book.title} by ${book.author}
-                    <button onclick="addBookToList(${book.id})" class="btn btn-sm btn-primary float-end">Add</button>
+                    <button class="btn btn-sm btn-primary float-end add-book-to-list" data-book-id="${book.id}">Add</button>
                 </li>
             `).join('');
+            setupAddBookEventListeners();
         })
         .catch(error => {
             console.error('Error searching books:', error);
             alert('Failed to search books. Please try again.');
         });
+}
+
+function setupAddBookEventListeners() {
+    document.querySelectorAll('.add-book-to-list').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const bookId = e.target.dataset.bookId;
+            addBookToList(bookId);
+        });
+    });
 }
 
 function addBookToList(bookId) {
@@ -325,3 +383,13 @@ function isAdmin() {
 function getUserId() {
     return parseInt(document.body.dataset.userId, 10);
 }
+
+// Initial setup
+document.addEventListener('DOMContentLoaded', () => {
+    const listSearchInput = document.getElementById('list-search');
+    if (listSearchInput) {
+        listSearchInput.addEventListener('input', debounce(searchLists, 300));
+    }
+
+    loadListList();
+});
