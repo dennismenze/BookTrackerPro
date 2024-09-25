@@ -8,67 +8,74 @@ function handleUnauthorized(response) {
 }
 
 function loadListList(searchQuery = '') {
-    console.log('Loading list list...');
+    console.log('loadListList function called with query:', searchQuery);
+    const listList = document.getElementById('list-list');
+    if (!listList) {
+        console.error('Error: list-list element not found in the DOM');
+        return;
+    }
+    console.log('Fetching lists...');
     fetch(`/api/lists?search=${encodeURIComponent(searchQuery)}`, {
         method: 'GET',
         credentials: 'include'
     })
-        .then(handleUnauthorized)
-        .then(response => response.json())
-        .then(lists => {
-            console.log('Received lists:', lists);
-            const listList = document.getElementById('list-list');
-            const isAdminUser = isAdmin();
-            const currentUserId = getUserId();
-            console.log('Is Admin:', isAdminUser);
-            console.log('Current User ID:', currentUserId);
-            listList.innerHTML = `
-                <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-                    <h2 class="text-2xl font-semibold mb-4">Your Reading Lists</h2>
-                    <div id="private-lists">
-                        <h3 class="text-xl font-semibold mb-2">Private Lists</h3>
-                        <ul class="space-y-4">
-                            ${lists.filter(list => !list.is_public).map(list => `
-                                <li class="flex items-center justify-between bg-gray-100 p-4 rounded-md">
-                                    <a href="/list/${list.id}" class="text-blue-600 hover:underline">${list.name}</a>
-                                    <div class="flex space-x-2 items-center">
-                                        <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${list.book_count} books</span>
-                                        <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">${list.read_percentage.toFixed(1)}% read</span>
-                                        <button class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600 transition duration-300 toggle-visibility" data-list-id="${list.id}" data-is-public="true">Make Public</button>
-                                        ${(isAdminUser || list.user_id === currentUserId) ? `<button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 delete-list" data-list-id="${list.id}">Delete</button>` : ''}
-                                    </div>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                </div>
-                <div class="bg-white shadow-md rounded-lg p-6">
-                    <h2 class="text-2xl font-semibold mb-4">Public Lists</h2>
+    .then(handleUnauthorized)
+    .then(response => {
+        console.log('Lists response status:', response.status);
+        return response.json();
+    })
+    .then(lists => {
+        console.log('Received lists:', lists);
+        const isAdminUser = isAdmin();
+        const currentUserId = getUserId();
+        console.log('Is Admin:', isAdminUser);
+        console.log('Current User ID:', currentUserId);
+        listList.innerHTML = `
+            <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Your Reading Lists</h2>
+                <div id="private-lists">
+                    <h3 class="text-xl font-semibold mb-2">Private Lists</h3>
                     <ul class="space-y-4">
-                        ${lists.filter(list => list.is_public).map(list => `
+                        ${lists.filter(list => !list.is_public).map(list => `
                             <li class="flex items-center justify-between bg-gray-100 p-4 rounded-md">
                                 <a href="/list/${list.id}" class="text-blue-600 hover:underline">${list.name}</a>
                                 <div class="flex space-x-2 items-center">
                                     <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${list.book_count} books</span>
                                     <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">${list.read_percentage.toFixed(1)}% read</span>
-                                    ${list.user_id === null ? `
-                                        <button class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600 transition duration-300 toggle-visibility" data-list-id="${list.id}" data-is-public="false">Make Private</button>
-                                    ` : ''}
-                                    ${isAdminUser ? `<button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 delete-list" data-list-id="${list.id}">Delete</button>` : ''}
+                                    <button class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600 transition duration-300 toggle-visibility" data-list-id="${list.id}" data-is-public="true">Make Public</button>
+                                    ${(isAdminUser || list.user_id === currentUserId) ? `<button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 delete-list" data-list-id="${list.id}">Delete</button>` : ''}
                                 </div>
                             </li>
                         `).join('')}
                     </ul>
                 </div>
-                <button id="create-list-btn" class="mt-8 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition duration-300">Create New List</button>
-            `;
-            setupEventListeners();
-        })
-        .catch(error => {
-            console.error('Error fetching list list:', error);
-            const listList = document.getElementById('list-list');
-            listList.innerHTML = '<p class="text-red-500 p-4 bg-white shadow-md rounded-lg">Error loading list list. Please try again.</p>';
-        });
+            </div>
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">Public Lists</h2>
+                <ul class="space-y-4">
+                    ${lists.filter(list => list.is_public).map(list => `
+                        <li class="flex items-center justify-between bg-gray-100 p-4 rounded-md">
+                            <a href="/list/${list.id}" class="text-blue-600 hover:underline">${list.name}</a>
+                            <div class="flex space-x-2 items-center">
+                                <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${list.book_count} books</span>
+                                <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">${list.read_percentage.toFixed(1)}% read</span>
+                                ${list.user_id === null ? `
+                                    <button class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600 transition duration-300 toggle-visibility" data-list-id="${list.id}" data-is-public="false">Make Private</button>
+                                ` : ''}
+                                ${isAdminUser ? `<button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 delete-list" data-list-id="${list.id}">Delete</button>` : ''}
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            <button id="create-list-btn" class="mt-8 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition duration-300">Create New List</button>
+        `;
+        setupEventListeners();
+    })
+    .catch(error => {
+        console.error('Error fetching lists:', error);
+        listList.innerHTML = '<p class="text-red-500 p-4 bg-white shadow-md rounded-lg">Error loading lists. Please try again.</p>';
+    });
 }
 
 function setupEventListeners() {
