@@ -11,15 +11,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/list.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const listId = {{ list_id }};
-        if (listId) {
-            loadListDetails(listId);
-        } else {
-            console.error('List ID not found');
-            document.getElementById('list-details').innerHTML = '<p>Error: List ID not provided. Please go back and try again.</p>';
-        }
-    });
-</script>
+<script src="{{ url_for('static', filename='js/list_detail_init.js') }}"></script>
 {% endblock %}
