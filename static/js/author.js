@@ -25,26 +25,34 @@ function loadAuthorList(searchQuery = '') {
                 throw new Error('Author list element not found in the DOM');
             }
             authorList.innerHTML = `
-                <h2 class="text-2xl font-bold mb-4">Your Authors</h2>
-                <ul class="list-group mb-8">
-                    ${data.user_authors.map(author => `
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="/author/${author.id}">${author.name}</a>
-                            <span class="badge bg-primary rounded-pill">${author.book_count} books</span>
-                            <span class="badge bg-success rounded-pill">${author.read_percentage.toFixed(1)}% read</span>
-                        </li>
-                    `).join('')}
-                </ul>
-                <h2 class="text-2xl font-bold mb-4">All Authors</h2>
-                <ul class="list-group">
-                    ${data.all_authors.map(author => `
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="/author/${author.id}">${author.name}</a>
-                            <span class="badge bg-primary rounded-pill">${author.book_count} books</span>
-                            ${isAdmin() ? `<button class="btn btn-danger btn-sm delete-author" data-author-id="${author.id}">Delete</button>` : ''}
-                        </li>
-                    `).join('')}
-                </ul>
+                <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Your Authors</h2>
+                    <ul class="space-y-4">
+                        ${data.user_authors.map(author => `
+                            <li class="flex items-center justify-between bg-gray-100 p-4 rounded-md">
+                                <a href="/author/${author.id}" class="text-blue-600 hover:underline">${author.name}</a>
+                                <div class="flex space-x-4">
+                                    <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${author.book_count} books</span>
+                                    <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">${author.read_percentage.toFixed(1)}% read</span>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h2 class="text-2xl font-semibold mb-4">All Authors</h2>
+                    <ul class="space-y-4">
+                        ${data.all_authors.map(author => `
+                            <li class="flex items-center justify-between bg-gray-100 p-4 rounded-md">
+                                <a href="/author/${author.id}" class="text-blue-600 hover:underline">${author.name}</a>
+                                <div class="flex space-x-4">
+                                    <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${author.book_count} books</span>
+                                    ${isAdmin() ? `<button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 delete-author" data-author-id="${author.id}">Delete</button>` : ''}
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
             `;
             setupEventListeners();
         })
@@ -52,7 +60,7 @@ function loadAuthorList(searchQuery = '') {
             console.error('Error fetching author list:', error);
             const authorList = document.getElementById('author-list');
             if (authorList) {
-                authorList.innerHTML = `<p class="text-red-500">Error loading author list: ${error.message}. Please try again.</p>`;
+                authorList.innerHTML = `<p class="text-red-500 p-4 bg-white shadow-md rounded-lg">Error loading author list: ${error.message}. Please try again.</p>`;
             } else {
                 console.error('Author list element not found in the DOM');
             }
@@ -129,11 +137,6 @@ function toggleReadStatus(bookId, isRead, authorId) {
     });
 }
 
-function searchAuthors() {
-    const searchQuery = document.getElementById('author-search').value;
-    loadAuthorList(searchQuery);
-}
-
 function deleteAuthor(authorId) {
     if (confirm('Are you sure you want to delete this author? This action cannot be undone.')) {
         fetch(`/api/authors/${authorId}`, {
@@ -174,11 +177,27 @@ function setupEventListeners() {
             toggleReadStatus(bookId, isRead, authorId);
         }
     });
-}
 
-document.addEventListener('DOMContentLoaded', function() {
     const searchButton = document.getElementById('search-authors-btn');
     if (searchButton) {
         searchButton.addEventListener('click', searchAuthors);
     }
+
+    const searchInput = document.getElementById('author-search');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                searchAuthors();
+            }
+        });
+    }
+}
+
+function searchAuthors() {
+    const searchQuery = document.getElementById('author-search').value;
+    loadAuthorList(searchQuery);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadAuthorList();
 });
