@@ -37,23 +37,23 @@ function loadBookDetails(bookId) {
                     }
                 </div>
                 <div class="md:w-2/3 md:pl-6">
-                    <p><strong>Author:</strong> <a href="/author/${book.author_id}" class="text-blue-500 hover:underline">${book.author}</a></p>
-                    <p><strong>ISBN:</strong> ${book.isbn || 'N/A'}</p>
-                    <p><strong>Page Count:</strong> ${book.page_count || 'N/A'}</p>
-                    <p><strong>Published Date:</strong> ${book.published_date || 'N/A'}</p>
-                    <p><strong>Status:</strong> ${book.is_read ? 'Read' : 'Unread'}</p>
+                    <p class="mb-2"><strong>Author:</strong> <a href="/author/${book.author_id}" class="text-blue-500 hover:underline">${book.author}</a></p>
+                    <p class="mb-2"><strong>ISBN:</strong> ${book.isbn || 'N/A'}</p>
+                    <p class="mb-2"><strong>Page Count:</strong> ${book.page_count || 'N/A'}</p>
+                    <p class="mb-2"><strong>Published Date:</strong> ${book.published_date || 'N/A'}</p>
+                    <p class="mb-2"><strong>Status:</strong> ${book.is_read ? 'Read' : 'Unread'}</p>
                     <div class="mt-4">
                         <h3 class="text-xl font-semibold mb-2">Description:</h3>
                         <p>${book.description || 'No description available.'}</p>
                     </div>
                     <div class="mt-4">
                         <h3 class="text-xl font-semibold mb-2">Lists:</h3>
-                        <ul>
+                        <ul class="list-disc list-inside">
                             ${book.lists.map(list => `<li>${list.name}</li>`).join('')}
                         </ul>
                     </div>
                     <div class="mt-4">
-                        <button class="toggle-read-status bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" data-book-id="${book.id}" data-is-read="${!book.is_read}">
+                        <button class="toggle-read-status btn-primary" data-book-id="${book.id}" data-is-read="${!book.is_read}">
                             Mark as ${book.is_read ? 'Unread' : 'Read'}
                         </button>
                     </div>
@@ -109,21 +109,21 @@ function loadBooks() {
         console.log('Received books:', books);
         const bookList = document.getElementById('book-list');
         if (books.length === 0) {
-            bookList.innerHTML = '<p>You have not read any books yet.</p>';
+            bookList.innerHTML = '<p class="p-4">You have not read any books yet.</p>';
         } else {
             bookList.innerHTML = books.map(book => `
-                <li class="mb-4">
+                <li class="book-list-item p-4">
                     <div class="flex items-center">
                         ${book.cover_image_url 
-                            ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">`
-                            : `<div class="w-16 h-24 bg-gray-200 flex items-center justify-center mr-4">
+                            ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="book-cover mr-4">`
+                            : `<div class="book-cover mr-4 bg-gray-200 flex items-center justify-center">
                                    <span class="text-xs text-gray-500">No cover</span>
                                </div>`
                         }
                         <div>
                             <h3 class="text-lg font-semibold">${book.title}</h3>
                             <p class="text-gray-600">${book.author}</p>
-                            <button class="view-book-details text-blue-500 hover:underline" data-book-id="${book.id}">View Details</button>
+                            <button class="view-book-details text-blue-500 hover:underline mt-2" data-book-id="${book.id}">View Details</button>
                         </div>
                     </div>
                 </li>
@@ -134,7 +134,7 @@ function loadBooks() {
     .catch(error => {
         console.error('Error fetching books:', error);
         const bookList = document.getElementById('book-list');
-        bookList.innerHTML = `<p class="text-red-500">Error loading books: ${error.message}. Please try again.</p>`;
+        bookList.innerHTML = `<p class="text-red-500 p-4">Error loading books: ${error.message}. Please try again.</p>`;
     });
 }
 
@@ -157,21 +157,21 @@ function searchBooks() {
         console.log('Received search results:', books);
         const bookList = document.getElementById('book-list');
         if (books.length === 0) {
-            bookList.innerHTML = '<p>No books found matching your search.</p>';
+            bookList.innerHTML = '<p class="p-4">No books found matching your search.</p>';
         } else {
             bookList.innerHTML = books.map(book => `
-                <li class="mb-4">
+                <li class="book-list-item p-4">
                     <div class="flex items-center">
                         ${book.cover_image_url 
-                            ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="w-16 h-24 object-cover mr-4">`
-                            : `<div class="w-16 h-24 bg-gray-200 flex items-center justify-center mr-4">
+                            ? `<img src="${book.cover_image_url}" alt="${book.title} cover" class="book-cover mr-4">`
+                            : `<div class="book-cover mr-4 bg-gray-200 flex items-center justify-center">
                                    <span class="text-xs text-gray-500">No cover</span>
                                </div>`
                         }
                         <div>
                             <h3 class="text-lg font-semibold">${book.title}</h3>
                             <p class="text-gray-600">${book.author}</p>
-                            <button class="view-book-details text-blue-500 hover:underline" data-book-id="${book.id}">View Details</button>
+                            <button class="view-book-details text-blue-500 hover:underline mt-2" data-book-id="${book.id}">View Details</button>
                         </div>
                     </div>
                 </li>
@@ -182,7 +182,7 @@ function searchBooks() {
     .catch(error => {
         console.error('Error searching books:', error);
         const bookList = document.getElementById('book-list');
-        bookList.innerHTML = `<p class="text-red-500">Error searching books: ${error.message}. Please try again.</p>`;
+        bookList.innerHTML = `<p class="text-red-500 p-4">Error searching books: ${error.message}. Please try again.</p>`;
     });
 }
 
@@ -202,9 +202,8 @@ function setupBookEventListeners() {
         });
     });
 
-    const searchButton = document.querySelector('button[onclick="searchBooks()"]');
+    const searchButton = document.querySelector('#search-books-btn');
     if (searchButton) {
-        searchButton.removeAttribute('onclick');
         searchButton.addEventListener('click', searchBooks);
     }
 }

@@ -1,53 +1,44 @@
 @import 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
 
-body {
-    font-family: 'Arial', sans-serif;
+/* Custom styles */
+.book-cover {
+    width: 100px;
+    height: 150px;
+    object-fit: cover;
 }
 
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 1rem;
+.book-list-item {
+    transition: background-color 0.3s ease;
 }
 
-h1, h2 {
-    @apply text-2xl font-bold mb-4;
+.book-list-item:hover {
+    background-color: #f3f4f6;
 }
 
-ul {
-    @apply list-disc list-inside;
+.btn-primary {
+    @apply bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300;
 }
 
-li {
-    @apply mb-2;
+.btn-secondary {
+    @apply bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition duration-300;
 }
 
-input[type="text"], input[type="checkbox"] {
-    @apply border rounded p-1;
+.btn-danger {
+    @apply bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300;
 }
 
-button {
-    @apply bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600;
+.input-field {
+    @apply mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
 }
 
-.book-list li {
-    @apply flex items-center justify-between;
+.card {
+    @apply bg-white shadow overflow-hidden sm:rounded-lg;
 }
 
-.book-list button {
-    @apply ml-2 bg-red-500 hover:bg-red-600;
+.card-header {
+    @apply px-4 py-5 sm:px-6;
 }
 
-@media (max-width: 640px) {
-    .container {
-        padding: 0.5rem;
-    }
-
-    h1, h2 {
-        @apply text-xl;
-    }
-
-    button {
-        @apply px-2 py-1 text-sm;
-    }
+.card-body {
+    @apply px-4 py-5 sm:p-6;
 }
