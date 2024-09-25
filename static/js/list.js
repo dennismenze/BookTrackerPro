@@ -18,6 +18,10 @@ function loadListList(searchQuery = '') {
         .then(lists => {
             console.log('Received lists:', lists);
             const listList = document.getElementById('list-list');
+            const isAdminUser = isAdmin();
+            const currentUserId = getUserId();
+            console.log('Is Admin:', isAdminUser);
+            console.log('Current User ID:', currentUserId);
             listList.innerHTML = `
                 <h2>Your Reading Lists</h2>
                 <div id="private-lists">
@@ -29,7 +33,7 @@ function loadListList(searchQuery = '') {
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
                                 <button onclick="toggleListVisibility(${list.id}, true)" class="btn btn-sm btn-outline-primary">Make Public</button>
-                                ${(isAdmin() || list.user_id === getUserId()) ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
+                                ${(isAdminUser || list.user_id === currentUserId) ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -45,7 +49,7 @@ function loadListList(searchQuery = '') {
                                 ${list.user_id === null ? `
                                     <button onclick="toggleListVisibility(${list.id}, false)" class="btn btn-sm btn-outline-secondary">Make Private</button>
                                 ` : ''}
-                                ${isAdmin() ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
+                                ${isAdminUser ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
