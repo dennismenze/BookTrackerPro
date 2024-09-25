@@ -38,9 +38,18 @@ function loadBookDetails(bookId) {
         toggleReadStatusBtn.onclick = () => toggleReadStatus(bookId, !book.is_read);
 
         const bookLists = document.getElementById('book-lists');
-        bookLists.innerHTML = book.lists.map(list => `
-            <li><a href="/list/${list.id}" class="text-blue-600 hover:underline">${list.name}</a></li>
-        `).join('');
+        bookLists.innerHTML = book.lists.length > 0
+            ? book.lists.map(list => `
+                <li><a href="/list/${list.id}" class="text-blue-600 hover:underline">${list.name}</a></li>
+            `).join('')
+            : '<li>This book is not in any lists.</li>';
+
+        // Add to collection button
+        const addToCollectionBtn = document.createElement('button');
+        addToCollectionBtn.textContent = book.in_user_collection ? 'Remove from Collection' : 'Add to Collection';
+        addToCollectionBtn.className = `mt-4 w-full py-2 px-4 rounded text-white font-semibold ${book.in_user_collection ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`;
+        addToCollectionBtn.onclick = () => toggleBookInCollection(bookId, !book.in_user_collection);
+        document.getElementById('book-details').appendChild(addToCollectionBtn);
     })
     .catch(error => {
         console.error('Error fetching book details:', error);
@@ -65,5 +74,25 @@ function toggleReadStatus(bookId, isRead) {
     .catch(error => {
         console.error('Error updating book read status:', error);
         alert('Failed to update book status. Please try again.');
+    });
+}
+
+function toggleBookInCollection(bookId, addToCollection) {
+    fetch(`/api/books/${bookId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ in_user_collection: addToCollection }),
+        credentials: 'include'
+    })
+    .then(handleUnauthorized)
+    .then(response => response.json())
+    .then(() => {
+        loadBookDetails(bookId);
+    })
+    .catch(error => {
+        console.error('Error updating book collection status:', error);
+        alert('Failed to update book collection status. Please try again.');
     });
 }

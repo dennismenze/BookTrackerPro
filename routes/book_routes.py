@@ -80,6 +80,23 @@ def get_book(id):
             'in_user_collection': user_book is not None
         }
 
+        # If any of the Google Books API fields are missing, try to fetch them
+        if not all([book.isbn, book.description, book.cover_image_url, book.page_count, book.published_date]):
+            google_books_info = fetch_google_books_info(book.title, book.author.name)
+            book_data.update({
+                'isbn': book.isbn or google_books_info.get('isbn'),
+                'description': book.description or google_books_info.get('description'),
+                'cover_image_url': book.cover_image_url or google_books_info.get('cover_image_url'),
+                'page_count': book.page_count or google_books_info.get('page_count'),
+                'published_date': book.published_date or google_books_info.get('published_date')
+            })
+
+            # Update the book in the database with the new information
+            for key, value in book_data.items():
+                if value and hasattr(book, key):
+                    setattr(book, key, value)
+            db.session.commit()
+
         current_app.logger.debug(f"Returning book data: {book_data}")
         return jsonify(book_data)
     except Exception as e:
