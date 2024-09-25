@@ -41,11 +41,12 @@ function loadAuthorList(searchQuery = '') {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <a href="/author/${author.id}">${author.name}</a>
                             <span class="badge bg-primary rounded-pill">${author.book_count} books</span>
-                            ${isAdmin() ? `<button onclick="deleteAuthor(${author.id})" class="btn btn-danger btn-sm">Delete</button>` : ''}
+                            ${isAdmin() ? `<button class="btn btn-danger btn-sm delete-author" data-author-id="${author.id}">Delete</button>` : ''}
                         </li>
                     `).join('')}
                 </ul>
             `;
+            setupEventListeners();
         })
         .catch(error => {
             console.error('Error fetching author list:', error);
@@ -86,14 +87,15 @@ function loadAuthorDetails(authorId) {
                     ${author.books.map(book => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <a href='/book/${book.id}?id=${book.id}'>${book.title}</a>
-                            <button onclick="toggleReadStatus(${book.id}, ${!book.is_read}, ${authorId})" class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'}">
+                            <button class="btn btn-sm ${book.is_read ? 'btn-secondary' : 'btn-success'} toggle-read-status" data-book-id="${book.id}" data-is-read="${!book.is_read}" data-author-id="${authorId}">
                                 Mark as ${book.is_read ? 'Unread' : 'Read'}
                             </button>
                         </li>
                     `).join('')}
                 </ul>
-                ${isAdmin() ? `<button onclick="deleteAuthor(${author.id})" class="btn btn-danger mt-4">Delete Author</button>` : ''}
+                ${isAdmin() ? `<button class="btn btn-danger mt-4 delete-author" data-author-id="${author.id}">Delete Author</button>` : ''}
             `;
+            setupEventListeners();
         })
         .catch(error => {
             console.error('Error fetching author details:', error);
@@ -159,3 +161,24 @@ function deleteAuthor(authorId) {
 function isAdmin() {
     return document.body.dataset.isAdmin === 'true';
 }
+
+function setupEventListeners() {
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('delete-author')) {
+            const authorId = event.target.dataset.authorId;
+            deleteAuthor(authorId);
+        } else if (event.target.classList.contains('toggle-read-status')) {
+            const bookId = event.target.dataset.bookId;
+            const isRead = event.target.dataset.isRead === 'true';
+            const authorId = event.target.dataset.authorId;
+            toggleReadStatus(bookId, isRead, authorId);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchButton = document.getElementById('search-authors-btn');
+    if (searchButton) {
+        searchButton.addEventListener('click', searchAuthors);
+    }
+});
