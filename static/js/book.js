@@ -53,7 +53,7 @@ function loadBookDetails(bookId) {
                         </ul>
                     </div>
                     <div class="mt-4">
-                        <button onclick="toggleReadStatus(${book.id}, ${!book.is_read})" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        <button class="toggle-read-status bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" data-book-id="${book.id}" data-is-read="${!book.is_read}">
                             Mark as ${book.is_read ? 'Unread' : 'Read'}
                         </button>
                     </div>
@@ -61,6 +61,7 @@ function loadBookDetails(bookId) {
             </div>
         `;
         console.log('Book details HTML updated');
+        setupBookEventListeners();
     })
     .catch(error => {
         console.error('Error fetching book details:', error);
@@ -122,12 +123,13 @@ function loadBooks() {
                         <div>
                             <h3 class="text-lg font-semibold">${book.title}</h3>
                             <p class="text-gray-600">${book.author}</p>
-                            <button onclick="loadBookDetails(${book.id})" class="text-blue-500 hover:underline">View Details</button>
+                            <button class="view-book-details text-blue-500 hover:underline" data-book-id="${book.id}">View Details</button>
                         </div>
                     </div>
                 </li>
             `).join('');
         }
+        setupBookEventListeners();
     })
     .catch(error => {
         console.error('Error fetching books:', error);
@@ -169,12 +171,13 @@ function searchBooks() {
                         <div>
                             <h3 class="text-lg font-semibold">${book.title}</h3>
                             <p class="text-gray-600">${book.author}</p>
-                            <button onclick="loadBookDetails(${book.id})" class="text-blue-500 hover:underline">View Details</button>
+                            <button class="view-book-details text-blue-500 hover:underline" data-book-id="${book.id}">View Details</button>
                         </div>
                     </div>
                 </li>
             `).join('');
         }
+        setupBookEventListeners();
     })
     .catch(error => {
         console.error('Error searching books:', error);
@@ -183,4 +186,30 @@ function searchBooks() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', loadBooks);
+function setupBookEventListeners() {
+    document.querySelectorAll('.view-book-details').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const bookId = e.target.dataset.bookId;
+            loadBookDetails(bookId);
+        });
+    });
+
+    document.querySelectorAll('.toggle-read-status').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const bookId = e.target.dataset.bookId;
+            const isRead = e.target.dataset.isRead === 'true';
+            toggleReadStatus(bookId, isRead);
+        });
+    });
+
+    const searchButton = document.querySelector('button[onclick="searchBooks()"]');
+    if (searchButton) {
+        searchButton.removeAttribute('onclick');
+        searchButton.addEventListener('click', searchBooks);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadBooks();
+    setupBookEventListeners();
+});
