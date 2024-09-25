@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('List detail page loaded');
     const listId = document.getElementById('list-details').dataset.listId;
     if (listId) {
+        console.log('List ID:', listId);
         loadListDetails(listId);
     } else {
         console.error('List ID not found');
@@ -9,13 +11,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadListDetails(listId) {
+    console.log('Fetching list details for ID:', listId);
     fetch(`/api/lists/${listId}`, {
         method: 'GET',
         credentials: 'include'
     })
     .then(handleUnauthorized)
-    .then(response => response.json())
+    .then(response => {
+        console.log('List details response status:', response.status);
+        return response.json();
+    })
     .then(list => {
+        console.log('Received list details:', list);
         document.getElementById('list-name').textContent = list.name;
         document.getElementById('book-count').textContent = `Books: ${list.books.length}`;
         document.getElementById('read-percentage').textContent = `Read: ${list.read_percentage.toFixed(1)}%`;
@@ -44,16 +51,19 @@ function loadListDetails(listId) {
 }
 
 function setupEventListeners() {
+    console.log('Setting up event listeners');
     document.querySelectorAll('.toggle-read-status').forEach(button => {
         button.addEventListener('click', (e) => {
             const bookId = e.target.dataset.bookId;
             const isRead = e.target.dataset.isRead === 'true';
+            console.log(`Toggling read status for book ${bookId} to ${!isRead}`);
             toggleReadStatus(bookId, !isRead);
         });
     });
 }
 
 function toggleReadStatus(bookId, isRead) {
+    console.log(`Updating read status for book ${bookId} to ${isRead}`);
     fetch(`/api/books/${bookId}/read_status`, {
         method: 'PUT',
         headers: {
@@ -65,6 +75,7 @@ function toggleReadStatus(bookId, isRead) {
     .then(handleUnauthorized)
     .then(response => response.json())
     .then(() => {
+        console.log('Read status updated successfully');
         const listId = document.getElementById('list-details').dataset.listId;
         loadListDetails(listId);
     })
