@@ -58,10 +58,6 @@ def get_book(id):
         user_book = UserBook.query.filter_by(user_id=current_user.id,
                                              book_id=book.id).first()
 
-        user_lists = [
-            list for list in book.lists if list.user_id == current_user.id
-        ]
-
         book_data = {
             'id': book.id,
             'title': book.title,
@@ -73,12 +69,21 @@ def get_book(id):
             'cover_image_url': book.cover_image_url,
             'page_count': book.page_count,
             'published_date': book.published_date,
-            'lists': [{
-                'id': list.id,
-                'name': list.name
-            } for list in user_lists],
+            'lists': [],
             'in_user_collection': user_book is not None
         }
+
+        # Handle the 'lists' property
+        try:
+            if hasattr(book, 'lists'):
+                book_data['lists'] = [{
+                    'id': list.id,
+                    'name': list.name
+                } for list in book.lists if list.user_id == current_user.id]
+            else:
+                current_app.logger.warning(f"Book {id} does not have 'lists' attribute")
+        except Exception as e:
+            current_app.logger.error(f"Error processing lists for book {id}: {str(e)}")
 
         # If any of the Google Books API fields are missing, try to fetch them
         if not all([book.isbn, book.description, book.cover_image_url, book.page_count, book.published_date]):
