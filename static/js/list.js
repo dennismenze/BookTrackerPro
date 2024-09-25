@@ -33,7 +33,7 @@ function loadListList(searchQuery = '') {
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
                                 <button onclick="toggleListVisibility(${list.id}, true)" class="btn btn-sm btn-outline-primary">Make Public</button>
-                                ${(!list.is_public || isAdminUser) ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
+                                ${(isAdminUser || list.user_id === currentUserId) ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -292,6 +292,7 @@ function searchLists() {
 }
 
 function deleteList(listId) {
+    console.log(`Attempting to delete list with ID: ${listId}`);
     if (confirm('Are you sure you want to delete this list? This action cannot be undone.')) {
         fetch(`/api/lists/${listId}`, {
             method: 'DELETE',
@@ -299,18 +300,20 @@ function deleteList(listId) {
         })
         .then(handleUnauthorized)
         .then(response => {
+            console.log(`Delete response status: ${response.status}`);
             if (!response.ok) {
-                throw new Error('Failed to delete list');
+                throw new Error(`Failed to delete list: ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
+            console.log('Delete response:', data);
             alert(data.message);
             loadListList();
         })
         .catch(error => {
             console.error('Error deleting list:', error);
-            alert('Failed to delete list. Please try again.');
+            alert(`Failed to delete list: ${error.message}. Please try again.`);
         });
     }
 }
