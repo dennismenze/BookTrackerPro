@@ -29,7 +29,7 @@ function loadListList(searchQuery = '') {
                                 <span class="badge bg-primary rounded-pill">${list.book_count} books</span>
                                 <span class="badge bg-success rounded-pill">${list.read_percentage.toFixed(1)}% read</span>
                                 <button onclick="toggleListVisibility(${list.id}, true)" class="btn btn-sm btn-outline-primary">Make Public</button>
-                                ${isAdmin() || list.user_id === getUserId() ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
+                                ${(isAdmin() || list.user_id === getUserId()) ? `<button onclick="deleteList(${list.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
                             </li>
                         `).join('')}
                     </ul>
