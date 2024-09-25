@@ -3,8 +3,22 @@
 {% block title %}Author Details - Book Tracker{% endblock %}
 
 {% block content %}
-<div id="author-details" class="bg-white shadow overflow-hidden sm:rounded-lg" data-author-id="{{ author_id }}">
-    <!-- Author details will be dynamically inserted here by JavaScript -->
+<div id="author-details" class="container mx-auto mt-8 px-4" data-author-id="{{ author_id }}">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h1 id="author-name" class="text-3xl font-bold mb-4"></h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h2 class="text-2xl font-semibold mb-2">Statistics</h2>
+                <p id="total-books" class="text-lg"></p>
+                <p id="read-books" class="text-lg"></p>
+                <p id="read-percentage" class="text-lg"></p>
+            </div>
+            <div>
+                <h2 class="text-2xl font-semibold mb-2">Books</h2>
+                <ul id="book-list" class="space-y-2"></ul>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

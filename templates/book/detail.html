@@ -3,8 +3,26 @@
 {% block title %}Book Details - Book Tracker{% endblock %}
 
 {% block content %}
-<div id="book-details" class="container mx-auto mt-8 p-4" data-book-id="{{ book_id }}">
-    <!-- Book details will be dynamically inserted here by JavaScript -->
+<div id="book-details" class="container mx-auto mt-8 px-4" data-book-id="{{ book_id }}">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h1 id="book-title" class="text-3xl font-bold mb-4"></h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-1">
+                <img id="book-cover" src="" alt="Book cover" class="w-full rounded-lg shadow-lg mb-4">
+                <button id="toggle-read-status" class="w-full py-2 px-4 rounded text-white font-semibold"></button>
+            </div>
+            <div class="md:col-span-2">
+                <p id="book-author" class="text-xl mb-2"></p>
+                <p id="book-isbn" class="mb-2"></p>
+                <p id="book-page-count" class="mb-2"></p>
+                <p id="book-published-date" class="mb-2"></p>
+                <h2 class="text-2xl font-semibold mt-4 mb-2">Description</h2>
+                <p id="book-description" class="mb-4"></p>
+                <h2 class="text-2xl font-semibold mt-4 mb-2">Lists</h2>
+                <ul id="book-lists" class="list-disc list-inside"></ul>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
