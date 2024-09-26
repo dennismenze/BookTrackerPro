@@ -70,7 +70,8 @@ def get_book(id):
             'page_count': book.page_count,
             'published_date': book.published_date,
             'lists': [],
-            'in_user_collection': user_book is not None
+            'in_user_collection': user_book is not None,
+            'is_main_work': book.is_main_work
         }
 
         try:
@@ -141,6 +142,11 @@ def toggle_main_work(id):
     try:
         current_app.logger.info(f"Toggling main work status for book {id}")
         book = Book.query.get_or_404(id)
+        
+        if not current_user.is_admin:
+            current_app.logger.warning(f"Non-admin user {current_user.id} attempted to toggle main work status")
+            return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
+
         book.is_main_work = not book.is_main_work
         db.session.commit()
         current_app.logger.info(f"Main work status updated successfully for book {id}")

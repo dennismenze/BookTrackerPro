@@ -14,6 +14,7 @@
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ISBN</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Main Work</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
@@ -24,6 +25,12 @@
                     <td class="px-6 py-4 whitespace-nowrap">{{ book.title }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">{{ book.author.name }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">{{ book.isbn or 'N/A' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="toggle-main-work px-2 py-1 rounded {% if book.is_main_work %}bg-green-500{% else %}bg-gray-300{% endif %} text-white"
+                                data-book-id="{{ book.id }}" data-is-main-work="{{ book.is_main_work|lower }}">
+                            {% if book.is_main_work %}Main Work{% else %}Not Main Work{% endif %}
+                        </button>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <a href="{{ url_for('book_detail', id=book.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-2">View</a>
                         <form action="{{ url_for('admin_books') }}" method="POST" class="inline">
@@ -38,4 +45,43 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleButtons = document.querySelectorAll('.toggle-main-work');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const bookId = this.dataset.bookId;
+            const isMainWork = this.dataset.isMainWork === 'true';
+            fetch(`/api/books/${bookId}/toggle_main_work`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ is_main_work: !isMainWork }),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_main_work) {
+                    this.textContent = 'Main Work';
+                    this.classList.remove('bg-gray-300');
+                    this.classList.add('bg-green-500');
+                } else {
+                    this.textContent = 'Not Main Work';
+                    this.classList.remove('bg-green-500');
+                    this.classList.add('bg-gray-300');
+                }
+                this.dataset.isMainWork = data.is_main_work;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the main work status.');
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
