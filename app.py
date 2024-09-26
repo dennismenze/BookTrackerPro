@@ -183,7 +183,6 @@ def create_app():
     def list_detail(id):
         return render_template('list/detail.html', list_id=id)
 
-    # New admin route
     @app.route('/admin')
     @login_required
     def admin():
@@ -191,6 +190,40 @@ def create_app():
             flash('You do not have permission to access the admin panel.')
             return redirect(url_for('index'))
         return render_template('admin/dashboard.html')
+
+    @app.route('/admin/users', methods=['GET', 'POST'])
+    @login_required
+    def admin_users():
+        if not current_user.is_admin:
+            flash('You do not have permission to access the admin panel.')
+            return redirect(url_for('index'))
+        
+        if request.method == 'POST':
+            action = request.form.get('action')
+            user_id = request.form.get('user_id')
+            
+            if action == 'delete':
+                user = User.query.get(user_id)
+                if user:
+                    db.session.delete(user)
+                    db.session.commit()
+                    flash('User deleted successfully.')
+                else:
+                    flash('User not found.')
+            
+            elif action == 'toggle_admin':
+                user = User.query.get(user_id)
+                if user:
+                    user.is_admin = not user.is_admin
+                    db.session.commit()
+                    flash(f"Admin status for {user.username} has been {'granted' if user.is_admin else 'revoked'}.")
+                else:
+                    flash('User not found.')
+            
+            return redirect(url_for('admin_users'))
+        
+        users = User.query.all()
+        return render_template('admin/users.html', users=users)
 
     return app
 
