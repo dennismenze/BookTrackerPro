@@ -206,6 +206,9 @@ def create_app():
                 user = User.query.get(user_id)
                 if user:
                     try:
+                        # Remove user's books from user_book table
+                        UserBook.query.filter_by(user_id=user.id).delete()
+                        
                         # Remove user's books from all lists
                         BookList = db.Table('book_list', db.metadata, autoload_with=db.engine)
                         books_to_remove = db.session.query(BookList.c.book_id).join(Book).filter(Book.users.any(id=user.id)).subquery()
