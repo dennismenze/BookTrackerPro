@@ -206,7 +206,7 @@ def create_app():
                 user = User.query.get(user_id)
                 if user:
                     try:
-                        # Remove user's books from user_book table
+                        # Remove user's entries from user_book table
                         UserBook.query.filter_by(user_id=user.id).delete()
                         
                         # Remove user's books from all lists
