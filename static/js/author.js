@@ -34,6 +34,8 @@ function loadAuthorList(searchQuery = '') {
                                 <div class="flex space-x-4">
                                     <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${author.book_count} books</span>
                                     <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">${author.read_percentage.toFixed(1)}% read</span>
+                                    <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm">${author.main_works_count} main works</span>
+                                    <span class="bg-purple-500 text-white px-3 py-1 rounded-full text-sm">${author.read_main_works_percentage.toFixed(1)}% main works read</span>
                                 </div>
                             </li>
                         `).join('')}
@@ -47,6 +49,7 @@ function loadAuthorList(searchQuery = '') {
                                 <a href="/author/${author.id}" class="text-blue-600 hover:underline">${author.name}</a>
                                 <div class="flex space-x-4">
                                     <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${author.book_count} books</span>
+                                    <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm">${author.main_works_count} main works</span>
                                     ${isAdmin() ? `<button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 delete-author" data-author-id="${author.id}">Delete</button>` : ''}
                                 </div>
                             </li>
@@ -90,6 +93,8 @@ function loadAuthorDetails(authorId) {
                 <h2>${author.name}</h2>
                 <p>Books: ${author.books.length}</p>
                 <p>Read Percentage: ${author.read_percentage.toFixed(1)}%</p>
+                <p>Main Works: ${author.main_works_count}</p>
+                <p>Main Works Read Percentage: ${author.read_main_works_percentage.toFixed(1)}%</p>
                 <h3>Books:</h3>
                 <ul class="list-group">
                     ${author.books.map(book => `

@@ -48,12 +48,16 @@ def get_authors():
                 'id': author.id,
                 'name': author.name,
                 'book_count': len(author.books),
+                'main_works_count': sum(1 for book in author.books if book.is_main_work),
+                'read_main_works_percentage': calculate_read_main_works_percentage(author.books, current_user.id)
             } for author in all_authors],
             'user_authors': [{
                 'id': author.id,
                 'name': author.name,
                 'book_count': sum(1 for book in author.books if any(user_book.user_id == current_user.id and user_book.is_read for user_book in book.user_books)),
-                'read_percentage': calculate_read_percentage(author.books, current_user.id)
+                'read_percentage': calculate_read_percentage(author.books, current_user.id),
+                'main_works_count': sum(1 for book in author.books if book.is_main_work),
+                'read_main_works_percentage': calculate_read_main_works_percentage(author.books, current_user.id)
             } for author in user_authors]
         }
         
@@ -161,3 +165,10 @@ def calculate_read_percentage(books, user_id):
         return 0
     read_books = sum(1 for book in books if any(user_book.user_id == user_id and user_book.is_read for user_book in book.user_books))
     return (read_books / len(books)) * 100
+
+def calculate_read_main_works_percentage(books, user_id):
+    main_works = [book for book in books if book.is_main_work]
+    if not main_works:
+        return 0
+    read_main_works = sum(1 for book in main_works if any(user_book.user_id == user_id and user_book.is_read for user_book in book.user_books))
+    return (read_main_works / len(main_works)) * 100
