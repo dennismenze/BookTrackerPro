@@ -3,7 +3,7 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from models import db, Book, Author, List, User, UserBook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
-from sqlalchemy import text, true
+from sqlalchemy import text, true, select
 from flask_migrate import Migrate
 from flask_talisman import Talisman
 from urllib.parse import urlparse
@@ -203,7 +203,7 @@ def create_app():
             user_id = request.form.get('user_id')
             
             if action == 'delete':
-                user = User.query.get(user_id)
+                user = db.session.get(User, user_id)
                 if user:
                     try:
                         # Remove user's entries from user_book table
@@ -211,15 +211,14 @@ def create_app():
                         
                         # Remove user's books from all lists
                         BookList = db.Table('book_list', db.metadata, autoload_with=db.engine)
-                        books_to_remove = db.session.query(BookList.c.book_id).join(Book).filter(Book.users.any(id=user.id)).subquery()
+                        books_to_remove = db.session.query(Book.id).join(UserBook).filter(UserBook.user_id == user.id).subquery()
                         db.session.execute(BookList.delete().where(BookList.c.book_id.in_(books_to_remove)))
                         
                         # Remove user from all lists
-                        for list in user.lists:
-                            list.user_id = None
+                        List.query.filter_by(user_id=user.id).update({'user_id': None})
                         
                         # Delete all books associated with the user
-                        Book.query.filter(Book.users.any(id=user.id)).delete(synchronize_session=False)
+                        Book.query.filter(Book.id.in_(books_to_remove)).delete(synchronize_session=False)
                         
                         # Delete the user
                         db.session.delete(user)
