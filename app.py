@@ -205,14 +205,27 @@ def create_app():
             if action == 'delete':
                 user = User.query.get(user_id)
                 if user:
-                    # Remove user from all lists
-                    for list in user.lists:
-                        list.user_id = None
-                    # Delete all books associated with the user
-                    Book.query.filter(Book.users.any(id=user.id)).delete(synchronize_session=False)
-                    db.session.delete(user)
-                    db.session.commit()
-                    flash('User deleted successfully.')
+                    try:
+                        # Remove user's books from all lists
+                        BookList = db.Table('book_list', db.metadata, autoload_with=db.engine)
+                        books_to_remove = db.session.query(BookList.c.book_id).join(Book).filter(Book.users.any(id=user.id)).subquery()
+                        db.session.execute(BookList.delete().where(BookList.c.book_id.in_(books_to_remove)))
+                        
+                        # Remove user from all lists
+                        for list in user.lists:
+                            list.user_id = None
+                        
+                        # Delete all books associated with the user
+                        Book.query.filter(Book.users.any(id=user.id)).delete(synchronize_session=False)
+                        
+                        # Delete the user
+                        db.session.delete(user)
+                        db.session.commit()
+                        flash('User and associated data deleted successfully.')
+                    except Exception as e:
+                        db.session.rollback()
+                        app.logger.error(f"Error deleting user: {str(e)}")
+                        flash('An error occurred while deleting the user. Please try again.')
                 else:
                     flash('User not found.')
             
