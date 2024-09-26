@@ -30,7 +30,7 @@ def create_app():
 
     csp = {
         'default-src': "'self'",
-        'script-src': ["'self'", "https://cdn.jsdelivr.net"],
+        'script-src': ["'self'", "https://cdn.jsdelivr.net", "https://cdn.tailwindcss.com"],
         'style-src': ["'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'"],
         'img-src': ["'self'", "https:", "data:"],
         'font-src': ["'self'", "https:", "data:"],
