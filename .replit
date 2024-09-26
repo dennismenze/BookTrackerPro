@@ -48,7 +48,7 @@ agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "flask db migrate -m 'Add Google Books API fields'"
+args = "flask db migrate -m 'Add is_main_work field to Book model'"
 
 [[workflows.workflow]]
 name = "Apply Migration"

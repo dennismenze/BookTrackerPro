@@ -73,7 +73,6 @@ def get_book(id):
             'in_user_collection': user_book is not None
         }
 
-        # Handle the 'lists' property
         try:
             if hasattr(book, 'lists'):
                 book_data['lists'] = [{
@@ -86,19 +85,16 @@ def get_book(id):
         except Exception as e:
             current_app.logger.error(f"Error processing lists for book {id}: {str(e)}")
 
-        # If any of the Google Books API fields are missing, try to fetch them
         if not all([book.isbn, book.description, book.cover_image_url, book.page_count, book.published_date]):
             current_app.logger.info(f"Fetching missing information for book {id} from Google Books API")
             google_books_info = fetch_google_books_info(book.title, book.author.name)
             
-            # Update book_data with Google Books info, but don't overwrite existing data
             book_data['isbn'] = book.isbn or google_books_info.get('isbn')
             book_data['description'] = book.description or google_books_info.get('description')
             book_data['cover_image_url'] = book.cover_image_url or google_books_info.get('cover_image_url')
             book_data['page_count'] = book.page_count or google_books_info.get('page_count')
             book_data['published_date'] = book.published_date or google_books_info.get('published_date')
 
-            # Update the book in the database with the new information
             book.isbn = book_data['isbn']
             book.description = book_data['description']
             book.cover_image_url = book_data['cover_image_url']
@@ -138,6 +134,21 @@ def update_read_status(id):
         db.session.rollback()
         current_app.logger.error(f"Error updating read status: {str(e)}")
         return jsonify({'error': 'An error occurred while updating the read status'}), 500
+
+@bp.route('/<int:id>/toggle_main_work', methods=['PUT'])
+@login_required
+def toggle_main_work(id):
+    try:
+        current_app.logger.info(f"Toggling main work status for book {id}")
+        book = Book.query.get_or_404(id)
+        book.is_main_work = not book.is_main_work
+        db.session.commit()
+        current_app.logger.info(f"Main work status updated successfully for book {id}")
+        return jsonify({'message': 'Main work status updated successfully', 'is_main_work': book.is_main_work})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating main work status: {str(e)}")
+        return jsonify({'error': 'An error occurred while updating the main work status'}), 500
 
 def fetch_google_books_info(title, author):
     try:

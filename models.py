@@ -62,6 +62,9 @@ class Book(db.Model):
     cover_image_url = db.Column(db.String(255))
     page_count = db.Column(db.Integer)
     published_date = db.Column(db.String(20))
+    
+    # New field for main works functionality
+    is_main_work = db.Column(db.Boolean, default=False)
 
 
 class Author(db.Model):

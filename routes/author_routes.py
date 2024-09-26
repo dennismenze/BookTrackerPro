@@ -21,13 +21,11 @@ def get_authors():
         current_app.logger.debug(f"get_authors function called for user ID: {current_user.id}")
         search_query = request.args.get('search', '')
         
-        # Query for authors of books the user has read
         user_authors_query = db.session.query(Author).join(Book).join(UserBook).filter(
             UserBook.user_id == current_user.id,
             UserBook.is_read == True
         ).distinct()
         
-        # Query for all authors
         all_authors_query = Author.query
         
         current_app.logger.debug(f"Initial user authors query: {user_authors_query}")
@@ -77,16 +75,23 @@ def get_author(id):
     
     books = []
     read_books_count = 0
+    read_main_works_count = 0
+    total_main_works_count = 0
     for book in all_books:
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
         is_read = user_book.is_read if user_book else False
         if is_read:
             read_books_count += 1
-        current_app.logger.info(f"Book: {book.title}, is_read: {is_read}")
+            if book.is_main_work:
+                read_main_works_count += 1
+        if book.is_main_work:
+            total_main_works_count += 1
+        current_app.logger.info(f"Book: {book.title}, is_read: {is_read}, is_main_work: {book.is_main_work}")
         books.append({
             'id': book.id,
             'title': book.title,
-            'is_read': is_read
+            'is_read': is_read,
+            'is_main_work': book.is_main_work
         })
     
     total_books = len(all_books)
@@ -94,7 +99,9 @@ def get_author(id):
     current_app.logger.info(f"Number of books read by user: {read_books_count}")
     
     read_percentage = (read_books_count / total_books * 100) if total_books > 0 else 0
+    read_main_works_percentage = (read_main_works_count / total_main_works_count * 100) if total_main_works_count > 0 else 0
     current_app.logger.info(f"Read percentage: {read_percentage}")
+    current_app.logger.info(f"Read main works percentage: {read_main_works_percentage}")
     
     return jsonify({
         'id': author.id,
@@ -102,7 +109,10 @@ def get_author(id):
         'books': books,
         'total_books': total_books,
         'read_books': read_books_count,
-        'read_percentage': read_percentage
+        'read_percentage': read_percentage,
+        'total_main_works': total_main_works_count,
+        'read_main_works': read_main_works_count,
+        'read_main_works_percentage': read_main_works_percentage
     })
 
 @bp.route('/', methods=['POST'])
