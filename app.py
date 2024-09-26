@@ -183,6 +183,15 @@ def create_app():
     def list_detail(id):
         return render_template('list/detail.html', list_id=id)
 
+    # New admin route
+    @app.route('/admin')
+    @login_required
+    def admin():
+        if not current_user.is_admin:
+            flash('You do not have permission to access the admin panel.')
+            return redirect(url_for('index'))
+        return render_template('admin/dashboard.html')
+
     return app
 
 if __name__ == '__main__':

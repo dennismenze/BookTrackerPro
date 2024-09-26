@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Book Tracker{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-8 px-4">
+    <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">User Management</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-600 hover:underline">View All Users</a></li>
+                <li><a href="#" class="text-blue-600 hover:underline">Create New User</a></li>
+            </ul>
+        </div>
+        
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">Content Management</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-600 hover:underline">Manage Books</a></li>
+                <li><a href="#" class="text-blue-600 hover:underline">Manage Authors</a></li>
+                <li><a href="#" class="text-blue-600 hover:underline">Manage Lists</a></li>
+            </ul>
+        </div>
+        
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">System Settings</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-600 hover:underline">General Settings</a></li>
+                <li><a href="#" class="text-blue-600 hover:underline">API Integrations</a></li>
+            </ul>
+        </div>
+        
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">Analytics</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-600 hover:underline">User Statistics</a></li>
+                <li><a href="#" class="text-blue-600 hover:underline">Reading Trends</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
