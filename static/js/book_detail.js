@@ -9,13 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadBookDetails(bookId) {
+    console.log(`Loading book details for id: ${bookId}`);
     fetch(`/api/books/${bookId}`, {
         method: 'GET',
         credentials: 'include'
     })
     .then(handleUnauthorized)
-    .then(response => response.json())
+    .then(response => {
+        console.log(`Book details response status: ${response.status}`);
+        return response.json();
+    })
     .then(book => {
+        console.log('Received book details:', book);
         document.getElementById('book-title').textContent = book.title;
         document.getElementById('book-author').innerHTML = `By <a href="/author/${book.author_id}" class="text-blue-600 hover:underline">${book.author}</a>`;
         document.getElementById('book-isbn').textContent = `ISBN: ${book.isbn || 'N/A'}`;
@@ -28,6 +33,7 @@ function loadBookDetails(bookId) {
             bookCover.src = book.cover_image_url;
             bookCover.alt = `${book.title} cover`;
         } else {
+            console.log('No cover image available for the book');
             bookCover.src = '/static/images/no-cover.png';
             bookCover.alt = 'No cover available';
         }
@@ -38,11 +44,15 @@ function loadBookDetails(bookId) {
         toggleReadStatusBtn.onclick = () => toggleReadStatus(bookId, !book.is_read);
 
         const bookLists = document.getElementById('book-lists');
-        bookLists.innerHTML = book.lists.length > 0
-            ? book.lists.map(list => `
+        if (book.lists && Array.isArray(book.lists) && book.lists.length > 0) {
+            console.log(`Book is in ${book.lists.length} lists`);
+            bookLists.innerHTML = book.lists.map(list => `
                 <li><a href="/list/${list.id}" class="text-blue-600 hover:underline">${list.name}</a></li>
-            `).join('')
-            : '<li>This book is not in any lists.</li>';
+            `).join('');
+        } else {
+            console.log('Book is not in any lists');
+            bookLists.innerHTML = '<li>This book is not in any lists.</li>';
+        }
 
         // Add to collection button
         const addToCollectionBtn = document.createElement('button');
@@ -58,6 +68,7 @@ function loadBookDetails(bookId) {
 }
 
 function toggleReadStatus(bookId, isRead) {
+    console.log(`Toggling read status for book ${bookId} to ${isRead}`);
     fetch(`/api/books/${bookId}/read_status`, {
         method: 'PUT',
         headers: {
@@ -67,8 +78,12 @@ function toggleReadStatus(bookId, isRead) {
         credentials: 'include'
     })
     .then(handleUnauthorized)
-    .then(response => response.json())
+    .then(response => {
+        console.log(`Toggle read status response: ${response.status}`);
+        return response.json();
+    })
     .then(() => {
+        console.log('Read status updated successfully');
         loadBookDetails(bookId);
     })
     .catch(error => {
@@ -78,6 +93,7 @@ function toggleReadStatus(bookId, isRead) {
 }
 
 function toggleBookInCollection(bookId, addToCollection) {
+    console.log(`Toggling book ${bookId} in collection: ${addToCollection}`);
     fetch(`/api/books/${bookId}`, {
         method: 'PUT',
         headers: {
@@ -87,8 +103,12 @@ function toggleBookInCollection(bookId, addToCollection) {
         credentials: 'include'
     })
     .then(handleUnauthorized)
-    .then(response => response.json())
+    .then(response => {
+        console.log(`Toggle book in collection response: ${response.status}`);
+        return response.json();
+    })
     .then(() => {
+        console.log('Book collection status updated successfully');
         loadBookDetails(bookId);
     })
     .catch(error => {
