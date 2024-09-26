@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Book Management - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-8 px-4">
+    <h1 class="text-3xl font-bold mb-6">Book Management</h1>
+    
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ISBN</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for book in books %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ book.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ book.title }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ book.author.name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ book.isbn or 'N/A' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{{ url_for('book_detail', id=book.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-2">View</a>
+                        <form action="{{ url_for('admin_books') }}" method="POST" class="inline">
+                            <input type="hidden" name="book_id" value="{{ book.id }}">
+                            <input type="hidden" name="action" value="delete">
+                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this book?');">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

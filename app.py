@@ -245,6 +245,43 @@ def create_app():
         users = User.query.all()
         return render_template('admin/users.html', users=users)
 
+    @app.route('/admin/books', methods=['GET', 'POST'])
+    @login_required
+    def admin_books():
+        if not current_user.is_admin:
+            flash('You do not have permission to access the admin panel.')
+            return redirect(url_for('index'))
+        
+        if request.method == 'POST':
+            action = request.form.get('action')
+            book_id = request.form.get('book_id')
+            
+            if action == 'delete':
+                book = Book.query.get(book_id)
+                if book:
+                    try:
+                        # Remove book from all lists
+                        book.lists = []
+                        
+                        # Remove book from all users
+                        UserBook.query.filter_by(book_id=book.id).delete()
+                        
+                        # Delete the book
+                        db.session.delete(book)
+                        db.session.commit()
+                        flash('Book deleted successfully.')
+                    except Exception as e:
+                        db.session.rollback()
+                        app.logger.error(f"Error deleting book: {str(e)}")
+                        flash('An error occurred while deleting the book. Please try again.')
+                else:
+                    flash('Book not found.')
+            
+            return redirect(url_for('admin_books'))
+        
+        books = Book.query.all()
+        return render_template('admin/books.html', books=books)
+
     return app
 
 if __name__ == '__main__':
