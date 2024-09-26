@@ -20,11 +20,17 @@ function loadAuthorDetails(authorId) {
         document.getElementById('total-books').textContent = `Total Books: ${author.total_books}`;
         document.getElementById('read-books').textContent = `Read Books: ${author.read_books}`;
         document.getElementById('read-percentage').textContent = `Read Percentage: ${author.read_percentage.toFixed(1)}%`;
+        document.getElementById('total-main-works').textContent = `Total Main Works: ${author.total_main_works}`;
+        document.getElementById('read-main-works').textContent = `Read Main Works: ${author.read_main_works}`;
+        document.getElementById('read-main-works-percentage').textContent = `Read Main Works Percentage: ${author.read_main_works_percentage.toFixed(1)}%`;
 
         const bookList = document.getElementById('book-list');
         bookList.innerHTML = author.books.map(book => `
-            <li class="flex items-center justify-between bg-gray-100 p-2 rounded">
-                <a href="/book/${book.id}" class="text-blue-600 hover:underline">${book.title}</a>
+            <li class="flex items-center justify-between bg-gray-100 p-2 rounded mb-2">
+                <div>
+                    <a href="/book/${book.id}" class="text-blue-600 hover:underline">${book.title}</a>
+                    ${book.is_main_work ? '<span class="ml-2 px-2 py-1 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded-full">Main Work</span>' : ''}
+                </div>
                 <button class="toggle-read-status px-2 py-1 rounded ${book.is_read ? 'bg-green-500' : 'bg-yellow-500'} text-white"
                         data-book-id="${book.id}" data-is-read="${book.is_read}">
                     ${book.is_read ? 'Read' : 'Unread'}
