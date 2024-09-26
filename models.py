@@ -31,13 +31,12 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255))
     books = db.relationship('Book', secondary=user_book, back_populates='users')
-    user_books = db.relationship("UserBook", back_populates="user")
+    user_books = db.relationship("UserBook", back_populates="user", cascade='all, delete-orphan')
     lists = db.relationship('List', backref='user', lazy='dynamic')
     is_admin = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password,
-                                                    method='pbkdf2:sha256')
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)

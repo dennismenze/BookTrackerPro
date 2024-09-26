@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, g
-from models import db, Book, Author, List, User
+from models import db, Book, Author, List, User, UserBook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
 from sqlalchemy import text, true
@@ -205,6 +205,11 @@ def create_app():
             if action == 'delete':
                 user = User.query.get(user_id)
                 if user:
+                    # Remove user from all lists
+                    for list in user.lists:
+                        list.user_id = None
+                    # Delete all books associated with the user
+                    Book.query.filter(Book.users.any(id=user.id)).delete(synchronize_session=False)
                     db.session.delete(user)
                     db.session.commit()
                     flash('User deleted successfully.')
