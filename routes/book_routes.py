@@ -115,6 +115,30 @@ def get_book(id):
         return jsonify({'error':
                         'An error occurred while fetching the book'}), 500
 
+@bp.route('/<int:id>/read_status', methods=['PUT'])
+@login_required
+def update_read_status(id):
+    try:
+        current_app.logger.info(f"Updating read status for book {id}")
+        book = Book.query.get_or_404(id)
+        data = request.get_json()
+        is_read = data.get('is_read', False)
+
+        user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=id).first()
+        if user_book:
+            user_book.is_read = is_read
+        else:
+            new_user_book = UserBook(user_id=current_user.id, book_id=id, is_read=is_read)
+            db.session.add(new_user_book)
+
+        db.session.commit()
+        current_app.logger.info(f"Read status updated successfully for book {id}")
+        return jsonify({'message': 'Read status updated successfully', 'is_read': is_read})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating read status: {str(e)}")
+        return jsonify({'error': 'An error occurred while updating the read status'}), 500
+
 def fetch_google_books_info(title, author):
     try:
         query = f"intitle:{title}+inauthor:{author}"
