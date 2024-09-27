@@ -295,10 +295,27 @@ def create_app():
         books = Book.query.all()
         return render_template('admin/books.html', books=books)
 
-    @app.route('/admin/authors')
+    @app.route('/admin/authors', methods=['GET', 'POST'])
     @login_required
     @admin_required
     def admin_authors():
+        if request.method == 'POST':
+            action = request.form.get('action')
+            if action == 'bulk_delete':
+                author_ids = request.form.getlist('author_ids')
+                if author_ids:
+                    try:
+                        Author.query.filter(Author.id.in_(author_ids)).delete(synchronize_session=False)
+                        db.session.commit()
+                        flash(f'{len(author_ids)} authors have been deleted successfully.')
+                    except Exception as e:
+                        db.session.rollback()
+                        app.logger.error(f"Error bulk deleting authors: {str(e)}")
+                        flash('An error occurred while deleting the authors. Please try again.')
+                else:
+                    flash('No authors selected for deletion.')
+            return redirect(url_for('admin_authors'))
+
         page = request.args.get('page', 1, type=int)
         per_page = 10  # Number of authors per page
         search_query = request.args.get('search', '')
