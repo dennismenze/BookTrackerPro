@@ -38,5 +38,10 @@ def map_book_data(book, user_id):
         'author_id': book.author_id,
         'is_read': is_book_read(book, user_id),
         'is_main_work': book.is_main_work,
-        'cover_image_url': book.cover_image_url or '/static/images/no-cover.png'
+        'cover_image_url': book.cover_image_url or '/static/images/no-cover.png',
+        'isbn': book.isbn,
+        'description': book.description,
+        'page_count': book.page_count,
+        'published_date': book.published_date,
+        'lists': []
     }

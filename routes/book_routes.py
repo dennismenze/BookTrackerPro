@@ -42,11 +42,7 @@ def get_books():
 @login_required
 def get_book(id):
     try:
-        current_app.logger.info(f"Fetching book with id: {id}")
         book = Book.query.get_or_404(id)
-
-        current_app.logger.info(f"Book found: {book.title}")
-
         user_book = UserBook.query.filter_by(user_id=current_user.id,
                                              book_id=book.id).first()
 
@@ -62,24 +58,15 @@ def get_book(id):
             'page_count': book.page_count,
             'published_date': book.published_date,
             'lists': [],
-            'in_user_collection': user_book is not None,
             'is_main_work': book.is_main_work
         }
 
-        try:
-            if hasattr(book, 'lists'):
-                book_data['lists'] = [{
-                    'id': list.id,
-                    'name': list.name
-                } for list in book.lists if list.user_id == current_user.id or list.user_id is None]
-                current_app.logger.debug(f"Book {id} lists: {book_data['lists']}")
-            else:
-                current_app.logger.warning(f"Book {id} does not have 'lists' attribute")
-        except Exception as e:
-            current_app.logger.error(f"Error processing lists for book {id}: {str(e)}")
+        book_data['lists'] = [{
+            'id': list.id,
+            'name': list.name
+        } for list in book.lists if list.user_id == current_user.id or list.user_id is None]
 
         if not all([book.isbn, book.description, book.cover_image_url, book.page_count, book.published_date]):
-            current_app.logger.info(f"Fetching missing information for book {id} from Google Books API")
             google_books_info = fetch_google_books_info(book.title, book.author.name)
             
             book_data['isbn'] = book.isbn or google_books_info.get('isbn')
@@ -95,21 +82,17 @@ def get_book(id):
             book.published_date = book_data['published_date']
             
             db.session.commit()
-            current_app.logger.info(f"Updated book {id} with Google Books API information")
 
-        current_app.logger.debug(f"Returning book data: {book_data}")
         return jsonify(book_data)
+    
     except Exception as e:
         current_app.logger.error(f"Error in get_book: {str(e)}")
-        return jsonify({'error':
-                        'An error occurred while fetching the book'}), 500
+        return jsonify({'error': 'An error occurred while fetching the book'}), 500
 
 @bp.route('/<int:id>/read_status', methods=['PUT'])
 @login_required
 def update_read_status(id):
     try:
-        current_app.logger.info(f"Updating read status for book {id}")
-        book = Book.query.get_or_404(id)
         data = request.get_json()
         is_read = data.get('is_read', False)
 
@@ -121,7 +104,6 @@ def update_read_status(id):
             db.session.add(new_user_book)
 
         db.session.commit()
-        current_app.logger.info(f"Read status updated successfully for book {id}")
         return jsonify({'message': 'Read status updated successfully', 'is_read': is_read})
     except Exception as e:
         db.session.rollback()
@@ -132,16 +114,13 @@ def update_read_status(id):
 @login_required
 def toggle_main_work(id):
     try:
-        current_app.logger.info(f"Toggling main work status for book {id}")
         book = Book.query.get_or_404(id)
         
         if not current_user.is_admin:
-            current_app.logger.warning(f"Non-admin user {current_user.id} attempted to toggle main work status")
             return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
 
         book.is_main_work = not book.is_main_work
         db.session.commit()
-        current_app.logger.info(f"Main work status updated successfully for book {id}")
         return jsonify({'message': 'Main work status updated successfully', 'is_main_work': book.is_main_work})
     except Exception as e:
         db.session.rollback()
