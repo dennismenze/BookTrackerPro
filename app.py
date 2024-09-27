@@ -34,7 +34,8 @@ def create_app():
         "'self'",
         'script-src': [
             "'self'", "https://cdn.jsdelivr.net",
-            "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"
+            "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com",
+            "'unsafe-inline'"  # Added 'unsafe-inline' to allow inline scripts
         ],
         'style-src': [
             "'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'",
