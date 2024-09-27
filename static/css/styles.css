@@ -42,3 +42,20 @@
 .card-body {
     @apply px-4 py-5 sm:p-6;
 }
+
+/* Font Awesome icon styles */
+.fa-eye, .fa-eye-slash {
+    font-size: 1rem;
+}
+
+.toggle-read-status {
+    @apply absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center;
+}
+
+.toggle-read-status:hover {
+    @apply bg-opacity-100;
+}
+
+.book-item.read {
+    opacity: 0.5;
+}
