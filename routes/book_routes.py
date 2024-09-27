@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app, abort
 from flask_login import login_required, current_user
 from models import db, Book, Author, List, UserBook
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func, or_
 import requests
 
@@ -10,19 +9,12 @@ bp = Blueprint('book', __name__, url_prefix='/api/books')
 @bp.before_request
 def check_auth():
     if not current_user.is_authenticated:
-        current_app.logger.warning(
-            f"User not authenticated.")
         abort(401)  # Unauthorized
-    else:
-        current_app.logger.debug(
-            f"User authenticated. User ID: {current_user.id}")
 
 @bp.route('/', methods=['GET'])
 @login_required
 def get_books():
     try:
-        current_app.logger.debug(
-            f"Database URI: {current_app.config['SQLALCHEMY_DATABASE_URI']}")
         search_query = request.args.get('search', '')
 
         books_query = Book.query.join(UserBook).filter(

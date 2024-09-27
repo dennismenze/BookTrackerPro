@@ -3,21 +3,14 @@ from flask_login import login_required, current_user
 from models import db, Book, Author, List, UserBook
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func, or_
+from utils import calculate_read_percentage, is_book_read, map_book_data
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
 @bp.before_request
 def check_auth():
-    current_app.logger.debug(f"check_auth called. Session: {session}")
-    current_app.logger.debug(
-        f"current_user.is_authenticated: {current_user.is_authenticated}")
     if not current_user.is_authenticated:
-        current_app.logger.warning(
-            f"User not authenticated. Session: {session}")
         abort(401)  # Unauthorized
-    else:
-        current_app.logger.debug(
-            f"User authenticated. User ID: {current_user.id}")
 
 @bp.route('/', methods=['GET'])
 @login_required
@@ -50,20 +43,10 @@ def get_lists():
 @login_required
 def get_list(id):
     try:
-        current_app.logger.info(f"Fetching list with id: {id}")
         list = List.query.filter(
             or_(List.id == id,
                 List.user_id == current_user.id)).first_or_404()
-        current_app.logger.info(f"List found: {list.name}")
-        books = [{
-            'id': book.id,
-            'title': book.title,
-            'author': book.author.name,
-            'author_id': book.author.id,
-            'is_read': is_book_read(book, current_user.id),
-            'cover_image_url': book.cover_image_url or '/static/images/no-cover.png'
-        } for book in list.books]
-        current_app.logger.info(f"Number of books in list: {len(books)}")
+        books = [map_book_data(book, current_user.id) for book in list.books]
         read_percentage = calculate_read_percentage(list.books,
                                                     current_user.id)
         current_app.logger.info(f"Read percentage: {read_percentage}")
@@ -196,14 +179,3 @@ def remove_book_from_list(id, book_id):
             'error':
             'An error occurred while removing the book from the list'
         }), 500
-
-def calculate_read_percentage(books, user_id):
-    if not books:
-        return 0
-    read_books = sum(1 for book in books if is_book_read(book, user_id))
-    return (read_books / len(books)) * 100
-
-def is_book_read(book, user_id):
-    user_book = UserBook.query.filter_by(user_id=user_id,
-                                         book_id=book.id).first()
-    return user_book.is_read if user_book else False

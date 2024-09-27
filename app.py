@@ -107,48 +107,30 @@ def create_app():
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        app.logger.debug("Login route accessed")
-        app.logger.debug(f"Session before login: {session}")
-
         if current_user.is_authenticated:
-            app.logger.debug("User already authenticated, redirecting to index")
             return redirect(url_for('index'))
 
         if request.method == 'POST':
-            app.logger.debug("Processing POST request")
             try:
                 username = request.form['username']
                 password = request.form['password']
-                app.logger.debug(f"Login attempt for username: {username}")
 
                 user = User.query.filter_by(username=username).first()
                 if user:
-                    app.logger.debug(f"User found: {username}")
                     if user.check_password(password):
-                        app.logger.debug("Password check successful")
                         login_user(user)
-                        app.logger.debug(f"Current user: {current_user.is_authenticated}")
-                        app.logger.debug(f"login_user called for user: {username}")
-
                         session['user_id'] = user.id
-                        app.logger.debug(f"Session after login: {session}")
-                        app.logger.info(f"User logged in successfully: {username}")
                         next_page = request.args.get('next')
                         if not next_page or urlparse(next_page).netloc != '':
                             next_page = url_for('index')
-                        app.logger.debug(f"Redirecting to: {next_page}")
                         return redirect(next_page)
                     else:
-                        app.logger.warning(f"Invalid password for username: {username}")
                         flash('Invalid username or password')
                 else:
-                    app.logger.warning(f"User not found: {username}")
                     flash('Invalid username or password')
             except Exception as e:
-                app.logger.error(f"Error during login: {str(e)}")
                 flash('An error occurred during login. Please try again.')
 
-        app.logger.debug("Rendering login template")
         return render_template('login.html')
 
     @app.route('/logout')
