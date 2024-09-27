@@ -57,7 +57,6 @@ function loadAuthorList(searchQuery = '') {
                     </ul>
                 </div>
             `;
-            setupEventListeners();
         })
         .catch(error => {
             console.error('Error fetching author list:', error);
@@ -108,7 +107,6 @@ function loadAuthorDetails(authorId) {
                 </ul>
                 ${isAdmin() ? `<button class="btn btn-danger mt-4 delete-author" data-author-id="${author.id}">Delete Author</button>` : ''}
             `;
-            setupEventListeners();
         })
         .catch(error => {
             console.error('Error fetching author details:', error);
@@ -170,7 +168,7 @@ function isAdmin() {
     return document.body.dataset.isAdmin === 'true';
 }
 
-function setupEventListeners() {
+function setupEventListenersAuthors() {
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('delete-author')) {
             const authorId = event.target.dataset.authorId;
@@ -205,4 +203,5 @@ function searchAuthors() {
 
 document.addEventListener('DOMContentLoaded', function() {
     loadAuthorList();
+    setupEventListenersAuthors();
 });
