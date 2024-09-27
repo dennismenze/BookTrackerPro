@@ -77,5 +77,25 @@
             checkbox.checked = this.checked;
         }
     });
+
+    // Update 'Select All' checkbox state based on individual checkboxes
+    function updateSelectAllCheckbox() {
+        var selectAllCheckbox = document.getElementById('select-all');
+        var checkboxes = document.getElementsByName('author_ids');
+        var allChecked = true;
+        for (var checkbox of checkboxes) {
+            if (!checkbox.checked) {
+                allChecked = false;
+                break;
+            }
+        }
+        selectAllCheckbox.checked = allChecked;
+    }
+
+    // Add event listeners to individual checkboxes
+    var checkboxes = document.getElementsByName('author_ids');
+    for (var checkbox of checkboxes) {
+        checkbox.addEventListener('change', updateSelectAllCheckbox);
+    }
 </script>
 {% endblock %}
