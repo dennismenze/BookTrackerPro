@@ -165,21 +165,25 @@ def create_app():
     def list_detail(id):
         return render_template('list/detail.html', list_id=id)
 
+    def admin_required(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated or not current_user.is_admin:
+                flash('You do not have permission to access this page.')
+                return redirect(url_for('index'))
+            return f(*args, **kwargs)
+        return decorated_function
+
     @app.route('/admin')
     @login_required
+    @admin_required
     def admin():
-        if not current_user.is_admin:
-            flash('You do not have permission to access the admin panel.')
-            return redirect(url_for('index'))
         return render_template('admin/dashboard.html')
 
     @app.route('/admin/users', methods=['GET', 'POST'])
     @login_required
+    @admin_required
     def admin_users():
-        if not current_user.is_admin:
-            flash('You do not have permission to access the admin panel.')
-            return redirect(url_for('index'))
-        
         if request.method == 'POST':
             action = request.form.get('action')
             user_id = request.form.get('user_id')
@@ -188,21 +192,16 @@ def create_app():
                 user = db.session.get(User, user_id)
                 if user:
                     try:
-                        # Remove user's entries from user_book table
                         UserBook.query.filter_by(user_id=user.id).delete()
                         
-                        # Remove user's books from all lists
                         BookList = db.Table('book_list', db.metadata, autoload_with=db.engine)
                         books_to_remove = db.session.query(Book.id).join(UserBook).filter(UserBook.user_id == user.id).subquery()
                         db.session.execute(BookList.delete().where(BookList.c.book_id.in_(books_to_remove)))
                         
-                        # Remove user from all lists
                         List.query.filter_by(user_id=user.id).update({'user_id': None})
                         
-                        # Delete all books associated with the user
                         Book.query.filter(Book.id.in_(books_to_remove)).delete(synchronize_session=False)
                         
-                        # Delete the user
                         db.session.delete(user)
                         db.session.commit()
                         flash('User and associated data deleted successfully.')
@@ -229,11 +228,8 @@ def create_app():
 
     @app.route('/admin/books', methods=['GET', 'POST'])
     @login_required
+    @admin_required
     def admin_books():
-        if not current_user.is_admin:
-            flash('You do not have permission to access the admin panel.')
-            return redirect(url_for('index'))
-        
         if request.method == 'POST':
             action = request.form.get('action')
             book_id = request.form.get('book_id')
@@ -242,13 +238,10 @@ def create_app():
                 book = Book.query.get(book_id)
                 if book:
                     try:
-                        # Remove book from all lists
                         book.lists = []
                         
-                        # Remove book from all users
                         UserBook.query.filter_by(book_id=book.id).delete()
                         
-                        # Delete the book
                         db.session.delete(book)
                         db.session.commit()
                         flash('Book deleted successfully.')
@@ -263,6 +256,55 @@ def create_app():
         
         books = Book.query.all()
         return render_template('admin/books.html', books=books)
+
+    @app.route('/admin/authors')
+    @login_required
+    @admin_required
+    def admin_authors():
+        authors = Author.query.all()
+        return render_template('admin/authors.html', authors=authors)
+
+    @app.route('/admin/authors/add', methods=['GET', 'POST'])
+    @login_required
+    @admin_required
+    def admin_add_author():
+        if request.method == 'POST':
+            name = request.form.get('name')
+            if name:
+                new_author = Author(name=name)
+                db.session.add(new_author)
+                db.session.commit()
+                flash('Author added successfully.')
+                return redirect(url_for('admin_authors'))
+            else:
+                flash('Author name is required.')
+        return render_template('admin/author_form.html')
+
+    @app.route('/admin/authors/<int:id>/edit', methods=['GET', 'POST'])
+    @login_required
+    @admin_required
+    def admin_edit_author(id):
+        author = Author.query.get_or_404(id)
+        if request.method == 'POST':
+            name = request.form.get('name')
+            if name:
+                author.name = name
+                db.session.commit()
+                flash('Author updated successfully.')
+                return redirect(url_for('admin_authors'))
+            else:
+                flash('Author name is required.')
+        return render_template('admin/author_form.html', author=author)
+
+    @app.route('/admin/authors/<int:id>/delete', methods=['POST'])
+    @login_required
+    @admin_required
+    def admin_delete_author(id):
+        author = Author.query.get_or_404(id)
+        db.session.delete(author)
+        db.session.commit()
+        flash('Author deleted successfully.')
+        return redirect(url_for('admin_authors'))
 
     return app
 
