@@ -30,12 +30,13 @@ function loadListDetails(listId) {
 
         const bookList = document.getElementById('book-list');
         bookList.innerHTML = list.books.map(book => `
-            <div class="book-item bg-gray-100 p-4 rounded-lg shadow">
+            <div class="book-item bg-gray-100 p-4 rounded-lg shadow ${book.is_read ? 'opacity-50' : ''}">
                 <img src="${book.cover_image_url}" alt="${book.title} cover" class="w-full h-48 object-cover rounded-md mb-2">
                 <h3 class="font-semibold text-lg mb-1">${book.title}</h3>
                 <p class="text-sm text-gray-600 mb-2">by ${book.author}</p>
-                <button class="toggle-read-status w-full px-2 py-1 rounded ${book.is_read ? 'bg-green-500' : 'bg-yellow-500'} text-white"
+                <button class="toggle-read-status w-full px-2 py-1 rounded ${book.is_read ? 'bg-green-500' : 'bg-yellow-500'} text-white flex items-center justify-center"
                         data-book-id="${book.id}" data-is-read="${book.is_read}">
+                    <i class="fas fa-eye${book.is_read ? '' : '-slash'} mr-2"></i>
                     ${book.is_read ? 'Read' : 'Unread'}
                 </button>
             </div>
