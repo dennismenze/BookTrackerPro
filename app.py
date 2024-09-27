@@ -3,7 +3,7 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from models import db, Book, Author, List, User, UserBook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
-from sqlalchemy import text, true, select
+from sqlalchemy import text, true, select, or_
 from flask_migrate import Migrate
 from flask_talisman import Talisman
 from urllib.parse import urlparse
@@ -301,8 +301,15 @@ def create_app():
     def admin_authors():
         page = request.args.get('page', 1, type=int)
         per_page = 10  # Number of authors per page
-        authors = Author.query.paginate(page=page, per_page=per_page, error_out=False)
-        return render_template('admin/authors.html', authors=authors)
+        search_query = request.args.get('search', '')
+        
+        authors_query = Author.query
+        
+        if search_query:
+            authors_query = authors_query.filter(Author.name.ilike(f'%{search_query}%'))
+        
+        authors = authors_query.paginate(page=page, per_page=per_page, error_out=False)
+        return render_template('admin/authors.html', authors=authors, search_query=search_query)
 
     @app.route('/admin/authors/add', methods=['GET', 'POST'])
     @login_required
