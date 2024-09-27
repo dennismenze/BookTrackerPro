@@ -6,7 +6,6 @@ from sqlalchemy import func, or_
 
 bp = Blueprint('list', __name__, url_prefix='/api/lists')
 
-
 @bp.before_request
 def check_auth():
     current_app.logger.debug(f"check_auth called. Session: {session}")
@@ -19,7 +18,6 @@ def check_auth():
     else:
         current_app.logger.debug(
             f"User authenticated. User ID: {current_user.id}")
-
 
 @bp.route('/', methods=['GET'])
 @login_required
@@ -36,24 +34,17 @@ def get_lists():
                 or_(List.user_id == current_user.id,
                     List.user_id == None)).all()
         return jsonify([{
-            'id':
-            list.id,
-            'name':
-            list.name,
-            'book_count':
-            len(list.books),
-            'read_percentage':
-            calculate_read_percentage(list.books, current_user.id),
-            'is_public':
-            list.is_public,
-            'user_id':
-            list.user_id
+            'id': list.id,
+            'name': list.name,
+            'book_count': len(list.books),
+            'read_percentage': calculate_read_percentage(list.books, current_user.id),
+            'is_public': list.is_public,
+            'user_id': list.user_id
         } for list in lists])
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error fetching lists: {str(e)}")
         return jsonify({'error':
                         'An error occurred while fetching lists'}), 500
-
 
 @bp.route('/<int:id>', methods=['GET'])
 @login_required
@@ -69,7 +60,8 @@ def get_list(id):
             'title': book.title,
             'author': book.author.name,
             'author_id': book.author.id,
-            'is_read': is_book_read(book, current_user.id)
+            'is_read': is_book_read(book, current_user.id),
+            'cover_image_url': book.cover_image_url or '/static/images/no-cover.png'
         } for book in list.books]
         current_app.logger.info(f"Number of books in list: {len(books)}")
         read_percentage = calculate_read_percentage(list.books,
@@ -86,7 +78,6 @@ def get_list(id):
         current_app.logger.error(f"Error fetching list details: {str(e)}")
         return jsonify(
             {'error': 'An error occurred while fetching list details'}), 500
-
 
 @bp.route('/', methods=['POST'])
 @login_required
@@ -110,7 +101,6 @@ def create_list():
         current_app.logger.error(f"Error creating list: {str(e)}")
         return jsonify({'error':
                         'An error occurred while creating the list'}), 500
-
 
 @bp.route('/<int:id>', methods=['PUT'])
 @login_required
@@ -138,7 +128,6 @@ def update_list(id):
         return jsonify({'error':
                         'An error occurred while updating the list'}), 500
 
-
 @bp.route('/<int:id>', methods=['DELETE'])
 @login_required
 def delete_list(id):
@@ -161,7 +150,6 @@ def delete_list(id):
         current_app.logger.error(f"Error deleting list: {str(e)}")
         return jsonify({'error':
                         'An error occurred while deleting the list'}), 500
-
 
 @bp.route('/<int:id>/books', methods=['POST'])
 @login_required
@@ -188,7 +176,6 @@ def add_book_to_list(id):
             {'error':
              'An error occurred while adding the book to the list'}), 500
 
-
 @bp.route('/<int:id>/books/<int:book_id>', methods=['DELETE'])
 @login_required
 def remove_book_from_list(id, book_id):
@@ -210,13 +197,11 @@ def remove_book_from_list(id, book_id):
             'An error occurred while removing the book from the list'
         }), 500
 
-
 def calculate_read_percentage(books, user_id):
     if not books:
         return 0
     read_books = sum(1 for book in books if is_book_read(book, user_id))
     return (read_books / len(books)) * 100
-
 
 def is_book_read(book, user_id):
     user_book = UserBook.query.filter_by(user_id=user_id,

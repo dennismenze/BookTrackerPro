@@ -26,16 +26,15 @@ function loadAuthorDetails(authorId) {
 
         const bookList = document.getElementById('book-list');
         bookList.innerHTML = author.books.map(book => `
-            <li class="flex items-center justify-between bg-gray-100 p-2 rounded mb-2">
-                <div>
-                    <a href="/book/${book.id}" class="text-blue-600 hover:underline">${book.title}</a>
-                    ${book.is_main_work ? '<span class="ml-2 px-2 py-1 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded-full">Main Work</span>' : ''}
-                </div>
-                <button class="toggle-read-status px-2 py-1 rounded ${book.is_read ? 'bg-green-500' : 'bg-yellow-500'} text-white"
+            <div class="book-item bg-gray-100 p-4 rounded-lg shadow">
+                <img src="${book.cover_image_url || '/static/images/no-cover.png'}" alt="${book.title} cover" class="w-full h-48 object-cover rounded-md mb-2">
+                <h3 class="font-semibold text-lg mb-1">${book.title}</h3>
+                ${book.is_main_work ? '<span class="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded-full mb-2">Main Work</span>' : ''}
+                <button class="toggle-read-status w-full px-2 py-1 rounded ${book.is_read ? 'bg-green-500' : 'bg-yellow-500'} text-white"
                         data-book-id="${book.id}" data-is-read="${book.is_read}">
                     ${book.is_read ? 'Read' : 'Unread'}
                 </button>
-            </li>
+            </div>
         `).join('');
 
         setupEventListeners();

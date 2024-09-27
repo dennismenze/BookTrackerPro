@@ -16,6 +16,8 @@ flask-migrate = "^4.0.7"
 flask-talisman = "^1.1.0"
 cryptography = "^43.0.1"
 requests = "^2.32.3"
+sqlalchemy = "^2.0.35"
+werkzeug = "^3.0.4"
 
 
 [build-system]
