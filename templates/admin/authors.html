@@ -20,7 +20,7 @@
     {% if authors.items %}
         <form action="{{ url_for('admin_authors') }}" method="POST">
             <div class="mb-4">
-                <button type="submit" name="action" value="bulk_delete" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="return confirm('Are you sure you want to delete the selected authors?')">
+                <button type="submit" name="action" value="bulk_delete" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="return confirm('Are you sure you want to delete the selected authors and their associated books?')">
                     Delete Selected
                 </button>
             </div>
@@ -45,8 +45,7 @@
                         <td class="py-3 px-6 text-left">{{ author.name }}</td>
                         <td class="py-3 px-6 text-center">
                             <a href="{{ url_for('admin_edit_author', id=author.id) }}" class="text-blue-500 hover:text-blue-700 mr-2">Edit</a>
-                            <button type="submit" name="action" value="delete" class="text-red-500 hover:text-red-700" onclick="return confirm('Are you sure you want to delete this author?')">Delete</button>
-                            <input type="hidden" name="author_id" value="{{ author.id }}">
+                            <button type="button" class="text-red-500 hover:text-red-700" onclick="confirmDelete({{ author.id }})">Delete</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -94,5 +93,24 @@
 
     // Initial update of 'Select All' checkbox state
     updateSelectAllCheckbox();
+
+    // Function to confirm delete action
+    function confirmDelete(authorId) {
+        if (confirm('Are you sure you want to delete this author and all associated books? This action cannot be undone.')) {
+            fetch(`/admin/authors/${authorId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('An error occurred while deleting the author. Please try again.');
+                }
+            });
+        }
+    }
 </script>
 {% endblock %}

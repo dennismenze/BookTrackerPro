@@ -35,7 +35,7 @@ def create_app():
         'script-src': [
             "'self'", "https://cdn.jsdelivr.net",
             "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com",
-            "'unsafe-inline'"  # Added 'unsafe-inline' to allow inline scripts
+            "'unsafe-inline'"
         ],
         'style-src': [
             "'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'",
@@ -318,7 +318,7 @@ def create_app():
             return redirect(url_for('admin_authors'))
 
         page = request.args.get('page', 1, type=int)
-        per_page = 10  # Number of authors per page
+        per_page = 10
         search_query = request.args.get('search', '')
         
         authors_query = Author.query
@@ -366,9 +366,16 @@ def create_app():
     @admin_required
     def admin_delete_author(id):
         author = Author.query.get_or_404(id)
-        db.session.delete(author)
-        db.session.commit()
-        flash('Author deleted successfully.')
+        try:
+            Book.query.filter_by(author_id=author.id).delete()
+            
+            db.session.delete(author)
+            db.session.commit()
+            flash('Author and associated books deleted successfully.')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error deleting author: {str(e)}")
+            flash('An error occurred while deleting the author. Please try again.')
         return redirect(url_for('admin_authors'))
 
     return app
