@@ -9,6 +9,7 @@ from flask_talisman import Talisman
 from urllib.parse import urlparse
 from functools import wraps
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -17,7 +18,8 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY",
+                                              "fallback_secret_key")
     app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}...")
 
     db.init_app(app)
@@ -29,13 +31,22 @@ def create_app():
     login_manager.login_view = 'login'
 
     csp = {
-        'default-src': "'self'",
-        'script-src': ["'self'", "https://cdn.jsdelivr.net", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
-        'style-src': ["'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+        'default-src':
+        "'self'",
+        'script-src': [
+            "'self'", "https://cdn.jsdelivr.net",
+            "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"
+        ],
+        'style-src': [
+            "'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'",
+            "https://cdnjs.cloudflare.com"
+        ],
         'img-src': ["'self'", "https:", "data:"],
         'font-src': ["'self'", "https:", "data:"],
-        'connect-src': "'self'",
-        'upgrade-insecure-requests': ''
+        'connect-src':
+        "'self'",
+        'upgrade-insecure-requests':
+        ''
     }
 
     Talisman(app, content_security_policy=csp, force_https=True)
@@ -44,7 +55,8 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    app.logger.debug(f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    app.logger.debug(
+        f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     from routes import book_routes, author_routes, list_routes
     app.register_blueprint(book_routes.bp)
@@ -68,7 +80,9 @@ def create_app():
     def register():
         app.logger.debug("Register route accessed")
         if current_user.is_authenticated:
-            app.logger.debug("Authenticated user accessing register page, redirecting to index")
+            app.logger.debug(
+                "Authenticated user accessing register page, redirecting to index"
+            )
             return redirect(url_for('index'))
         if request.method == 'POST':
             app.logger.debug("Processing POST request for registration")
@@ -79,13 +93,16 @@ def create_app():
 
                 user = User.query.filter_by(username=username).first()
                 if user:
-                    app.logger.warning(f"Registration attempt with existing username: {username}")
+                    app.logger.warning(
+                        f"Registration attempt with existing username: {username}"
+                    )
                     flash('Username already exists')
                     return redirect(url_for('register'))
 
                 user = User.query.filter_by(email=email).first()
                 if user:
-                    app.logger.warning(f"Registration attempt with existing email: {email}")
+                    app.logger.warning(
+                        f"Registration attempt with existing email: {email}")
                     flash('Email already exists')
                     return redirect(url_for('register'))
 
@@ -94,19 +111,22 @@ def create_app():
                 db.session.add(new_user)
                 db.session.commit()
 
-                app.logger.info(f"New user registered successfully: {username}")
+                app.logger.info(
+                    f"New user registered successfully: {username}")
                 flash('Registration successful')
                 return redirect(url_for('login'))
             except Exception as e:
                 db.session.rollback()
                 app.logger.error(f'Error during registration: {str(e)}')
-                flash('An error occurred during registration. Please try again.')
+                flash(
+                    'An error occurred during registration. Please try again.')
 
         app.logger.debug("Rendering registration template")
         return render_template('register.html')
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        app.logger.debug("Login route accessed")
         if current_user.is_authenticated:
             return redirect(url_for('index'))
 
@@ -114,8 +134,10 @@ def create_app():
             try:
                 username = request.form['username']
                 password = request.form['password']
-
+                app.logger.debug(
+                    f"Processing POST request for login: {username}")
                 user = User.query.filter_by(username=username).first()
+                app.logger.debug(f"User found: {user}")
                 if user:
                     if user.check_password(password):
                         login_user(user)
@@ -143,7 +165,9 @@ def create_app():
     @app.route('/authors')
     @login_required
     def authors():
-        return render_template('author/list.html', user_id=current_user.id, is_admin=current_user.is_admin)
+        return render_template('author/list.html',
+                               user_id=current_user.id,
+                               is_admin=current_user.is_admin)
 
     @app.route('/author/<int:id>')
     @login_required
@@ -158,7 +182,9 @@ def create_app():
     @app.route('/lists')
     @login_required
     def lists():
-        return render_template('list/list.html', user_id=current_user.id, is_admin=current_user.is_admin)
+        return render_template('list/list.html',
+                               user_id=current_user.id,
+                               is_admin=current_user.is_admin)
 
     @app.route('/list/<int:id>')
     @login_required
@@ -166,12 +192,14 @@ def create_app():
         return render_template('list/detail.html', list_id=id)
 
     def admin_required(f):
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated or not current_user.is_admin:
                 flash('You do not have permission to access this page.')
                 return redirect(url_for('index'))
             return f(*args, **kwargs)
+
         return decorated_function
 
     @app.route('/admin')
@@ -187,42 +215,53 @@ def create_app():
         if request.method == 'POST':
             action = request.form.get('action')
             user_id = request.form.get('user_id')
-            
+
             if action == 'delete':
                 user = db.session.get(User, user_id)
                 if user:
                     try:
                         UserBook.query.filter_by(user_id=user.id).delete()
-                        
-                        BookList = db.Table('book_list', db.metadata, autoload_with=db.engine)
-                        books_to_remove = db.session.query(Book.id).join(UserBook).filter(UserBook.user_id == user.id).subquery()
-                        db.session.execute(BookList.delete().where(BookList.c.book_id.in_(books_to_remove)))
-                        
-                        List.query.filter_by(user_id=user.id).update({'user_id': None})
-                        
-                        Book.query.filter(Book.id.in_(books_to_remove)).delete(synchronize_session=False)
-                        
+
+                        BookList = db.Table('book_list',
+                                            db.metadata,
+                                            autoload_with=db.engine)
+                        books_to_remove = db.session.query(
+                            Book.id).join(UserBook).filter(
+                                UserBook.user_id == user.id).subquery()
+                        db.session.execute(BookList.delete().where(
+                            BookList.c.book_id.in_(books_to_remove)))
+
+                        List.query.filter_by(user_id=user.id).update(
+                            {'user_id': None})
+
+                        Book.query.filter(Book.id.in_(books_to_remove)).delete(
+                            synchronize_session=False)
+
                         db.session.delete(user)
                         db.session.commit()
                         flash('User and associated data deleted successfully.')
                     except Exception as e:
                         db.session.rollback()
                         app.logger.error(f"Error deleting user: {str(e)}")
-                        flash('An error occurred while deleting the user. Please try again.')
+                        flash(
+                            'An error occurred while deleting the user. Please try again.'
+                        )
                 else:
                     flash('User not found.')
-            
+
             elif action == 'toggle_admin':
                 user = User.query.get(user_id)
                 if user:
                     user.is_admin = not user.is_admin
                     db.session.commit()
-                    flash(f"Admin status for {user.username} has been {'granted' if user.is_admin else 'revoked'}.")
+                    flash(
+                        f"Admin status for {user.username} has been {'granted' if user.is_admin else 'revoked'}."
+                    )
                 else:
                     flash('User not found.')
-            
+
             return redirect(url_for('admin_users'))
-        
+
         users = User.query.all()
         return render_template('admin/users.html', users=users)
 
@@ -233,27 +272,29 @@ def create_app():
         if request.method == 'POST':
             action = request.form.get('action')
             book_id = request.form.get('book_id')
-            
+
             if action == 'delete':
                 book = Book.query.get(book_id)
                 if book:
                     try:
                         book.lists = []
-                        
+
                         UserBook.query.filter_by(book_id=book.id).delete()
-                        
+
                         db.session.delete(book)
                         db.session.commit()
                         flash('Book deleted successfully.')
                     except Exception as e:
                         db.session.rollback()
                         app.logger.error(f"Error deleting book: {str(e)}")
-                        flash('An error occurred while deleting the book. Please try again.')
+                        flash(
+                            'An error occurred while deleting the book. Please try again.'
+                        )
                 else:
                     flash('Book not found.')
-            
+
             return redirect(url_for('admin_books'))
-        
+
         books = Book.query.all()
         return render_template('admin/books.html', books=books)
 
@@ -307,6 +348,7 @@ def create_app():
         return redirect(url_for('admin_authors'))
 
     return app
+
 
 if __name__ == '__main__':
     app = create_app()
