@@ -19,7 +19,7 @@
             </tr>
         </thead>
         <tbody class="text-gray-600 text-sm font-light">
-            {% for author in authors %}
+            {% for author in authors.items %}
             <tr class="border-b border-gray-200 hover:bg-gray-100">
                 <td class="py-3 px-6 text-left whitespace-nowrap">{{ author.id }}</td>
                 <td class="py-3 px-6 text-left">{{ author.name }}</td>
@@ -33,5 +33,17 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="flex justify-center mt-4">
+        {% if authors.has_prev %}
+            <a href="{{ url_for('admin_authors', page=authors.prev_num) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
+        {% endif %}
+        <span class="py-2 px-4">
+            Page {{ authors.page }} of {{ authors.pages }}
+        </span>
+        {% if authors.has_next %}
+            <a href="{{ url_for('admin_authors', page=authors.next_num) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Next</a>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
