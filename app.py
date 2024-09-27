@@ -306,9 +306,17 @@ def create_app():
                 author_ids = request.form.getlist('author_ids')
                 if author_ids:
                     try:
-                        Author.query.filter(Author.id.in_(author_ids)).delete(synchronize_session=False)
+                        for author_id in author_ids:
+                            author = Author.query.get(author_id)
+                            if author:
+                                # Delete associated books and user_books records
+                                books = Book.query.filter_by(author_id=author.id).all()
+                                for book in books:
+                                    UserBook.query.filter_by(book_id=book.id).delete()
+                                    db.session.delete(book)
+                                db.session.delete(author)
                         db.session.commit()
-                        flash(f'{len(author_ids)} authors have been deleted successfully.')
+                        flash(f'{len(author_ids)} authors and their associated books have been deleted successfully.')
                     except Exception as e:
                         db.session.rollback()
                         app.logger.error(f"Error bulk deleting authors: {str(e)}")
@@ -367,7 +375,11 @@ def create_app():
     def admin_delete_author(id):
         author = Author.query.get_or_404(id)
         try:
-            Book.query.filter_by(author_id=author.id).delete()
+            # Delete associated books and user_books records
+            books = Book.query.filter_by(author_id=author.id).all()
+            for book in books:
+                UserBook.query.filter_by(book_id=book.id).delete()
+                db.session.delete(book)
             
             db.session.delete(author)
             db.session.commit()
