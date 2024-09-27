@@ -39,7 +39,7 @@
                     {% for author in authors.items %}
                     <tr class="border-b border-gray-200 hover:bg-gray-100">
                         <td class="py-3 px-6 text-left whitespace-nowrap">
-                            <input type="checkbox" name="author_ids" value="{{ author.id }}" class="form-checkbox h-5 w-5 text-blue-600">
+                            <input type="checkbox" name="author_ids" value="{{ author.id }}" class="author-checkbox form-checkbox h-5 w-5 text-blue-600">
                         </td>
                         <td class="py-3 px-6 text-left whitespace-nowrap">{{ author.id }}</td>
                         <td class="py-3 px-6 text-left">{{ author.name }}</td>
@@ -71,31 +71,28 @@
 </div>
 
 <script>
-    document.getElementById('select-all').addEventListener('change', function() {
-        var checkboxes = document.getElementsByName('author_ids');
-        for (var checkbox of checkboxes) {
-            checkbox.checked = this.checked;
-        }
-    });
+    const selectAllCheckbox = document.getElementById('select-all');
+    const authorCheckboxes = document.querySelectorAll('.author-checkbox');
 
-    // Update 'Select All' checkbox state based on individual checkboxes
+    // Function to update 'Select All' checkbox state
     function updateSelectAllCheckbox() {
-        var selectAllCheckbox = document.getElementById('select-all');
-        var checkboxes = document.getElementsByName('author_ids');
-        var allChecked = true;
-        for (var checkbox of checkboxes) {
-            if (!checkbox.checked) {
-                allChecked = false;
-                break;
-            }
-        }
+        const allChecked = Array.from(authorCheckboxes).every(checkbox => checkbox.checked);
         selectAllCheckbox.checked = allChecked;
     }
 
-    // Add event listeners to individual checkboxes
-    var checkboxes = document.getElementsByName('author_ids');
-    for (var checkbox of checkboxes) {
+    // Event listener for 'Select All' checkbox
+    selectAllCheckbox.addEventListener('change', function() {
+        authorCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Event listeners for individual author checkboxes
+    authorCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', updateSelectAllCheckbox);
-    }
+    });
+
+    // Initial update of 'Select All' checkbox state
+    updateSelectAllCheckbox();
 </script>
 {% endblock %}
