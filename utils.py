@@ -118,12 +118,3 @@ def fetch_google_books_info(title, author):
     except Exception as e:
         current_app.logger.error(f"Error fetching Google Books info: {str(e)}")
         return {}
-
-
-def clear_authors_and_books():
-    UserBook.query.delete()
-    BookList.query.delete()
-    Book.query.delete()
-    Author.query.delete()
-    db.session.commit()
-    print("Database has been cleared.")

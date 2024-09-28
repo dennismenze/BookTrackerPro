@@ -78,5 +78,3 @@ class BookList(db.Model):
     __tablename__ = 'book_list'
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
-    book = db.relationship('Book', backref='book_list')
-    list = db.relationship('List', backref='book_list')
