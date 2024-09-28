@@ -7,6 +7,7 @@ from models import db, User, Book, Author, List, UserBook
 from functools import wraps
 from sqlalchemy import func
 from flask_migrate import Migrate
+from routes import book_routes, author_routes, list_routes
 
 def create_app():
     app = Flask(__name__)
@@ -17,6 +18,10 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
+    
+    app.register_blueprint(book_routes.bp)
+    app.register_blueprint(author_routes.bp)
+    app.register_blueprint(list_routes.bp)
 
     login_manager = LoginManager()
     login_manager.login_view = 'login'
@@ -118,65 +123,6 @@ def create_app():
     @login_required
     def author_detail(id):
         return render_template('author/detail.html', author_id=id)
-
-    @app.route('/api/authors/<int:id>')
-    @login_required
-    def api_author_detail(id):
-        author = Author.query.get_or_404(id)
-        books = Book.query.filter_by(author_id=author.id).all()
-
-        total_books = len(books)
-        read_books = sum(1 for book in books if UserBook.query.filter_by(
-            user_id=current_user.id, book_id=book.id, is_read=True).first())
-        read_percentage = (read_books / total_books *
-                           100) if total_books > 0 else 0
-
-        main_works = [book for book in books if book.is_main_work]
-        total_main_works = len(main_works)
-        read_main_works = sum(
-            1 for book in main_works
-            if UserBook.query.filter_by(user_id=current_user.id,
-                                        book_id=book.id,
-                                        is_read=True).first())
-        read_main_works_percentage = (read_main_works / total_main_works *
-                                      100) if total_main_works > 0 else 0
-
-        return jsonify({
-            'id':
-            author.id,
-            'name':
-            author.name,
-            'image_url':
-            author.image_url
-            or url_for('static', filename='images/default-author.png'),
-            'total_books':
-            total_books,
-            'read_books':
-            read_books,
-            'read_percentage':
-            read_percentage,
-            'total_main_works':
-            total_main_works,
-            'read_main_works':
-            read_main_works,
-            'read_main_works_percentage':
-            read_main_works_percentage,
-            'books': [{
-                'id':
-                book.id,
-                'title':
-                book.title,
-                'is_read':
-                UserBook.query.filter_by(user_id=current_user.id,
-                                         book_id=book.id,
-                                         is_read=True).first() is not None,
-                'is_main_work':
-                book.is_main_work,
-                'cover_image_url':
-                book.cover_image_url
-                or url_for('static', filename='images/no-cover.png')
-            } for book in books]
-        })
 
     @app.route('/book/<int:id>')
     @login_required
@@ -427,49 +373,6 @@ def create_app():
                 'An error occurred while deleting the author. Please try again.'
             )
         return redirect(url_for('admin_authors'))
-
-    @app.route('/api/books')
-    @login_required
-    def api_books():
-        books = Book.query.all()
-        return jsonify([{
-            'id':
-            book.id,
-            'title':
-            book.title,
-            'author':
-            book.author.name,
-            'cover_image_url':
-            book.cover_image_url
-            or url_for('static', filename='images/no-cover.png'),
-            'is_read':
-            UserBook.query.filter_by(user_id=current_user.id,
-                                     book_id=book.id,
-                                     is_read=True).first() is not None
-        } for book in books])
-
-    @app.route('/api/authors')
-    @login_required
-    def api_authors():
-        search_query = request.args.get('search', '')
-        authors_query = Author.query
-
-        if search_query:
-            authors_query = authors_query.filter(
-                Author.name.ilike(f'%{search_query}%'))
-
-        authors = authors_query.all()
-        return jsonify([{
-            'id':
-            author.id,
-            'name':
-            author.name,
-            'image_url':
-            author.image_url
-            or url_for('static', filename='images/default-author.png'),
-            'books_count':
-            len(author.books)
-        } for author in authors])
 
     return app
 

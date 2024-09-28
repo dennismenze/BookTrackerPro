@@ -1,7 +1,6 @@
 from models import db, Author, Book, UserBook, BookList
 from flask import current_app
 import requests
-import time
 
 
 def calculate_read_percentage(books, user_id):
@@ -44,9 +43,53 @@ def is_book_read(book, user_id):
                                          book_id=book.id).first()
     return user_book.is_read if user_book else False
 
-def map_author_data(author)
-    author_data = 
+def map_author_data(author, user_id):  
+    books = [map_book_data(book, user_id) for book in author.books]
+    book_stats = get_books_stats(author.books, user_id)    
+    
+    author_data = {
+        'id': author.id,
+        'name': author.name,
+        'image_url': author.image_url,
+        'books': books,
+        'total_books': book_stats['total_books'],
+        'read_books': book_stats['read_books'],
+        'read_percentage': book_stats['read_percentage'],
+        'total_main_works': book_stats['total_main_works'],
+        'read_main_works': book_stats['read_main_works'],
+        'read_main_works_percentage': book_stats['read_main_works_percentage']
+    }
 
+    if not author.image_url:
+        author.image_url = get_author_image_from_wikimedia(author.name)
+        db.session.commit()
+    return author_data
+
+def get_author_image_from_wikimedia(author_name):
+    # Definiere die API-Endpunkt-URL
+    url = "https://en.wikipedia.org/w/api.php"
+
+    # Parameter für die Wikipedia-API, um die Seite des Autors zu suchen
+    params = {
+        "action": "query",
+        "titles": author_name,
+        "prop": "pageimages",
+        "format": "json",
+        "pithumbsize": 500  # Die Größe des gewünschten Thumbnails in Pixeln
+    }
+
+    # Anfrage an die Wikipedia-API senden
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+
+    # Extrahiere die Bild-URL aus der Antwort
+    pages = data.get("query", {}).get("pages", {})
+    for page_id, page in pages.items():
+        if "thumbnail" in page:
+            return page["thumbnail"]["source"]
+
+    return None
 
 def map_book_data(book, user_id):
     book_data = {

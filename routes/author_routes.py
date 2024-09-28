@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, current_app, abort
 from flask_login import login_required, current_user
 from models import db, Author, Book, UserBook
 from sqlalchemy import func, or_
-from utils import calculate_read_percentage, calculate_read_main_works_percentage, map_book_data, get_books_stats
+from utils import calculate_read_percentage, calculate_read_main_works_percentage, map_author_data, map_book_data, get_books_stats
 
 bp = Blueprint('author', __name__, url_prefix='/api/authors')
 
@@ -58,20 +58,9 @@ def get_authors():
 @login_required
 def get_author(id):
     author = Author.query.get_or_404(id)    
-    books = [map_book_data(book, current_user.id) for book in author.books]
-    book_stats = get_books_stats(author.books, current_user.id)    
+    author_data = map_author_data(author, current_user.id) 
     
-    return jsonify({
-        'id': author.id,
-        'name': author.name,
-        'books': books,
-        'total_books': book_stats['total_books'],
-        'read_books': book_stats['read_books'],
-        'read_percentage': book_stats['read_percentage'],
-        'total_main_works': book_stats['total_main_works'],
-        'read_main_works': book_stats['read_main_works'],
-        'read_main_works_percentage': book_stats['read_main_works_percentage']
-    })
+    return jsonify(author_data)
 
 @bp.route('/', methods=['POST'])
 @login_required
