@@ -1,53 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Book Tracker{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <div class="px-4 py-5 sm:px-6">
-        <h2 class="text-2xl font-bold text-gray-900">My Latest Books</h2>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Welcome to Book Tracker</h1>
+    
+    <div class="mb-4">
+        <form action="{{ url_for('index') }}" method="GET" class="flex">
+            <input type="text" name="search" placeholder="Search authors..." value="{{ search_query }}" class="border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Search</button>
+        </form>
     </div>
-    <div class="border-t border-gray-200">
-        <ul id="book-list" class="grid grid-cols-5 gap-4"></ul>
-    </div>
-</div>
 
-<div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
-    <div class="px-4 py-5 sm:px-6">
-        <h2 class="text-2xl font-bold text-gray-900">Search Books</h2>
-    </div>
-    <div class="border-t border-gray-200">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex space-x-2">
-                <input type="text" id="book-search" name="book-search" placeholder="Search books..." class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                <button id="search-books-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Search</button>
-            </div>
-        </div>
-    </div>
-</div>
+    {% if authors.items %}
+        <table class="w-full bg-white shadow-md rounded mb-4">
+            <thead>
+                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <th class="py-3 px-6 text-left">Name</th>
+                    <th class="py-3 px-6 text-center">Books Count</th>
+                    <th class="py-3 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 text-sm font-light">
+                {% for author in authors.items %}
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left">{{ author.name }}</td>
+                    <td class="py-3 px-6 text-center">{{ author.books|length }}</td>
+                    <td class="py-3 px-6 text-center">
+                        <a href="{{ url_for('author_detail', id=author.id) }}" class="text-blue-500 hover:text-blue-700">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-<div class="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6">
-            <h2 class="text-2xl font-bold text-gray-900">My Books</h2>
+        <div class="flex justify-center mt-4">
+            {% if authors.has_prev %}
+                <a href="{{ url_for('index', page=authors.prev_num, search=search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
+            {% endif %}
+            <span class="py-2 px-4">
+                Page {{ authors.page }} of {{ authors.pages }}
+            </span>
+            {% if authors.has_next %}
+                <a href="{{ url_for('index', page=authors.next_num, search=search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Next</a>
+            {% endif %}
         </div>
-        <div class="border-t border-gray-200">
-            <ul id="book-list" class="divide-y divide-gray-200"></ul>
-        </div>
-    </div>
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6">
-            <h2 class="text-2xl font-bold text-gray-900">Book Details</h2>
-        </div>
-        <div class="border-t border-gray-200">
-            <div id="book-details" class="px-4 py-5 sm:p-6"></div>
-        </div>
-    </div>
+    {% else %}
+        <p class="text-gray-600 text-center mt-4">No authors found.</p>
+    {% endif %}
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/book.js') }}"></script>
-<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

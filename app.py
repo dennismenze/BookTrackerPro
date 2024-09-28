@@ -8,7 +8,7 @@ import logging
 from flask_talisman import Talisman
 from urllib.parse import urlparse
 from functools import wraps
-
+from sqlalchemy import func
 
 def create_app():
     app = Flask(__name__)
@@ -74,7 +74,17 @@ def create_app():
     @app.route('/')
     @login_required
     def index():
-        return render_template('index.html')
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        search_query = request.args.get('search', '')
+
+        authors_query = Author.query.outerjoin(Book).group_by(Author.id).order_by(func.count(Book.id).desc())
+
+        if search_query:
+            authors_query = authors_query.filter(Author.name.ilike(f'%{search_query}%'))
+
+        authors = authors_query.paginate(page=page, per_page=per_page, error_out=False)
+        return render_template('index.html', authors=authors, search_query=search_query)
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
@@ -192,14 +202,12 @@ def create_app():
         return render_template('list/detail.html', list_id=id)
 
     def admin_required(f):
-
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated or not current_user.is_admin:
                 flash('You do not have permission to access this page.')
                 return redirect(url_for('index'))
             return f(*args, **kwargs)
-
         return decorated_function
 
     @app.route('/admin')
@@ -405,7 +413,6 @@ def create_app():
         return redirect(url_for('admin_authors'))
 
     return app
-
 
 if __name__ == '__main__':
     app = create_app()
