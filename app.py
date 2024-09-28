@@ -6,15 +6,17 @@ from werkzeug.utils import secure_filename
 from models import db, User, Book, Author, List, UserBook
 from functools import wraps
 from sqlalchemy import func
+from flask_migrate import Migrate
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'your-secret-key'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///book_tracker.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
     db.init_app(app)
+    migrate = Migrate(app, db)
 
     login_manager = LoginManager()
     login_manager.login_view = 'login'
@@ -36,30 +38,39 @@ def create_app():
         authors = None
 
         if current_user.is_authenticated:
-            latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(Book.id.desc()).limit(5).all()
-            user_authors = Author.query.join(Book).join(UserBook).filter(UserBook.user_id == current_user.id).distinct().all()
-        
+            latest_books = Book.query.join(UserBook).filter(
+                UserBook.user_id == current_user.id).order_by(
+                    Book.id.desc()).limit(5).all()
+            user_authors = Author.query.join(Book).join(UserBook).filter(
+                UserBook.user_id == current_user.id).distinct().all()
+
         book_search_query = request.args.get('book_search', '')
         author_search_query = request.args.get('author_search', '')
 
         if book_search_query:
             book_page = request.args.get('book_page', 1, type=int)
             book_per_page = 10
-            book_query = Book.query.filter(Book.title.ilike(f'%{book_search_query}%'))
-            books = book_query.paginate(page=book_page, per_page=book_per_page, error_out=False)
+            book_query = Book.query.filter(
+                Book.title.ilike(f'%{book_search_query}%'))
+            books = book_query.paginate(page=book_page,
+                                        per_page=book_per_page,
+                                        error_out=False)
 
         if author_search_query:
             author_page = request.args.get('author_page', 1, type=int)
             author_per_page = 10
-            authors_query = Author.query.filter(Author.name.ilike(f'%{author_search_query}%'))
-            authors = authors_query.paginate(page=author_page, per_page=author_per_page, error_out=False)
+            authors_query = Author.query.filter(
+                Author.name.ilike(f'%{author_search_query}%'))
+            authors = authors_query.paginate(page=author_page,
+                                             per_page=author_per_page,
+                                             error_out=False)
 
-        return render_template('index.html', 
-                               latest_books=latest_books, 
-                               user_authors=user_authors, 
-                               books=books, 
+        return render_template('index.html',
+                               latest_books=latest_books,
+                               user_authors=user_authors,
+                               books=books,
                                book_search_query=book_search_query,
-                               authors=authors, 
+                               authors=authors,
                                author_search_query=author_search_query)
 
     @app.route('/login', methods=['GET', 'POST'])
@@ -113,32 +124,57 @@ def create_app():
     def api_author_detail(id):
         author = Author.query.get_or_404(id)
         books = Book.query.filter_by(author_id=author.id).all()
-        
+
         total_books = len(books)
-        read_books = sum(1 for book in books if UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first())
-        read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
-        
+        read_books = sum(1 for book in books if UserBook.query.filter_by(
+            user_id=current_user.id, book_id=book.id, is_read=True).first())
+        read_percentage = (read_books / total_books *
+                           100) if total_books > 0 else 0
+
         main_works = [book for book in books if book.is_main_work]
         total_main_works = len(main_works)
-        read_main_works = sum(1 for book in main_works if UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first())
-        read_main_works_percentage = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
-        
+        read_main_works = sum(
+            1 for book in main_works
+            if UserBook.query.filter_by(user_id=current_user.id,
+                                        book_id=book.id,
+                                        is_read=True).first())
+        read_main_works_percentage = (read_main_works / total_main_works *
+                                      100) if total_main_works > 0 else 0
+
         return jsonify({
-            'id': author.id,
-            'name': author.name,
-            'image_url': author.image_url or url_for('static', filename='images/default-author.png'),
-            'total_books': total_books,
-            'read_books': read_books,
-            'read_percentage': read_percentage,
-            'total_main_works': total_main_works,
-            'read_main_works': read_main_works,
-            'read_main_works_percentage': read_main_works_percentage,
+            'id':
+            author.id,
+            'name':
+            author.name,
+            'image_url':
+            author.image_url
+            or url_for('static', filename='images/default-author.png'),
+            'total_books':
+            total_books,
+            'read_books':
+            read_books,
+            'read_percentage':
+            read_percentage,
+            'total_main_works':
+            total_main_works,
+            'read_main_works':
+            read_main_works,
+            'read_main_works_percentage':
+            read_main_works_percentage,
             'books': [{
-                'id': book.id,
-                'title': book.title,
-                'is_read': UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first() is not None,
-                'is_main_work': book.is_main_work,
-                'cover_image_url': book.cover_image_url or url_for('static', filename='images/no-cover.png')
+                'id':
+                book.id,
+                'title':
+                book.title,
+                'is_read':
+                UserBook.query.filter_by(user_id=current_user.id,
+                                         book_id=book.id,
+                                         is_read=True).first() is not None,
+                'is_main_work':
+                book.is_main_work,
+                'cover_image_url':
+                book.cover_image_url
+                or url_for('static', filename='images/no-cover.png')
             } for book in books]
         })
 
@@ -324,15 +360,17 @@ def create_app():
             name = request.form.get('name')
             if name:
                 new_author = Author(name=name)
-                
+
                 if 'image' in request.files:
                     file = request.files['image']
                     if file.filename != '':
                         filename = secure_filename(file.filename)
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                                 filename)
                         file.save(file_path)
-                        new_author.image_url = url_for('static', filename=f'uploads/{filename}')
-                
+                        new_author.image_url = url_for(
+                            'static', filename=f'uploads/{filename}')
+
                 db.session.add(new_author)
                 db.session.commit()
                 flash('Author added successfully.')
@@ -350,15 +388,17 @@ def create_app():
             name = request.form.get('name')
             if name:
                 author.name = name
-                
+
                 if 'image' in request.files:
                     file = request.files['image']
                     if file.filename != '':
                         filename = secure_filename(file.filename)
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                                 filename)
                         file.save(file_path)
-                        author.image_url = url_for('static', filename=f'uploads/{filename}')
-                
+                        author.image_url = url_for(
+                            'static', filename=f'uploads/{filename}')
+
                 db.session.commit()
                 flash('Author updated successfully.')
                 return redirect(url_for('admin_authors'))
@@ -393,11 +433,19 @@ def create_app():
     def api_books():
         books = Book.query.all()
         return jsonify([{
-            'id': book.id,
-            'title': book.title,
-            'author': book.author.name,
-            'cover_image_url': book.cover_image_url or url_for('static', filename='images/no-cover.png'),
-            'is_read': UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first() is not None
+            'id':
+            book.id,
+            'title':
+            book.title,
+            'author':
+            book.author.name,
+            'cover_image_url':
+            book.cover_image_url
+            or url_for('static', filename='images/no-cover.png'),
+            'is_read':
+            UserBook.query.filter_by(user_id=current_user.id,
+                                     book_id=book.id,
+                                     is_read=True).first() is not None
         } for book in books])
 
     @app.route('/api/authors')
@@ -407,14 +455,20 @@ def create_app():
         authors_query = Author.query
 
         if search_query:
-            authors_query = authors_query.filter(Author.name.ilike(f'%{search_query}%'))
+            authors_query = authors_query.filter(
+                Author.name.ilike(f'%{search_query}%'))
 
         authors = authors_query.all()
         return jsonify([{
-            'id': author.id,
-            'name': author.name,
-            'image_url': author.image_url or url_for('static', filename='images/default-author.png'),
-            'books_count': len(author.books)
+            'id':
+            author.id,
+            'name':
+            author.name,
+            'image_url':
+            author.image_url
+            or url_for('static', filename='images/default-author.png'),
+            'books_count':
+            len(author.books)
         } for author in authors])
 
     return app
