@@ -9,26 +9,29 @@ from flask_talisman import Talisman
 from urllib.parse import urlparse
 from functools import wraps
 
+
 def create_app():
     app = Flask(__name__)
 
     logging.basicConfig(level=logging.DEBUG)
     app.logger.setLevel(logging.DEBUG)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///book_tracker.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+        "DATABASE_URL", "sqlite:///app.db")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY",
+                                              "fallback_secret_key")
     app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}...")
 
     db.init_app(app)
-    migrate = Migrate(app, db)
 
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'login'
 
     csp = {
-        'default-src': "'self'",
+        'default-src':
+        "'self'",
         'script-src': [
             "'self'", "https://cdn.jsdelivr.net",
             "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com",
@@ -40,8 +43,10 @@ def create_app():
         ],
         'img-src': ["'self'", "https:", "data:"],
         'font-src': ["'self'", "https:", "data:"],
-        'connect-src': "'self'",
-        'upgrade-insecure-requests': ''
+        'connect-src':
+        "'self'",
+        'upgrade-insecure-requests':
+        ''
     }
 
     Talisman(app, content_security_policy=csp, force_https=True)
@@ -187,12 +192,14 @@ def create_app():
         return render_template('list/detail.html', list_id=id)
 
     def admin_required(f):
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated or not current_user.is_admin:
                 flash('You do not have permission to access this page.')
                 return redirect(url_for('index'))
             return f(*args, **kwargs)
+
         return decorated_function
 
     @app.route('/admin')
@@ -304,17 +311,24 @@ def create_app():
                         for author_id in author_ids:
                             author = Author.query.get(author_id)
                             if author:
-                                books = Book.query.filter_by(author_id=author.id).all()
+                                books = Book.query.filter_by(
+                                    author_id=author.id).all()
                                 for book in books:
-                                    UserBook.query.filter_by(book_id=book.id).delete()
+                                    UserBook.query.filter_by(
+                                        book_id=book.id).delete()
                                     db.session.delete(book)
                                 db.session.delete(author)
                         db.session.commit()
-                        flash(f'{len(author_ids)} authors and their associated books have been deleted successfully.')
+                        flash(
+                            f'{len(author_ids)} authors and their associated books have been deleted successfully.'
+                        )
                     except Exception as e:
                         db.session.rollback()
-                        app.logger.error(f"Error bulk deleting authors: {str(e)}")
-                        flash('An error occurred while deleting the authors. Please try again.')
+                        app.logger.error(
+                            f"Error bulk deleting authors: {str(e)}")
+                        flash(
+                            'An error occurred while deleting the authors. Please try again.'
+                        )
                 else:
                     flash('No authors selected for deletion.')
             return redirect(url_for('admin_authors'))
@@ -322,14 +336,19 @@ def create_app():
         page = request.args.get('page', 1, type=int)
         per_page = 10
         search_query = request.args.get('search', '')
-        
+
         authors_query = Author.query
-        
+
         if search_query:
-            authors_query = authors_query.filter(Author.name.ilike(f'%{search_query}%'))
-        
-        authors = authors_query.paginate(page=page, per_page=per_page, error_out=False)
-        return render_template('admin/authors.html', authors=authors, search_query=search_query)
+            authors_query = authors_query.filter(
+                Author.name.ilike(f'%{search_query}%'))
+
+        authors = authors_query.paginate(page=page,
+                                         per_page=per_page,
+                                         error_out=False)
+        return render_template('admin/authors.html',
+                               authors=authors,
+                               search_query=search_query)
 
     @app.route('/admin/authors/add', methods=['GET', 'POST'])
     @login_required
@@ -373,17 +392,20 @@ def create_app():
             for book in books:
                 UserBook.query.filter_by(book_id=book.id).delete()
                 db.session.delete(book)
-            
+
             db.session.delete(author)
             db.session.commit()
             flash('Author and associated books deleted successfully.')
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error deleting author: {str(e)}")
-            flash('An error occurred while deleting the author. Please try again.')
+            flash(
+                'An error occurred while deleting the author. Please try again.'
+            )
         return redirect(url_for('admin_authors'))
 
     return app
+
 
 if __name__ == '__main__':
     app = create_app()
