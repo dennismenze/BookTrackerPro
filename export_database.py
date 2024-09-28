@@ -1,7 +1,7 @@
 import os
 import csv
 import zipfile
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from models import db, User, Book, Author, List, UserBook
@@ -26,7 +26,7 @@ try:
 
     # Export data from each table
     for table_name in table_names:
-        query = f"SELECT * FROM {table_name}"
+        query = text(f"SELECT * FROM {table_name}")
         result = session.execute(query)
         
         file_path = os.path.join(backup_folder, f"{table_name}.csv")
