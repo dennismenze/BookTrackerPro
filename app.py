@@ -122,7 +122,25 @@ def create_app():
     @app.route('/author/<int:id>')
     @login_required
     def author_detail(id):
-        return render_template('author/detail.html', author_id=id)
+        author = Author.query.get_or_404(id)
+        total_books = len(author.books)
+        total_pages = sum(book.page_count or 0 for book in author.books)
+        avg_pages = total_pages / total_books if total_books > 0 else 0
+
+        if current_user.is_authenticated:
+            user_books = UserBook.query.filter_by(user_id=current_user.id).all()
+            user_book_ids = [ub.book_id for ub in user_books]
+            books_read = sum(1 for book in author.books if book.id in user_book_ids)
+            books_read_percentage = (books_read / total_books) * 100 if total_books > 0 else 0
+        else:
+            books_read_percentage = 0
+
+        return render_template('author_detail.html',
+                               author=author,
+                               total_books=total_books,
+                               total_pages=total_pages,
+                               avg_pages=avg_pages,
+                               books_read_percentage=books_read_percentage)
 
     @app.route('/book/<int:id>')
     @login_required

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ author.name }} - Author Details{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">{{ author.name }}</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+            <img src="{{ author.image_url or url_for('static', filename='images/default-author.png') }}" alt="{{ author.name }}" class="w-full h-auto rounded-lg shadow-md">
+        </div>
+        <div>
+            <h2 class="text-2xl font-semibold mb-4">Author Statistics</h2>
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Total Books</dt>
+                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_books }}</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Total Pages</dt>
+                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_pages }}</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Average Pages</dt>
+                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ avg_pages|round|int }}</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">You've Read</dt>
+                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ books_read_percentage }}%</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="text-2xl font-semibold mt-8 mb-4">Books by {{ author.name }}</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for book in author.books %}
+        <div class="bg-white shadow-md rounded-lg p-4">
+            <a href="{{ url_for('book_detail', id=book.id) }}">
+                <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2 rounded">
+                <h3 class="font-semibold">{{ book.title }}</h3>
+            </a>
+            <p class="text-sm text-gray-600">{{ book.page_count }} pages</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
