@@ -1,38 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}Author Details - Book Tracker{% endblock %}
+{% block title %}{{ author.name }}{% endblock %}
 
 {% block content %}
-<div id="author-details" class="container mx-auto mt-8 px-4" data-author-id="{{ author_id }}">
-    <div class="bg-white shadow-md rounded-lg p-6">
-        <div class="flex items-center mb-6">
-            <img id="author-image" src="{{ image_url }}" alt="Author Image" class="w-32 h-32 object-cover rounded-full mr-6">
-            <h1 id="author-name" class="text-3xl font-bold"></h1>
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row">
+        <div class="md:w-1/4 mb-4 md:mb-0">
+            <img src="{{ author.image_url or url_for('static', filename='images/default-author.png') }}" alt="{{ author.name }}" class="w-full rounded-lg shadow-md">
         </div>
-        <div class="flex flex-row">
-            <div class="basis-3/4">
-                <h2 class="text-2xl font-semibold mb-2">Books</h2>
-                <div id="book-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+        <div class="md:w-3/4 md:pl-8">
+            <h1 class="text-3xl font-bold mb-4">{{ author.name }}</h1>
+            
+            <!-- Statistics Box -->
+            <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Author Statistics</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-600">Total Books:</p>
+                        <p class="text-2xl font-bold">{{ stats.total_books }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Total Pages:</p>
+                        <p class="text-2xl font-bold">{{ stats.total_pages }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Average Pages per Book:</p>
+                        <p class="text-2xl font-bold">{{ stats.avg_pages }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Books You've Read:</p>
+                        <p class="text-2xl font-bold">{{ stats.books_read }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Books To Read:</p>
+                        <p class="text-2xl font-bold">{{ stats.books_to_read }}</p>
+                    </div>
+                </div>
             </div>
-            <div class="basis-1/4">
-                <h2 class="text-2xl font-semibold mb-2">Statistics</h2>
-                <p id="total-books" class="text-lg"></p>
-                <p id="read-books" class="text-lg"></p>
-                <p id="read-percentage" class="text-lg"></p>
-                <h3 class="text-xl font-semibold mt-4 mb-2">Main Works</h3>
-                <p id="total-main-works" class="text-lg"></p>
-                <p id="read-main-works" class="text-lg"></p>
-                <p id="read-main-works-percentage" class="text-lg"></p>
+            
+            <h2 class="text-2xl font-semibold mb-4">Books by {{ author.name }}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for book in author.books %}
+                <div class="bg-white shadow-md rounded-lg p-4">
+                    <a href="{{ url_for('book_detail', id=book.id) }}">
+                        <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2 rounded">
+                        <h3 class="font-semibold">{{ book.title }}</h3>
+                    </a>
+                    <p class="text-sm text-gray-600">{{ book.published_date }}</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/book_rendering.js') }}"></script>
-<script src="{{ url_for('static', filename='js/author.js') }}"></script>
-<script src="{{ url_for('static', filename='js/author_detail.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 {% endblock %}
