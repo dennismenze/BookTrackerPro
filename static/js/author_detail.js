@@ -31,7 +31,11 @@ function loadAuthorDetails(authorId) {
     })
     .catch(error => {
         console.error('Error fetching author details:', error);
-        document.getElementById('author-details').innerHTML = `<p class="text-red-500">Error loading author details: ${error.message}. Please try again.</p>`;
+        if (error.message === 'Unauthorized') {
+            window.location.href = '/login';
+        } else {
+            document.getElementById('author-details').innerHTML = `<p class="text-red-500">Error loading author details: ${error.message}. Please try again.</p>`;
+        }
     });
 }
 
@@ -64,4 +68,12 @@ function toggleReadStatus(bookId, isRead) {
         console.error('Error updating book read status:', error);
         alert('Failed to update book status. Please try again.');
     });
+}
+
+function handleUnauthorized(response) {
+    if (response.status === 401) {
+        window.location.href = '/login';
+        throw new Error('Unauthorized');
+    }
+    return response;
 }

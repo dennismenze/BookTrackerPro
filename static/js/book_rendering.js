@@ -37,3 +37,16 @@ function toggleReadStatus(bookId, newStatus) {
         console.error('Error:', error);
     });
 }
+
+function renderBookItem(book) {
+    return `
+    <div class="bg-white shadow-md rounded-lg p-4 relative ${book.is_read ? 'opacity-50' : ''}">
+        <img src="${book.cover_image_url || '/static/images/no-cover.png'}" alt="${book.title} cover" class="w-full h-48 object-cover mb-2">
+        <h3 class="font-semibold">${book.title}</h3>
+        ${book.is_main_work ? '<span class="absolute top-0 right-0 bg-yellow-400 text-yellow-800 p-1 rounded-bl"><i class="fas fa-bookmark"></i></span>' : ''}
+        <button class="toggle-read-status absolute top-2 left-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center" data-book-id="${book.id}" data-is-read="${book.is_read}">
+            <i class="fas ${book.is_read ? 'fa-eye-slash' : 'fa-eye'}"></i>
+        </button>
+    </div>
+    `;
+}
