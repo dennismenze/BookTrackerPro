@@ -22,5 +22,5 @@ else:
 
 print("Environment variables:")
 for key, value in os.environ.items():
-    if key.startswith(("PG", "DATABASE")):
+    if key.startswith(("DATABASE", "MYSQL")):
         print(f"{key}: {'*' * len(value)}")  # Mask the actual values
