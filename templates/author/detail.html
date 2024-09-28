@@ -9,11 +9,13 @@
     <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Reading Statistics</h2>
         <div class="bg-gray-800 p-6 rounded-lg">
-            <p class="text-white mb-2 text-lg">You've watched <span id="watched-count" class="font-bold text-blue-400">0</span> of <span id="total-count" class="font-bold">0</span></p>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <p class="text-white text-lg">You've watched <span id="watched-count" class="font-bold text-blue-400">0</span> of <span id="total-count" class="font-bold">0</span></p>
+                <p class="text-white text-2xl font-bold"><span id="percentage">0</span>%</p>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2.5 mb-4">
                 <div class="bg-blue-600 h-2.5 rounded-full" id="progress-bar" style="width: 0%"></div>
             </div>
-            <p class="text-white text-2xl font-bold mb-4"><span id="percentage">0</span>%</p>
             <div class="grid grid-cols-2 gap-4 text-white">
                 <div>
                     <p class="text-sm uppercase">Total Pages Read</p>
