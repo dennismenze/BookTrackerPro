@@ -1,83 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}{{ author.name }} - Author Details{% endblock %}
+{% block title %}Author Details - Book Tracker{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="flex flex-wrap -mx-4">
-        <!-- Author Information -->
-        <div class="w-full md:w-2/3 px-4">
-            <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-                <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ author.name }}</h1>
-                    {% if author.image_url %}
-                        <img src="{{ author.image_url }}" alt="{{ author.name }}" class="w-24 h-24 object-cover rounded-full">
-                    {% else %}
-                        <div class="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center">
-                            <span class="text-2xl text-gray-600">{{ author.name[:1] }}</span>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Books by Author -->
-            <div class="mt-8">
-                <h2 class="text-2xl font-bold mb-4">Books by {{ author.name }}</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {% for book in books %}
-                        <div class="bg-white shadow-md rounded-lg p-4 relative">
-                            <a href="{{ url_for('book_detail', id=book.id) }}">
-                                <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2">
-                                <h3 class="font-semibold">{{ book.title }}</h3>
-                            </a>
-                            <p class="text-sm text-gray-600">{{ book.published_date }}</p>
-                            <button onclick="toggleReadStatus({{ book.id }})" class="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md">
-                                <i id="read-icon-{{ book.id }}" class="fas fa-eye{% if not book.is_read %}-slash{% endif %}"></i>
-                            </button>
-                            {% if book.is_main_work %}
-                                <span class="absolute top-2 left-2 text-yellow-500"><i class="fas fa-bookmark"></i></span>
-                            {% endif %}
-                            <!-- Debug information -->
-                            <p class="text-xs text-gray-500 mt-2">Read status: {{ book.is_read }}</p>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
+<div id="author-details" class="container mx-auto mt-8 px-4" data-author-id="{{ author_id }}">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="flex items-center mb-6">
+            <img id="author-image" src="{{ image_url }}" alt="Author Image" class="w-32 h-32 object-cover rounded-full mr-6">
+            <h1 id="author-name" class="text-3xl font-bold"></h1>
         </div>
-
-        <!-- Statistics Box -->
-        <div class="w-full md:w-1/3 px-4">
-            <div class="bg-white shadow-md rounded-lg p-6 sticky top-6">
-                <h2 class="text-xl font-bold mb-4">Author Statistics</h2>
-                <dl>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Total Books</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ total_books }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Total Pages</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ total_pages }}</dd>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Avg Pages per Book</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ avg_pages|round(2) }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Books You've Read</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ books_read }}</dd>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Books You're Reading</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ books_reading }}</dd>
-                    </div>
-                </dl>
-                <div class="mt-6">
-                    <p class="text-sm font-medium text-gray-500 mb-2">Your Progress</p>
-                    <p class="text-sm text-gray-900 mb-2">You've read {{ books_read }} of {{ total_books }} books</p>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ (books_read / total_books * 100)|round(2) }}%"></div>
-                    </div>
-                </div>
+        <div class="flex flex-row">
+            <div class="basis-3/4">
+                <h2 class="text-2xl font-semibold mb-2">Books</h2>
+                <div id="book-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+            </div>
+            <div class="basis-1/4">
+                <h2 class="text-2xl font-semibold mb-2">Statistics</h2>
+                <p id="total-books" class="text-lg"></p>
+                <p id="read-books" class="text-lg"></p>
+                <p id="read-percentage" class="text-lg"></p>
+                <h3 class="text-xl font-semibold mt-4 mb-2">Main Works</h3>
+                <p id="total-main-works" class="text-lg"></p>
+                <p id="read-main-works" class="text-lg"></p>
+                <p id="read-main-works-percentage" class="text-lg"></p>
             </div>
         </div>
     </div>
@@ -85,5 +30,9 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/book_rendering.js') }}"></script>
+<script src="{{ url_for('static', filename='js/author.js') }}"></script>
 <script src="{{ url_for('static', filename='js/author_detail.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 {% endblock %}
