@@ -44,6 +44,9 @@ def is_book_read(book, user_id):
                                          book_id=book.id).first()
     return user_book.is_read if user_book else False
 
+def map_author_data(author)
+    author_data = 
+
 
 def map_book_data(book, user_id):
     book_data = {
