@@ -42,6 +42,11 @@ def create_app():
         books = None
         authors = None
 
+        # Calculate statistics
+        total_books = Book.query.count()
+        total_authors = Author.query.count()
+        total_users = User.query.count()
+
         if current_user.is_authenticated:
             latest_books = Book.query.join(UserBook).filter(
                 UserBook.user_id == current_user.id).order_by(
@@ -76,7 +81,10 @@ def create_app():
                                books=books,
                                book_search_query=book_search_query,
                                authors=authors,
-                               author_search_query=author_search_query)
+                               author_search_query=author_search_query,
+                               total_books=total_books,
+                               total_authors=total_authors,
+                               total_users=total_users)
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
