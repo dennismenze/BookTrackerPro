@@ -122,22 +122,7 @@ def create_app():
     @app.route('/author/<int:id>')
     @login_required
     def author_detail(id):
-        author = Author.query.get_or_404(id)
-        total_books = len(author.books)
-        total_pages = sum(book.page_count or 0 for book in author.books)
-        avg_pages = total_pages / total_books if total_books > 0 else 0
-        books_read = UserBook.query.join(Book).filter(Book.author_id == id, UserBook.user_id == current_user.id, UserBook.is_read == True).count()
-        books_to_read = UserBook.query.join(Book).filter(Book.author_id == id, UserBook.user_id == current_user.id, UserBook.is_read == False).count()
-        
-        stats = {
-            'total_books': total_books,
-            'total_pages': total_pages,
-            'avg_pages': round(avg_pages, 2),
-            'books_read': books_read,
-            'books_to_read': books_to_read
-        }
-        
-        return render_template('author/detail.html', author=author, stats=stats)
+        return render_template('author/detail.html', author_id=id)
 
     @app.route('/book/<int:id>')
     @login_required
