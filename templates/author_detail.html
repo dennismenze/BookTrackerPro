@@ -12,26 +12,24 @@
         </div>
         <div>
             <h2 class="text-2xl font-semibold mb-4">Author Statistics</h2>
-            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Total Books</dt>
-                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_books }}</dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Total Pages</dt>
-                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_pages }}</dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Average Pages</dt>
-                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ avg_pages|round|int }}</dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">You've Read</dt>
-                            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ books_read_percentage }}%</dd>
-                        </div>
-                    </dl>
+            <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+                <div class="space-y-4">
+                    <div class="border-b pb-4">
+                        <p class="text-sm text-gray-600">Total Books</p>
+                        <p class="text-3xl font-bold">{{ total_books }}</p>
+                    </div>
+                    <div class="border-b pb-4">
+                        <p class="text-sm text-gray-600">Total Pages</p>
+                        <p class="text-3xl font-bold">{{ total_pages }}</p>
+                    </div>
+                    <div class="border-b pb-4">
+                        <p class="text-sm text-gray-600">Average Pages</p>
+                        <p class="text-3xl font-bold">{{ avg_pages|round|int }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Books Read Percentage</p>
+                        <p class="text-3xl font-bold">{{ books_read_percentage|round(1) }}%</p>
+                    </div>
                 </div>
             </div>
         </div>
