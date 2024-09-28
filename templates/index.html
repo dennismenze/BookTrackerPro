@@ -27,10 +27,49 @@
     <!-- Search Books Section -->
     <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Search Books</h2>
-        <div class="flex space-x-2">
-            <input type="text" id="book-search" name="book-search" placeholder="Search books..." class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-            <button id="search-books-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Search</button>
-        </div>
+        <form action="{{ url_for('index') }}" method="GET" class="flex mb-4">
+            <input type="text" name="book_search" placeholder="Search books..." value="{{ book_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Search</button>
+        </form>
+
+        {% if books and books.items %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <table class="min-w-full">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for book in books.items %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ book.title }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ book.author.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <a href="{{ url_for('book_detail', id=book.id) }}" class="text-blue-600 hover:text-blue-900">View Details</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 flex justify-center">
+                {% if books.has_prev %}
+                    <a href="{{ url_for('index', book_page=books.prev_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">Previous</a>
+                {% endif %}
+                <span class="bg-gray-200 text-gray-700 font-bold py-2 px-4">
+                    Page {{ books.page }} of {{ books.pages }}
+                </span>
+                {% if books.has_next %}
+                    <a href="{{ url_for('index', book_page=books.next_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Next</a>
+                {% endif %}
+            </div>
+        {% elif book_search_query %}
+            <p class="text-gray-600 text-center mt-4">No books found matching your search.</p>
+        {% endif %}
     </div>
 
     <!-- My Authors Section -->
@@ -53,7 +92,7 @@
     <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Search Authors</h2>
         <form action="{{ url_for('index') }}" method="GET" class="flex mb-4">
-            <input type="text" name="search" placeholder="Search authors..." value="{{ search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="author_search" placeholder="Search authors..." value="{{ author_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Search</button>
         </form>
 
@@ -81,16 +120,16 @@
 
             <div class="flex justify-center mt-4">
                 {% if authors.has_prev %}
-                    <a href="{{ url_for('index', page=authors.prev_num, search=search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
+                    <a href="{{ url_for('index', author_page=authors.prev_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
                 {% endif %}
                 <span class="py-2 px-4">
                     Page {{ authors.page }} of {{ authors.pages }}
                 </span>
                 {% if authors.has_next %}
-                    <a href="{{ url_for('index', page=authors.next_num, search=search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Next</a>
+                    <a href="{{ url_for('index', author_page=authors.next_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Next</a>
                 {% endif %}
             </div>
-        {% elif search_query %}
+        {% elif author_search_query %}
             <p class="text-gray-600 text-center mt-4">No authors found matching your search.</p>
         {% endif %}
     </div>
