@@ -17,6 +17,7 @@ function loadAuthorDetails(authorId) {
     .then(response => response.json())
     .then(author => {
         document.getElementById('author-name').textContent = author.name;
+        document.getElementById('author-image').src = author.image_url || '/static/images/default-author.png';
         document.getElementById('total-books').textContent = `Total Books: ${author.total_books}`;
         document.getElementById('read-books').textContent = `Read Books: ${author.read_books}`;
         document.getElementById('read-percentage').textContent = `Read Percentage: ${author.read_percentage.toFixed(1)}%`;

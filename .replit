@@ -4,7 +4,7 @@ modules = ["python-3.11"]
 channel = "stable-24_05"
 
 [workflows]
-runButton = "Run Flask App"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -68,7 +68,7 @@ agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "flask db migrate -m 'Update models for MariaDB'"
+args = "flask db migrate -m 'Add image_url to Author model'"
 
 [[workflows.workflow]]
 name = "Apply Migration"

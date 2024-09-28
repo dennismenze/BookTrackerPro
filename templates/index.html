@@ -81,7 +81,10 @@
             <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {% for author in user_authors %}
                     <li class="bg-white shadow-md rounded-lg p-4">
-                        <a href="{{ url_for('author_detail', id=author.id) }}" class="text-blue-600 hover:text-blue-800">{{ author.name }}</a>
+                        <a href="{{ url_for('author_detail', id=author.id) }}" class="flex items-center">
+                            <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ author.name }}" class="w-12 h-12 object-cover rounded-full mr-4">
+                            <span class="text-blue-600 hover:text-blue-800">{{ author.name }}</span>
+                        </a>
                     </li>
                 {% endfor %}
             </ul>
@@ -103,6 +106,7 @@
                 <table class="w-full bg-white shadow-md rounded mb-4">
                     <thead>
                         <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-left">Image</th>
                             <th class="py-3 px-6 text-left">Name</th>
                             <th class="py-3 px-6 text-center">Books Count</th>
                             <th class="py-3 px-6 text-center">Actions</th>
@@ -111,6 +115,9 @@
                     <tbody class="text-gray-600 text-sm font-light">
                         {% for author in authors.items %}
                         <tr class="border-b border-gray-200 hover:bg-gray-100">
+                            <td class="py-3 px-6 text-left">
+                                <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ author.name }}" class="w-12 h-12 object-cover rounded-full">
+                            </td>
                             <td class="py-3 px-6 text-left">{{ author.name }}</td>
                             <td class="py-3 px-6 text-center">{{ author.books|length }}</td>
                             <td class="py-3 px-6 text-center">

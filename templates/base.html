@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 font-sans" data-is-admin="{{ 'true' if g.user.is_admin else 'false' }}" data-user-id="{{ g.user.id }}">
+<body class="bg-gray-100 font-sans" data-is-admin="{{ 'true' if current_user.is_authenticated and current_user.is_admin else 'false' }}" data-user-id="{{ current_user.id if current_user.is_authenticated else '' }}">
     <nav class="bg-blue-600 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">

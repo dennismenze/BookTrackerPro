@@ -1,100 +1,57 @@
 import os
-from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, g
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from models import db, Book, Author, List, User, UserBook
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-import logging
-from flask_talisman import Talisman
-from urllib.parse import urlparse
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, g
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from models import db, User, Book, Author, List, UserBook
 from functools import wraps
-from sqlalchemy import func, or_
+from sqlalchemy import func
 
 def create_app():
     app = Flask(__name__)
-
-    logging.basicConfig(level=logging.DEBUG)
-    app.logger.setLevel(logging.DEBUG)
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-        "DATABASE_URL", "sqlite:///app.db")
+    app.config['SECRET_KEY'] = 'your-secret-key'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///book_tracker.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY",
-                                              "fallback_secret_key")
-    app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}...")
+    app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
     db.init_app(app)
 
     login_manager = LoginManager()
-    login_manager.init_app(app)
     login_manager.login_view = 'login'
-
-    csp = {
-        'default-src':
-        "'self'",
-        'script-src': [
-            "'self'", "https://cdn.jsdelivr.net",
-            "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com",
-            "'unsafe-inline'"
-        ],
-        'style-src': [
-            "'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'",
-            "https://cdnjs.cloudflare.com"
-        ],
-        'img-src': ["'self'", "https:", "data:"],
-        'font-src': ["'self'", "https:", "data:"],
-        'connect-src':
-        "'self'",
-        'upgrade-insecure-requests':
-        ''
-    }
-
-    Talisman(app, content_security_policy=csp, force_https=True)
+    login_manager.init_app(app)
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    app.logger.debug(
-        f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-
-    from routes import book_routes, author_routes, list_routes
-    app.register_blueprint(book_routes.bp)
-    app.register_blueprint(author_routes.bp)
-    app.register_blueprint(list_routes.bp)
-
     @app.before_request
     def before_request():
         g.user = current_user
 
-    @app.before_request
-    def log_request_info():
-        app.logger.debug(f"Request path: {request.path}")
-
     @app.route('/')
-    @login_required
     def index():
-        latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(Book.id.desc()).limit(5).all()
-        user_authors = Author.query.join(Book).join(UserBook).filter(UserBook.user_id == current_user.id).distinct().all()
+        latest_books = []
+        user_authors = []
+        books = None
+        authors = None
+
+        if current_user.is_authenticated:
+            latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(Book.id.desc()).limit(5).all()
+            user_authors = Author.query.join(Book).join(UserBook).filter(UserBook.user_id == current_user.id).distinct().all()
         
         book_search_query = request.args.get('book_search', '')
         author_search_query = request.args.get('author_search', '')
 
-        books = None
-        authors = None
-
         if book_search_query:
             book_page = request.args.get('book_page', 1, type=int)
             book_per_page = 10
-            book_query = Book.query.filter(or_(Book.title.ilike(f'%{book_search_query}%'),
-                                               Book.author.has(Author.name.ilike(f'%{book_search_query}%'))))
+            book_query = Book.query.filter(Book.title.ilike(f'%{book_search_query}%'))
             books = book_query.paginate(page=book_page, per_page=book_per_page, error_out=False)
 
         if author_search_query:
             author_page = request.args.get('author_page', 1, type=int)
             author_per_page = 10
-            authors_query = Author.query.outerjoin(Book).group_by(Author.id).order_by(func.count(Book.id).desc())
-            authors_query = authors_query.filter(Author.name.ilike(f'%{author_search_query}%'))
+            authors_query = Author.query.filter(Author.name.ilike(f'%{author_search_query}%'))
             authors = authors_query.paginate(page=author_page, per_page=author_per_page, error_out=False)
 
         return render_template('index.html', 
@@ -105,103 +62,85 @@ def create_app():
                                authors=authors, 
                                author_search_query=author_search_query)
 
-    @app.route('/register', methods=['GET', 'POST'])
-    def register():
-        app.logger.debug("Register route accessed")
-        if current_user.is_authenticated:
-            app.logger.debug(
-                "Authenticated user accessing register page, redirecting to index"
-            )
-            return redirect(url_for('index'))
-        if request.method == 'POST':
-            app.logger.debug("Processing POST request for registration")
-            try:
-                username = request.form['username']
-                email = request.form['email']
-                password = request.form['password']
-
-                user = User.query.filter_by(username=username).first()
-                if user:
-                    app.logger.warning(
-                        f"Registration attempt with existing username: {username}"
-                    )
-                    flash('Username already exists')
-                    return redirect(url_for('register'))
-
-                user = User.query.filter_by(email=email).first()
-                if user:
-                    app.logger.warning(
-                        f"Registration attempt with existing email: {email}")
-                    flash('Email already exists')
-                    return redirect(url_for('register'))
-
-                new_user = User(username=username, email=email)
-                new_user.set_password(password)
-                db.session.add(new_user)
-                db.session.commit()
-
-                app.logger.info(
-                    f"New user registered successfully: {username}")
-                flash('Registration successful')
-                return redirect(url_for('login'))
-            except Exception as e:
-                db.session.rollback()
-                app.logger.error(f'Error during registration: {str(e)}')
-                flash(
-                    'An error occurred during registration. Please try again.')
-
-        app.logger.debug("Rendering registration template")
-        return render_template('register.html')
-
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        app.logger.debug("Login route accessed")
-        if current_user.is_authenticated:
-            return redirect(url_for('index'))
-
         if request.method == 'POST':
-            try:
-                username = request.form['username']
-                password = request.form['password']
-                app.logger.debug(
-                    f"Processing POST request for login: {username}")
-                user = User.query.filter_by(username=username).first()
-                app.logger.debug(f"User found: {user}")
-                if user:
-                    if user.check_password(password):
-                        login_user(user)
-                        session['user_id'] = user.id
-                        next_page = request.args.get('next')
-                        if not next_page or urlparse(next_page).netloc != '':
-                            next_page = url_for('index')
-                        return redirect(next_page)
-                    else:
-                        flash('Invalid username or password')
-                else:
-                    flash('Invalid username or password')
-            except Exception as e:
-                flash('An error occurred during login. Please try again.')
-
+            username = request.form.get('username')
+            password = request.form.get('password')
+            user = User.query.filter_by(username=username).first()
+            if user and user.check_password(password):
+                login_user(user)
+                return redirect(url_for('index'))
+            flash('Invalid username or password')
         return render_template('login.html')
 
     @app.route('/logout')
     @login_required
     def logout():
         logout_user()
-        session.clear()
         return redirect(url_for('index'))
+
+    @app.route('/register', methods=['GET', 'POST'])
+    def register():
+        if request.method == 'POST':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            user = User.query.filter_by(username=username).first()
+            if user:
+                flash('Username already exists')
+            else:
+                new_user = User(username=username, email=email)
+                new_user.set_password(password)
+                db.session.add(new_user)
+                db.session.commit()
+                login_user(new_user)
+                return redirect(url_for('index'))
+        return render_template('register.html')
 
     @app.route('/authors')
     @login_required
     def authors():
-        return render_template('author/list.html',
-                               user_id=current_user.id,
-                               is_admin=current_user.is_admin)
+        return render_template('authors.html')
 
     @app.route('/author/<int:id>')
     @login_required
     def author_detail(id):
         return render_template('author/detail.html', author_id=id)
+
+    @app.route('/api/authors/<int:id>')
+    @login_required
+    def api_author_detail(id):
+        author = Author.query.get_or_404(id)
+        books = Book.query.filter_by(author_id=author.id).all()
+        
+        total_books = len(books)
+        read_books = sum(1 for book in books if UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first())
+        read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+        
+        main_works = [book for book in books if book.is_main_work]
+        total_main_works = len(main_works)
+        read_main_works = sum(1 for book in main_works if UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first())
+        read_main_works_percentage = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
+        
+        return jsonify({
+            'id': author.id,
+            'name': author.name,
+            'image_url': author.image_url or url_for('static', filename='images/default-author.png'),
+            'total_books': total_books,
+            'read_books': read_books,
+            'read_percentage': read_percentage,
+            'total_main_works': total_main_works,
+            'read_main_works': read_main_works,
+            'read_main_works_percentage': read_main_works_percentage,
+            'books': [{
+                'id': book.id,
+                'title': book.title,
+                'is_read': UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first() is not None,
+                'is_main_work': book.is_main_work,
+                'cover_image_url': book.cover_image_url or url_for('static', filename='images/no-cover.png')
+            } for book in books]
+        })
 
     @app.route('/book/<int:id>')
     @login_required
@@ -385,6 +324,15 @@ def create_app():
             name = request.form.get('name')
             if name:
                 new_author = Author(name=name)
+                
+                if 'image' in request.files:
+                    file = request.files['image']
+                    if file.filename != '':
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(file_path)
+                        new_author.image_url = url_for('static', filename=f'uploads/{filename}')
+                
                 db.session.add(new_author)
                 db.session.commit()
                 flash('Author added successfully.')
@@ -402,6 +350,15 @@ def create_app():
             name = request.form.get('name')
             if name:
                 author.name = name
+                
+                if 'image' in request.files:
+                    file = request.files['image']
+                    if file.filename != '':
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(file_path)
+                        author.image_url = url_for('static', filename=f'uploads/{filename}')
+                
                 db.session.commit()
                 flash('Author updated successfully.')
                 return redirect(url_for('admin_authors'))
@@ -430,6 +387,35 @@ def create_app():
                 'An error occurred while deleting the author. Please try again.'
             )
         return redirect(url_for('admin_authors'))
+
+    @app.route('/api/books')
+    @login_required
+    def api_books():
+        books = Book.query.all()
+        return jsonify([{
+            'id': book.id,
+            'title': book.title,
+            'author': book.author.name,
+            'cover_image_url': book.cover_image_url or url_for('static', filename='images/no-cover.png'),
+            'is_read': UserBook.query.filter_by(user_id=current_user.id, book_id=book.id, is_read=True).first() is not None
+        } for book in books])
+
+    @app.route('/api/authors')
+    @login_required
+    def api_authors():
+        search_query = request.args.get('search', '')
+        authors_query = Author.query
+
+        if search_query:
+            authors_query = authors_query.filter(Author.name.ilike(f'%{search_query}%'))
+
+        authors = authors_query.all()
+        return jsonify([{
+            'id': author.id,
+            'name': author.name,
+            'image_url': author.image_url or url_for('static', filename='images/default-author.png'),
+            'books_count': len(author.books)
+        } for author in authors])
 
     return app
 
