@@ -74,6 +74,8 @@ def create_app():
     @app.route('/')
     @login_required
     def index():
+        latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(Book.id.desc()).limit(5).all()
+        user_authors = Author.query.join(Book).join(UserBook).filter(UserBook.user_id == current_user.id).distinct().all()
         page = request.args.get('page', 1, type=int)
         per_page = 10
         search_query = request.args.get('search', '')
@@ -82,9 +84,11 @@ def create_app():
 
         if search_query:
             authors_query = authors_query.filter(Author.name.ilike(f'%{search_query}%'))
+            authors = authors_query.paginate(page=page, per_page=per_page, error_out=False)
+        else:
+            authors = None
 
-        authors = authors_query.paginate(page=page, per_page=per_page, error_out=False)
-        return render_template('index.html', authors=authors, search_query=search_query)
+        return render_template('index.html', latest_books=latest_books, user_authors=user_authors, authors=authors, search_query=search_query)
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
