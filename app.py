@@ -3,11 +3,11 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from models import db, Book, Author, List, User, UserBook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
-from sqlalchemy import text, true, select, or_
 from flask_migrate import Migrate
 from flask_talisman import Talisman
 from urllib.parse import urlparse
 from functools import wraps
+from utils import import_authors_and_books, clear_authors_and_books
 
 def create_app():
     app = Flask(__name__)
@@ -22,6 +22,10 @@ def create_app():
     app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}...")
 
     db.init_app(app)
+
+    # with app.app_context():
+    #     clear_authors_and_books()
+    #     import_authors_and_books()
 
     migrate = Migrate(app, db)
 

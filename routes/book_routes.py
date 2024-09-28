@@ -2,7 +2,8 @@ from flask import Blueprint, jsonify, request, current_app, abort
 from flask_login import login_required, current_user
 from models import db, Book, Author, List, UserBook
 from sqlalchemy import func, or_
-import requests
+from utils import map_book_data
+
 
 bp = Blueprint('book', __name__, url_prefix='/api/books')
 
@@ -43,45 +44,12 @@ def get_books():
 def get_book(id):
     try:
         book = Book.query.get_or_404(id)
-        user_book = UserBook.query.filter_by(user_id=current_user.id,
-                                             book_id=book.id).first()
-
-        book_data = {
-            'id': book.id,
-            'title': book.title,
-            'author': book.author.name,
-            'author_id': book.author_id,
-            'is_read': user_book.is_read if user_book else False,
-            'isbn': book.isbn,
-            'description': book.description,
-            'cover_image_url': book.cover_image_url,
-            'page_count': book.page_count,
-            'published_date': book.published_date,
-            'lists': [],
-            'is_main_work': book.is_main_work
-        }
+        book_data = map_book_data(book, current_user.id)
 
         book_data['lists'] = [{
             'id': list.id,
             'name': list.name
         } for list in book.lists if list.user_id == current_user.id or list.user_id is None]
-
-        if not all([book.isbn, book.description, book.cover_image_url, book.page_count, book.published_date]):
-            google_books_info = fetch_google_books_info(book.title, book.author.name)
-            
-            book_data['isbn'] = book.isbn or google_books_info.get('isbn')
-            book_data['description'] = book.description or google_books_info.get('description')
-            book_data['cover_image_url'] = book.cover_image_url or google_books_info.get('cover_image_url')
-            book_data['page_count'] = book.page_count or google_books_info.get('page_count')
-            book_data['published_date'] = book.published_date or google_books_info.get('published_date')
-
-            book.isbn = book_data['isbn']
-            book.description = book_data['description']
-            book.cover_image_url = book_data['cover_image_url']
-            book.page_count = book_data['page_count']
-            book.published_date = book_data['published_date']
-            
-            db.session.commit()
 
         return jsonify(book_data)
     
@@ -126,25 +94,3 @@ def toggle_main_work(id):
         db.session.rollback()
         current_app.logger.error(f"Error updating main work status: {str(e)}")
         return jsonify({'error': 'An error occurred while updating the main work status'}), 500
-
-def fetch_google_books_info(title, author):
-    try:
-        query = f"intitle:{title}+inauthor:{author}"
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-        response = requests.get(url)
-        data = response.json()
-
-        if 'items' in data and len(data['items']) > 0:
-            volume_info = data['items'][0]['volumeInfo']
-            return {
-                'isbn': volume_info.get('industryIdentifiers', [{}])[0].get('identifier'),
-                'description': volume_info.get('description'),
-                'cover_image_url': volume_info.get('imageLinks', {}).get('thumbnail'),
-                'page_count': volume_info.get('pageCount'),
-                'published_date': volume_info.get('publishedDate')
-            }
-        else:
-            return {}
-    except Exception as e:
-        current_app.logger.error(f"Error fetching Google Books info: {str(e)}")
-        return {}

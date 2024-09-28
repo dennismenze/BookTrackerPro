@@ -89,14 +89,10 @@ class List(db.Model):
     def is_public(self):
         return self.user_id is None
 
+class BookList(db.Model):
+    __tablename__ = 'book_list'
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
+    list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
 
-book_list = db.Table(
-    'book_list',
-    db.Column('book_id',
-              db.Integer,
-              db.ForeignKey('books.id'),
-              primary_key=True),
-    db.Column('list_id',
-              db.Integer,
-              db.ForeignKey('lists.id'),
-              primary_key=True))
+    book = db.relationship('Book', backref='book_list')
+    list = db.relationship('List', backref='book_list')

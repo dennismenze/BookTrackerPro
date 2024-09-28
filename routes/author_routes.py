@@ -29,7 +29,7 @@ def get_authors():
             all_authors_query = all_authors_query.filter(func.lower(Author.name).contains(func.lower(search_query)))
         
         user_authors = user_authors_query.all()
-        all_authors = all_authors_query.all()
+        all_authors = all_authors_query.limit(10).all()
            
         result = {
             'all_authors': [{
