@@ -1,3 +1,4 @@
+
 from flask import Blueprint, render_template, jsonify
 from flask_login import login_required, current_user
 from models import db, Author, Book, UserBook
@@ -15,14 +16,15 @@ def author_detail(id):
     books_read = UserBook.query.join(Book).filter(Book.author_id == author.id, UserBook.user_id == current_user.id, UserBook.is_read == True).count()
     books_reading = UserBook.query.join(Book).filter(Book.author_id == author.id, UserBook.user_id == current_user.id, UserBook.is_read == False).count()
     
-    # Fetch books with their read status
+    # Fetch books with their read status and is_main_work attribute
     books = db.session.query(Book, UserBook.is_read).outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id)).filter(Book.author_id == author.id).all()
     
-    # Prepare books data with read status
+    # Prepare books data with read status and is_main_work attribute
     books_data = []
     for book, is_read in books:
         book_data = book.__dict__
         book_data['is_read'] = is_read if is_read is not None else False
+        book_data['is_main_work'] = book.is_main_work  # Include is_main_work attribute
         books_data.append(book_data)
     
     return render_template('author/detail.html', 
