@@ -55,14 +55,6 @@ args = "Reset Migration"
 task = "workflow.run"
 args = "Create Initial Migration"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Create Test User"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Test Author Detail"
-
 [[workflows.workflow]]
 name = "Run Flask App"
 author = "agent"
@@ -184,28 +176,6 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "flask db migrate -m 'Initial migration'"
-
-[[workflows.workflow]]
-name = "Create Test User"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python create_test_user.py"
-
-[[workflows.workflow]]
-name = "Test Author Detail"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python test_author_detail.py"
 
 [deployment]
 run = ["sh", "-c", "python app.py"]
