@@ -60,7 +60,7 @@ agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "flask db migrate -m 'Add is_main_work field to Book model'"
+args = "flask db migrate -m 'Update models for MariaDB'"
 
 [[workflows.workflow]]
 name = "Apply Migration"

@@ -1,13 +1,13 @@
 import os
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, g
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from models import db, Book, Author, List, User, UserBook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
-from flask_migrate import Migrate
 from flask_talisman import Talisman
 from urllib.parse import urlparse
 from functools import wraps
-from utils import import_authors_and_books, clear_authors_and_books
 
 def create_app():
     app = Flask(__name__)
@@ -15,18 +15,12 @@ def create_app():
     logging.basicConfig(level=logging.DEBUG)
     app.logger.setLevel(logging.DEBUG)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "mysql+pymysql://username:password@localhost/book_tracker")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY",
-                                              "fallback_secret_key")
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
     app.logger.debug(f"SECRET_KEY: {app.config['SECRET_KEY'][:5]}...")
 
     db.init_app(app)
-
-    # with app.app_context():
-    #     clear_authors_and_books()
-    #     import_authors_and_books()
-
     migrate = Migrate(app, db)
 
     login_manager = LoginManager()
@@ -34,8 +28,7 @@ def create_app():
     login_manager.login_view = 'login'
 
     csp = {
-        'default-src':
-        "'self'",
+        'default-src': "'self'",
         'script-src': [
             "'self'", "https://cdn.jsdelivr.net",
             "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com",
@@ -47,10 +40,8 @@ def create_app():
         ],
         'img-src': ["'self'", "https:", "data:"],
         'font-src': ["'self'", "https:", "data:"],
-        'connect-src':
-        "'self'",
-        'upgrade-insecure-requests':
-        ''
+        'connect-src': "'self'",
+        'upgrade-insecure-requests': ''
     }
 
     Talisman(app, content_security_policy=csp, force_https=True)
@@ -313,7 +304,6 @@ def create_app():
                         for author_id in author_ids:
                             author = Author.query.get(author_id)
                             if author:
-                                # Delete associated books and user_books records
                                 books = Book.query.filter_by(author_id=author.id).all()
                                 for book in books:
                                     UserBook.query.filter_by(book_id=book.id).delete()
@@ -379,7 +369,6 @@ def create_app():
     def admin_delete_author(id):
         author = Author.query.get_or_404(id)
         try:
-            # Delete associated books and user_books records
             books = Book.query.filter_by(author_id=author.id).all()
             for book in books:
                 UserBook.query.filter_by(book_id=book.id).delete()

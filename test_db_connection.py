@@ -14,7 +14,7 @@ if database_url:
         # Try to create an engine and connect to the database
         engine = create_engine(database_url)
         with engine.connect() as connection:
-            print("Successfully connected to the database!")
+            print("Successfully connected to the MariaDB database!")
     except SQLAlchemyError as e:
         print(f"Error connecting to the database: {str(e)}")
 else:

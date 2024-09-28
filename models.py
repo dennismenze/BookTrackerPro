@@ -3,10 +3,8 @@ from sqlalchemy.orm import DeclarativeBase
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
 class Base(DeclarativeBase):
     pass
-
 
 db = SQLAlchemy(model_class=Base)
 
@@ -41,49 +39,36 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-
 class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    author_id = db.Column(db.Integer,
-                          db.ForeignKey('authors.id'),
-                          nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
     users = db.relationship('User', secondary=user_book, back_populates='books')
     user_books = db.relationship("UserBook", back_populates="book")
     author = db.relationship('Author', back_populates='books')
-    lists = db.relationship('List',
-                            secondary='book_list',
-                            back_populates='books')
+    lists = db.relationship('List', secondary='book_list', back_populates='books')
     
-    # Fields for Google Books API integration
     isbn = db.Column(db.String(20))
     description = db.Column(db.Text)
     cover_image_url = db.Column(db.String(255))
     page_count = db.Column(db.Integer)
     published_date = db.Column(db.String(20))
     
-    # New field for main works functionality
     is_main_work = db.Column(db.Boolean, default=False)
-
 
 class Author(db.Model):
     __tablename__ = 'authors'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-
     books = db.relationship('Book', back_populates='author')
-
 
 class List(db.Model):
     __tablename__ = 'lists'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-
-    books = db.relationship('Book',
-                            secondary='book_list',
-                            back_populates='lists')
+    books = db.relationship('Book', secondary='book_list', back_populates='lists')
 
     @property
     def is_public(self):
@@ -93,6 +78,5 @@ class BookList(db.Model):
     __tablename__ = 'book_list'
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
-
     book = db.relationship('Book', backref='book_list')
     list = db.relationship('List', backref='book_list')
