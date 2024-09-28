@@ -24,7 +24,7 @@
             <div class="mt-8">
                 <h2 class="text-2xl font-bold mb-4">Books by {{ author.name }}</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {% for book in author.books %}
+                    {% for book in books %}
                         <div class="bg-white shadow-md rounded-lg p-4 relative">
                             <a href="{{ url_for('book_detail', id=book.id) }}">
                                 <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2">
@@ -37,6 +37,8 @@
                             {% if book.is_main_work %}
                                 <span class="absolute top-2 left-2 text-yellow-500"><i class="fas fa-bookmark"></i></span>
                             {% endif %}
+                            <!-- Debug information -->
+                            <p class="text-xs text-gray-500 mt-2">Read status: {{ book.is_read }}</p>
                         </div>
                     {% endfor %}
                 </div>
@@ -96,6 +98,9 @@ function toggleReadStatus(bookId) {
                 icon.classList.remove('fa-eye');
                 icon.classList.add('fa-eye-slash');
             }
+            // Update debug information
+            const debugInfo = icon.closest('.relative').querySelector('.text-xs');
+            debugInfo.textContent = `Read status: ${data.is_read}`;
         })
         .catch(error => console.error('Error:', error));
 }
