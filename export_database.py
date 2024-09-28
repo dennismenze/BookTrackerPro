@@ -1,33 +1,58 @@
 import os
-import subprocess
+import csv
+import zipfile
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+from models import db, User, Book, Author, List, UserBook
 
 # Get database connection details from environment variables
-db_name = os.environ.get('PGDATABASE')
-db_user = os.environ.get('PGUSER')
-db_host = os.environ.get('PGHOST')
-db_password = os.environ.get('PGPASSWORD')
-db_port = os.environ.get('PGPORT')
+database_url = os.environ.get('DATABASE_URL')
 
-# Create a timestamp for the backup file
+# Create a timestamp for the backup files
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-backup_file = f"database_backup_{timestamp}.sql"
-
-# Construct the pg_dump command
-pg_dump_command = [
-    "pg_dump",
-    f"--dbname=postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}",
-    "--format=plain",
-    "--no-owner",
-    "--no-acl",
-    f"--file={backup_file}"
-]
+backup_folder = f"database_backup_{timestamp}"
+os.makedirs(backup_folder, exist_ok=True)
 
 try:
-    # Execute the pg_dump command
-    subprocess.run(pg_dump_command, check=True)
-    print(f"Database export completed successfully. Backup file: {backup_file}")
-except subprocess.CalledProcessError as e:
-    print(f"Error exporting database: {e}")
+    # Create SQLAlchemy engine
+    engine = create_engine(database_url)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # Get all table names
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
+
+    # Export data from each table
+    for table_name in table_names:
+        query = f"SELECT * FROM {table_name}"
+        result = session.execute(query)
+        
+        file_path = os.path.join(backup_folder, f"{table_name}.csv")
+        with open(file_path, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(result.keys())
+            csv_writer.writerows(result)
+
+    # Create a zip file containing all CSV files
+    zip_file_path = f"{backup_folder}.zip"
+    with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+        for root, _, files in os.walk(backup_folder):
+            for file in files:
+                zipf.write(os.path.join(root, file), file)
+
+    print(f"Database export completed successfully. Backup file: {zip_file_path}")
+
 except Exception as e:
-    print(f"An unexpected error occurred: {e}")
+    print(f"An error occurred during the database export: {str(e)}")
+
+finally:
+    # Clean up the temporary backup folder
+    for root, _, files in os.walk(backup_folder, topdown=False):
+        for file in files:
+            os.remove(os.path.join(root, file))
+    os.rmdir(backup_folder)
+    
+    # Close the database session
+    session.close()
