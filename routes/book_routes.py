@@ -28,7 +28,7 @@ def api_books():
         'cover_image_url': book.cover_image_url
     } for book in books])
 
-@bp.route('/toggle_read_status', methods=['POST'])
+@bp.route('toggle_read_status', methods=['POST'])
 @login_required
 def toggle_read_status():
     data = request.json

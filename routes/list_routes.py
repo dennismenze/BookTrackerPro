@@ -59,7 +59,7 @@ def list_detail(id):
     
     return render_template('list/detail.html', list=book_list, books=books, read_percentage=read_percentage)
 
-@bp.route('/toggle_read_status', methods=['POST'])
+@bp.route('toggle_read_status', methods=['POST'])
 @login_required
 def toggle_read_status():
     data = request.json

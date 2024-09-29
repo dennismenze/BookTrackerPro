@@ -42,8 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateReadStats(readBooks, readPercentage) {
+    function updateReadStats(readBooks, readPercent) {
         if (readBooksCount) readBooksCount.textContent = readBooks;
-        if (readPercentage) readPercentage.textContent = readPercentage.toFixed(1);
+        if (readPercentage) readPercentage.textContent = readPercent.toFixed(1);
     }
 });

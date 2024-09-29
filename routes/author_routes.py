@@ -60,7 +60,7 @@ def api_authors():
         'image_url': author.image_url
     } for author in authors])
 
-@bp.route('/toggle_read_status', methods=['POST'])
+@bp.route('toggle_read_status', methods=['POST'])
 @login_required
 def toggle_read_status():
     data = request.json
