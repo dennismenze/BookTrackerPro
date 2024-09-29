@@ -19,9 +19,9 @@ def lists():
 
     lists = query.order_by(List.name).paginate(page=page, per_page=per_page, error_out=False)
 
-    # Fetch the first 4 books for each list
+    # Fetch the first 5 books for each list
     for list_item in lists.items:
-        list_item.preview_books = list_item.books[:4]
+        list_item.preview_books = list_item.books[:5]
         list_item.book_count = len(list_item.books)
 
     return render_template('list/lists.html', lists=lists, search_query=search_query)
