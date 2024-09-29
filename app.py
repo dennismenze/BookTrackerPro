@@ -9,6 +9,7 @@ from sqlalchemy import func
 from flask_migrate import Migrate
 from routes import book_routes, author_routes, list_routes
 
+
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'your-secret-key'
@@ -18,7 +19,7 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
-    
+
     app.register_blueprint(book_routes.bp, url_prefix='/book')
     app.register_blueprint(author_routes.bp, url_prefix='/author')
     app.register_blueprint(list_routes.bp, url_prefix='/list')
@@ -348,6 +349,7 @@ def create_app():
         return redirect(url_for('admin_authors'))
 
     return app
+
 
 if __name__ == '__main__':
     app = create_app()

@@ -4,7 +4,7 @@ from models import db, Author
 
 bp = Blueprint('author', __name__)
 
-@bp.route('/s')
+@bp.route('/authors')
 @login_required
 def authors():
     return render_template('authors.html')
@@ -15,7 +15,6 @@ def author_detail(id):
     return render_template('author/detail.html', author_id=id)
 
 @bp.route('/api/authors')
-@login_required
 def api_authors():
     search_query = request.args.get('search', '')
     authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
