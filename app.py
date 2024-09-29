@@ -18,7 +18,6 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-    # Set up logging
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
@@ -39,7 +38,6 @@ def create_app():
 
     @app.before_request
     def before_request():
-        #for the agent to take screenshots. Please leave in.
         if not current_user.is_authenticated:
             user = User.query.filter_by(username='test').first()
             if user:
@@ -132,14 +130,12 @@ def create_app():
         return render_template('register.html')
 
     def admin_required(f):
-
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated or not current_user.is_admin:
                 flash('You do not have permission to access this page.')
                 return redirect(url_for('index'))
             return f(*args, **kwargs)
-
         return decorated_function
 
     @app.route('/admin')

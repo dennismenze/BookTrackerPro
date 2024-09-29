@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Fetch and display user's books
-    fetch('/book/api/books')
+    fetch('/book/books')
         .then(response => response.json())
         .then(books => {
             const bookList = document.getElementById('book-list');
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch and display authors
     const searchAuthors = (query = '') => {
-        fetch(`/author/api/authors?search=${query}`)
+        fetch(`/author/authors?search=${query}`)
             .then(response => response.json())
             .then(authors => {
                 const authorList = document.getElementById('author-list');

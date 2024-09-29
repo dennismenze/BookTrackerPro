@@ -26,13 +26,13 @@ def authors():
 def author_detail(id):
     return render_template('author/detail.html', author_id=id)
 
-@bp.route('/api/authors')
+@bp.route('/authors')
 def api_authors():
     search_query = request.args.get('search', '')
     authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
     return jsonify([{'id': author.id, 'name': author.name, 'image_url': author.image_url} for author in authors])
 
-@bp.route('/api/author/<int:id>')
+@bp.route('/author/<int:id>')
 @login_required
 def api_author_detail(id):
     author = Author.query.get_or_404(id)

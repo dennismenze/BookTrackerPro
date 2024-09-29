@@ -9,7 +9,7 @@ bp = Blueprint('book', __name__)
 def book_detail(id):
     return render_template('book/detail.html', book_id=id)
 
-@bp.route('/api/books')
+@bp.route('/books')
 @login_required
 def api_books():
     print("API books route hit")  # Debug print statement
@@ -22,7 +22,7 @@ def api_books():
         'cover_image_url': book.cover_image_url
     } for book in books])
 
-@bp.route('/api/book/<int:id>')
+@bp.route('/book/<int:id>')
 @login_required
 def api_book_detail(id):
     book = Book.query.get_or_404(id)
