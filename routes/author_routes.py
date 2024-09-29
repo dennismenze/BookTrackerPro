@@ -32,4 +32,20 @@ def api_authors():
     authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
     return jsonify([{'id': author.id, 'name': author.name, 'image_url': author.image_url} for author in authors])
 
+@bp.route('/api/author/<int:id>')
+@login_required
+def api_author_detail(id):
+    author = Author.query.get_or_404(id)
+    books = Book.query.filter_by(author_id=author.id).all()
+    return jsonify({
+        'id': author.id,
+        'name': author.name,
+        'image_url': author.image_url,
+        'books': [{
+            'id': book.id,
+            'title': book.title,
+            'cover_image_url': book.cover_image_url
+        } for book in books]
+    })
+
 # Add other author-related routes here

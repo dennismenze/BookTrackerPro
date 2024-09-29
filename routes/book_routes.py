@@ -22,4 +22,20 @@ def api_books():
         'cover_image_url': book.cover_image_url
     } for book in books])
 
+@bp.route('/api/book/<int:id>')
+@login_required
+def api_book_detail(id):
+    book = Book.query.get_or_404(id)
+    return jsonify({
+        'id': book.id,
+        'title': book.title,
+        'author': book.author.name,
+        'author_id': book.author_id,
+        'cover_image_url': book.cover_image_url,
+        'isbn': book.isbn,
+        'description': book.description,
+        'page_count': book.page_count,
+        'published_date': book.published_date
+    })
+
 # Add other book-related routes here
