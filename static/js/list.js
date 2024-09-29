@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const bookItems = document.querySelectorAll('.book-item');
     const readPercentage = document.getElementById('read-percentage');
+    const addBookForm = document.getElementById('add-book-form');
+    const bookSearchInput = document.getElementById('book-search');
+    const searchResults = document.getElementById('search-results');
 
     bookItems.forEach(bookItem => {
         const toggleButton = bookItem.querySelector('.toggle-read-status');
@@ -9,6 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const bookId = bookItem.dataset.bookId;
             const isRead = bookItem.classList.contains('read');
             toggleReadStatus(bookId, !isRead);
+        });
+
+        const removeButton = bookItem.querySelector('.remove-book');
+        removeButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            const bookId = bookItem.dataset.bookId;
+            removeBookFromList(bookId);
         });
     });
 
@@ -45,5 +55,88 @@ document.addEventListener('DOMContentLoaded', function() {
         if (readPercentage) {
             readPercentage.textContent = percentage.toFixed(1);
         }
+    }
+
+    addBookForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const query = bookSearchInput.value.trim();
+        if (query) {
+            searchBooks(query);
+        }
+    });
+
+    function searchBooks(query) {
+        fetch(`/list/search_books?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(books => {
+                displaySearchResults(books);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function displaySearchResults(books) {
+        searchResults.innerHTML = '';
+        books.forEach(book => {
+            const bookElement = document.createElement('div');
+            bookElement.className = 'flex items-center justify-between p-2 border-b';
+            bookElement.innerHTML = `
+                <div>
+                    <img src="${book.cover_image_url || '/static/images/no-cover.png'}" alt="${book.title} cover" class="w-12 h-16 object-cover mr-2 inline-block">
+                    <span>${book.title} by ${book.author}</span>
+                </div>
+                <button class="add-book-button bg-green-500 text-white p-1 rounded" data-book-id="${book.id}">Add</button>
+            `;
+            searchResults.appendChild(bookElement);
+        });
+
+        const addButtons = searchResults.querySelectorAll('.add-book-button');
+        addButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const bookId = this.dataset.bookId;
+                addBookToList(bookId);
+            });
+        });
+    }
+
+    function addBookToList(bookId) {
+        const listId = window.location.pathname.split('/').pop();
+        fetch('/list/add_book_to_list', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ book_id: bookId, list_id: listId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Book added to list successfully');
+                location.reload(); // Refresh the page to show the updated list
+            } else {
+                alert(data.error || 'Failed to add book to list');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function removeBookFromList(bookId) {
+        const listId = window.location.pathname.split('/').pop();
+        fetch('/list/remove_book_from_list', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ book_id: bookId, list_id: listId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Book removed from list successfully');
+                location.reload(); // Refresh the page to show the updated list
+            } else {
+                alert(data.error || 'Failed to remove book from list');
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 });

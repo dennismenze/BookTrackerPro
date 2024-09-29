@@ -12,6 +12,16 @@
         <p class="text-gray-600">Read: <span id="read-percentage">{{ read_percentage|round(1) }}</span>%</p>
     </div>
 
+    <!-- Add book search form -->
+    <div class="mb-6">
+        <h2 class="text-2xl font-semibold mb-2">Add Books to List</h2>
+        <form id="add-book-form" class="flex items-center">
+            <input type="text" id="book-search" placeholder="Search for books..." class="flex-grow p-2 border rounded-l">
+            <button type="submit" class="bg-blue-500 text-white p-2 rounded-r">Search</button>
+        </form>
+        <div id="search-results" class="mt-2"></div>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {% for book in books %}
             <div class="bg-white shadow-md rounded-lg p-4 relative book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}">
@@ -22,6 +32,9 @@
                 <p class="text-gray-600">{{ book.author }}</p>
                 <button class="toggle-read-status absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center">
                     <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                </button>
+                <button class="remove-book absolute bottom-2 right-2 bg-red-500 text-white p-1 rounded">
+                    Remove
                 </button>
             </div>
         {% endfor %}
