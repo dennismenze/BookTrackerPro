@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Book, UserBook, Author
+from models import db, Book, UserBook, Author, List
 
 bp = Blueprint('book', __name__)
 
@@ -11,7 +11,11 @@ def book_detail(id):
     user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
     book_in_list = user_book is not None
     is_read = user_book.is_read if user_book else False
-    return render_template('book_detail.html', book=book, book_in_list=book_in_list, is_read=is_read)
+    
+    # Fetch all lists containing the book
+    lists_containing_book = List.query.filter(List.books.any(id=book.id)).all()
+    
+    return render_template('book_detail.html', book=book, book_in_list=book_in_list, is_read=is_read, lists_containing_book=lists_containing_book)
 
 @bp.route('/books')
 @login_required

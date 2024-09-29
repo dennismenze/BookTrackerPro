@@ -34,6 +34,27 @@
                         {% if is_read %}Mark as Unread{% else %}Mark as Read{% endif %}
                     </button>
                 </div>
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold mb-2">Lists containing this book:</h3>
+                    {% if lists_containing_book %}
+                        <ul class="list-disc list-inside">
+                            {% for list in lists_containing_book %}
+                                <li>
+                                    <a href="{{ url_for('list.list_detail', id=list.id) }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ list.name }}
+                                    </a>
+                                    {% if list.is_public %}
+                                        <span class="text-green-600">(Public)</span>
+                                    {% else %}
+                                        <span class="text-gray-600">(Private)</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-gray-600">This book is not in any lists yet.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
