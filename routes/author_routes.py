@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Author, Book
+from models import db, Author, Book, UserBook
 from sqlalchemy import func
 
 bp = Blueprint('author', __name__)
-
 
 @bp.route('/authors')
 @login_required
@@ -26,12 +25,25 @@ def authors():
                            authors=authors,
                            search_query=search_query)
 
-
 @bp.route('/<int:id>')
 @login_required
 def author_detail(id):
-    return render_template('author/detail.html', author_id=id)
-
+    author = Author.query.get_or_404(id)
+    books = Book.query.filter_by(author_id=author.id).all()
+    
+    # Calculate statistics
+    total_books = len(books)
+    read_books = UserBook.query.filter(UserBook.book_id.in_([book.id for book in books]), 
+                                       UserBook.user_id == current_user.id, 
+                                       UserBook.is_read == True).count()
+    read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+    
+    return render_template('author_detail.html', 
+                           author=author, 
+                           books=books, 
+                           total_books=total_books, 
+                           read_books=read_books, 
+                           read_percentage=read_percentage)
 
 @bp.route('/author/authors')
 def api_authors():
@@ -43,25 +55,6 @@ def api_authors():
         'image_url': author.image_url
     } for author in authors])
 
-
-@bp.route('/author/<int:id>')
-@login_required
-def api_author_detail(id):
-    author = Author.query.get_or_404(id)
-    books = Book.query.filter_by(author_id=author.id).all()
-    return jsonify({
-        'id':
-        author.id,
-        'name':
-        author.name,
-        'image_url':
-        author.image_url,
-        'books': [{
-            'id': book.id,
-            'title': book.title,
-            'cover_image_url': book.cover_image_url
-        } for book in books]
-    })
-
+# Remove the api_author_detail route as it's no longer needed
 
 # Add other author-related routes here

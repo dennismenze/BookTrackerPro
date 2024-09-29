@@ -11,9 +11,14 @@
             </div>
             <div class="md:w-2/3 md:pl-6">
                 <h1 class="text-3xl font-bold mb-4">{{ author.name }}</h1>
+                <div class="mb-4">
+                    <p class="text-lg"><strong>Total Books:</strong> {{ total_books }}</p>
+                    <p class="text-lg"><strong>Books Read:</strong> {{ read_books }}</p>
+                    <p class="text-lg"><strong>Read Percentage:</strong> {{ "%.1f"|format(read_percentage) }}%</p>
+                </div>
                 <h2 class="text-2xl font-semibold mb-4">Books by {{ author.name }}</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {% for book in author.books %}
+                    {% for book in books %}
                         <div class="bg-gray-100 rounded-lg p-4">
                             <a href="{{ url_for('book.book_detail', id=book.id) }}" class="block">
                                 <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover rounded-lg mb-2">
@@ -26,8 +31,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/author_detail.js') }}"></script>
 {% endblock %}
