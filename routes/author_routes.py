@@ -4,14 +4,21 @@ from models import db, Author
 
 bp = Blueprint('author', __name__)
 
-@bp.route('/authors')
+@bp.route('/s')
 @login_required
 def authors():
     return render_template('authors.html')
 
-@bp.route('/author/<int:id>')
+@bp.route('/<int:id>')
 @login_required
 def author_detail(id):
     return render_template('author/detail.html', author_id=id)
+
+@bp.route('/api/authors')
+@login_required
+def api_authors():
+    search_query = request.args.get('search', '')
+    authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
+    return jsonify([{'id': author.id, 'name': author.name, 'image_url': author.image_url} for author in authors])
 
 # Add other author-related routes here

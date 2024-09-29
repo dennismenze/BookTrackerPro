@@ -19,9 +19,9 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     
-    app.register_blueprint(book_routes.bp)
-    app.register_blueprint(author_routes.bp)
-    app.register_blueprint(list_routes.bp)
+    app.register_blueprint(book_routes.bp, url_prefix='/book')
+    app.register_blueprint(author_routes.bp, url_prefix='/author')
+    app.register_blueprint(list_routes.bp, url_prefix='/list')
 
     login_manager = LoginManager()
     login_manager.login_view = 'login'
