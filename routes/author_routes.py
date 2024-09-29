@@ -1,13 +1,25 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Author
+from models import db, Author, Book
+from sqlalchemy import func
 
 bp = Blueprint('author', __name__)
 
 @bp.route('/authors')
 @login_required
 def authors():
-    return render_template('authors.html')
+    page = request.args.get('page', 1, type=int)
+    per_page = 12  # Number of authors per page
+    search_query = request.args.get('search', '')
+
+    query = Author.query
+
+    if search_query:
+        query = query.filter(Author.name.ilike(f'%{search_query}%'))
+
+    authors = query.order_by(Author.name).paginate(page=page, per_page=per_page, error_out=False)
+
+    return render_template('authors.html', authors=authors, search_query=search_query)
 
 @bp.route('/<int:id>')
 @login_required
@@ -16,10 +28,8 @@ def author_detail(id):
 
 @bp.route('/api/authors')
 def api_authors():
-    print("API authors route hit")  # Debug print statement
     search_query = request.args.get('search', '')
     authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
-    print(f"Number of authors: {len(authors)}")  # Debug print statement
     return jsonify([{'id': author.id, 'name': author.name, 'image_url': author.image_url} for author in authors])
 
 # Add other author-related routes here
