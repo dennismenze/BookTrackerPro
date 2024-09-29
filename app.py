@@ -114,33 +114,6 @@ def create_app():
                 return redirect(url_for('index'))
         return render_template('register.html')
 
-    @app.route('/authors')
-    @login_required
-    def authors():
-        return render_template('authors.html')
-
-    @app.route('/author/<int:id>')
-    @login_required
-    def author_detail(id):
-        return render_template('author/detail.html', author_id=id)
-
-    @app.route('/book/<int:id>')
-    @login_required
-    def book_detail(id):
-        return render_template('book/detail.html', book_id=id)
-
-    @app.route('/lists')
-    @login_required
-    def lists():
-        return render_template('list/list.html',
-                               user_id=current_user.id,
-                               is_admin=current_user.is_admin)
-
-    @app.route('/list/<int:id>')
-    @login_required
-    def list_detail(id):
-        return render_template('list/detail.html', list_id=id)
-
     def admin_required(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
