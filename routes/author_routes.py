@@ -16,8 +16,10 @@ def author_detail(id):
 
 @bp.route('/api/authors')
 def api_authors():
+    print("API authors route hit")  # Debug print statement
     search_query = request.args.get('search', '')
     authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
+    print(f"Number of authors: {len(authors)}")  # Debug print statement
     return jsonify([{'id': author.id, 'name': author.name, 'image_url': author.image_url} for author in authors])
 
 # Add other author-related routes here

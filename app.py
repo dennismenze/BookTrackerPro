@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, g
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -9,7 +10,6 @@ from sqlalchemy import func
 from flask_migrate import Migrate
 from routes import book_routes, author_routes, list_routes
 
-
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'your-secret-key'
@@ -17,9 +17,13 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
+    # Set up logging
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
     db.init_app(app)
     migrate = Migrate(app, db)
-
+    
     app.register_blueprint(book_routes.bp, url_prefix='/book')
     app.register_blueprint(author_routes.bp, url_prefix='/author')
     app.register_blueprint(list_routes.bp, url_prefix='/list')
@@ -35,6 +39,12 @@ def create_app():
     @app.before_request
     def before_request():
         g.user = current_user
+        logger.debug(f"Request: {request.method} {request.path}")
+
+    @app.after_request
+    def after_request(response):
+        logger.debug(f"Response: {response.status_code}")
+        return response
 
     @app.route('/')
     def index():
@@ -164,7 +174,7 @@ def create_app():
                         flash('User and associated data deleted successfully.')
                     except Exception as e:
                         db.session.rollback()
-                        app.logger.error(f"Error deleting user: {str(e)}")
+                        logger.error(f"Error deleting user: {str(e)}")
                         flash(
                             'An error occurred while deleting the user. Please try again.'
                         )
@@ -208,7 +218,7 @@ def create_app():
                         flash('Book deleted successfully.')
                     except Exception as e:
                         db.session.rollback()
-                        app.logger.error(f"Error deleting book: {str(e)}")
+                        logger.error(f"Error deleting book: {str(e)}")
                         flash(
                             'An error occurred while deleting the book. Please try again.'
                         )
@@ -246,7 +256,7 @@ def create_app():
                         )
                     except Exception as e:
                         db.session.rollback()
-                        app.logger.error(
+                        logger.error(
                             f"Error bulk deleting authors: {str(e)}")
                         flash(
                             'An error occurred while deleting the authors. Please try again.'
@@ -342,14 +352,13 @@ def create_app():
             flash('Author and associated books deleted successfully.')
         except Exception as e:
             db.session.rollback()
-            app.logger.error(f"Error deleting author: {str(e)}")
+            logger.error(f"Error deleting author: {str(e)}")
             flash(
                 'An error occurred while deleting the author. Please try again.'
             )
         return redirect(url_for('admin_authors'))
 
     return app
-
 
 if __name__ == '__main__':
     app = create_app()
