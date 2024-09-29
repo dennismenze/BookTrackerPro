@@ -5,6 +5,7 @@ from sqlalchemy import func
 
 bp = Blueprint('author', __name__)
 
+
 @bp.route('/authors')
 @login_required
 def authors():
@@ -17,20 +18,31 @@ def authors():
     if search_query:
         query = query.filter(Author.name.ilike(f'%{search_query}%'))
 
-    authors = query.order_by(Author.name).paginate(page=page, per_page=per_page, error_out=False)
+    authors = query.order_by(Author.name).paginate(page=page,
+                                                   per_page=per_page,
+                                                   error_out=False)
 
-    return render_template('authors.html', authors=authors, search_query=search_query)
+    return render_template('authors.html',
+                           authors=authors,
+                           search_query=search_query)
+
 
 @bp.route('/<int:id>')
 @login_required
 def author_detail(id):
     return render_template('author/detail.html', author_id=id)
 
-@bp.route('/authors')
+
+@bp.route('/author/authors')
 def api_authors():
     search_query = request.args.get('search', '')
     authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
-    return jsonify([{'id': author.id, 'name': author.name, 'image_url': author.image_url} for author in authors])
+    return jsonify([{
+        'id': author.id,
+        'name': author.name,
+        'image_url': author.image_url
+    } for author in authors])
+
 
 @bp.route('/author/<int:id>')
 @login_required
@@ -38,14 +50,18 @@ def api_author_detail(id):
     author = Author.query.get_or_404(id)
     books = Book.query.filter_by(author_id=author.id).all()
     return jsonify({
-        'id': author.id,
-        'name': author.name,
-        'image_url': author.image_url,
+        'id':
+        author.id,
+        'name':
+        author.name,
+        'image_url':
+        author.image_url,
         'books': [{
             'id': book.id,
             'title': book.title,
             'cover_image_url': book.cover_image_url
         } for book in books]
     })
+
 
 # Add other author-related routes here
