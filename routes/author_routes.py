@@ -38,6 +38,11 @@ def author_detail(id):
                                        UserBook.is_read == True).count()
     read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
     
+    # Add is_read status to books
+    for book in books:
+        user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
+        book.is_read = user_book.is_read if user_book else False
+    
     return render_template('author_detail.html', 
                            author=author, 
                            books=books, 
@@ -55,6 +60,39 @@ def api_authors():
         'image_url': author.image_url
     } for author in authors])
 
-# Remove the api_author_detail route as it's no longer needed
+@bp.route('/toggle_read_status', methods=['POST'])
+@login_required
+def toggle_read_status():
+    data = request.json
+    book_id = data.get('book_id')
+    is_read = data.get('is_read')
+
+    if book_id is None or is_read is None:
+        return jsonify({'success': False, 'error': 'Invalid data'}), 400
+
+    user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
+
+    if user_book:
+        user_book.is_read = is_read
+    else:
+        user_book = UserBook(user_id=current_user.id, book_id=book_id, is_read=is_read)
+        db.session.add(user_book)
+
+    db.session.commit()
+
+    # Recalculate statistics
+    author = Book.query.get(book_id).author
+    books = Book.query.filter_by(author_id=author.id).all()
+    total_books = len(books)
+    read_books = UserBook.query.filter(UserBook.book_id.in_([book.id for book in books]), 
+                                       UserBook.user_id == current_user.id, 
+                                       UserBook.is_read == True).count()
+    read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+
+    return jsonify({
+        'success': True,
+        'read_books': read_books,
+        'read_percentage': read_percentage
+    })
 
 # Add other author-related routes here
