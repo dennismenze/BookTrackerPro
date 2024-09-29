@@ -1,31 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}List Details - Book Tracker{% endblock %}
+{% block title %}{{ list.name }}{% endblock %}
 
 {% block content %}
-<div id="list-details" class="container mx-auto mt-8 px-4" data-list-id="{{ list_id }}">
-    <div class="bg-white shadow-md rounded-lg p-6">
-        <h1 id="list-name" class="text-3xl font-bold mb-4"></h1>
-        <div class="flex flex-row">
-            <div class="basis-3/4">
-                <h2 class="text-2xl font-semibold mb-2">Books</h2>
-                <div id="book-list" class="grid grid-cols-5 gap-4"></div>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">{{ list.name }}</h1>
+    
+    <div class="mb-4">
+        <p class="text-gray-600">{{ "Public list" if list.is_public else "Private list" }}</p>
+        <p class="text-gray-600">{{ books|length }} books</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for book in books %}
+            <div class="bg-white shadow-md rounded-lg p-4 relative book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}">
+                <a href="{{ url_for('book.book_detail', id=book.id) }}" class="block">
+                    <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover rounded-lg mb-2">
+                    <h3 class="font-semibold text-blue-600 hover:text-blue-800">{{ book.title }}</h3>
+                </a>
+                <p class="text-gray-600">{{ book.author }}</p>
+                <div class="mt-2">
+                    <span class="text-sm font-semibold {% if book.is_read %}text-green-600{% else %}text-gray-500{% endif %}">
+                        {{ "Read" if book.is_read else "Unread" }}
+                    </span>
+                </div>
             </div>
-            <div class="basis-1/4">
-                <h2 class="text-2xl font-semibold mb-2">Statistics</h2>
-                <p id="book-count" class="text-lg"></p>
-                <p id="read-percentage" class="text-lg"></p>
-                <p id="list-visibility" class="text-lg"></p>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/book_rendering.js') }}"></script>
 <script src="{{ url_for('static', filename='js/list.js') }}"></script>
-<script src="{{ url_for('static', filename='js/list_detail_init.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 {% endblock %}
