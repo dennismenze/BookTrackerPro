@@ -1,29 +1,31 @@
 document.addEventListener('DOMContentLoaded', function() {
     const bookItems = document.querySelectorAll('.book-item');
+    const readPercentage = document.getElementById('read-percentage');
 
     bookItems.forEach(bookItem => {
-        bookItem.addEventListener('click', function(event) {
-            if (event.target.tagName !== 'A') {
-                event.preventDefault();
-                const bookId = this.dataset.bookId;
-                const isRead = this.classList.contains('read');
-                toggleReadStatus(bookId, !isRead);
-            }
+        const toggleButton = bookItem.querySelector('.toggle-read-status');
+        toggleButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            const bookId = bookItem.dataset.bookId;
+            const isRead = bookItem.classList.contains('read');
+            toggleReadStatus(bookId, !isRead);
         });
     });
 
     function toggleReadStatus(bookId, newStatus) {
-        fetch('/book/toggle_read_status', {
+        const listId = window.location.pathname.split('/').pop();
+        fetch('/list/toggle_read_status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ book_id: bookId, is_read: newStatus }),
+            body: JSON.stringify({ book_id: bookId, list_id: listId, is_read: newStatus }),
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 updateBookItemStatus(bookId, newStatus);
+                updateReadPercentage(data.read_percentage);
             }
         })
         .catch(error => console.error('Error:', error));
@@ -33,12 +35,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const bookItem = document.querySelector(`.book-item[data-book-id="${bookId}"]`);
         if (bookItem) {
             bookItem.classList.toggle('read', isRead);
-            const statusSpan = bookItem.querySelector('span');
-            if (statusSpan) {
-                statusSpan.textContent = isRead ? 'Read' : 'Unread';
-                statusSpan.classList.toggle('text-green-600', isRead);
-                statusSpan.classList.toggle('text-gray-500', !isRead);
-            }
+            const icon = bookItem.querySelector('.toggle-read-status i');
+            icon.classList.toggle('fa-eye', !isRead);
+            icon.classList.toggle('fa-eye-slash', isRead);
+        }
+    }
+
+    function updateReadPercentage(percentage) {
+        if (readPercentage) {
+            readPercentage.textContent = percentage.toFixed(1);
         }
     }
 });

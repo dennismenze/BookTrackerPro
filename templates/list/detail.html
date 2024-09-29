@@ -9,6 +9,7 @@
     <div class="mb-4">
         <p class="text-gray-600">{{ "Public list" if list.is_public else "Private list" }}</p>
         <p class="text-gray-600">{{ books|length }} books</p>
+        <p class="text-gray-600">Read: <span id="read-percentage">{{ read_percentage|round(1) }}</span>%</p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -19,11 +20,9 @@
                     <h3 class="font-semibold text-blue-600 hover:text-blue-800">{{ book.title }}</h3>
                 </a>
                 <p class="text-gray-600">{{ book.author }}</p>
-                <div class="mt-2">
-                    <span class="text-sm font-semibold {% if book.is_read %}text-green-600{% else %}text-gray-500{% endif %}">
-                        {{ "Read" if book.is_read else "Unread" }}
-                    </span>
-                </div>
+                <button class="toggle-read-status absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center">
+                    <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                </button>
             </div>
         {% endfor %}
     </div>

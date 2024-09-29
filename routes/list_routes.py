@@ -38,16 +38,59 @@ def list_detail(id):
     
     # Fetch all books in the list with their read status
     books = []
+    total_books = len(book_list.books)
+    read_books = 0
     for book in book_list.books:
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
+        is_read = user_book.is_read if user_book else False
+        if is_read:
+            read_books += 1
         books.append({
             'id': book.id,
             'title': book.title,
             'author': book.author.name,
             'cover_image_url': book.cover_image_url,
-            'is_read': user_book.is_read if user_book else False
+            'is_read': is_read
         })
     
-    return render_template('list/detail.html', list=book_list, books=books)
+    # Calculate the percentage of books read
+    read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+    
+    return render_template('list/detail.html', list=book_list, books=books, read_percentage=read_percentage)
+
+@bp.route('/toggle_read_status', methods=['POST'])
+@login_required
+def toggle_read_status():
+    data = request.json
+    book_id = data.get('book_id')
+    list_id = data.get('list_id')
+    is_read = data.get('is_read')
+
+    if book_id is None or list_id is None or is_read is None:
+        return jsonify({'success': False, 'error': 'Invalid data'}), 400
+
+    user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
+
+    if user_book:
+        user_book.is_read = is_read
+    else:
+        user_book = UserBook(user_id=current_user.id, book_id=book_id, is_read=is_read)
+        db.session.add(user_book)
+
+    db.session.commit()
+
+    # Recalculate the read percentage
+    book_list = List.query.get(list_id)
+    total_books = len(book_list.books)
+    read_books = UserBook.query.filter(UserBook.user_id == current_user.id, 
+                                       UserBook.book_id.in_([book.id for book in book_list.books]), 
+                                       UserBook.is_read == True).count()
+    read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+
+    return jsonify({
+        'success': True,
+        'is_read': is_read,
+        'read_percentage': round(read_percentage, 1)
+    })
 
 # Add other list-related routes here
