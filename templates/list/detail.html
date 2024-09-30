@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ list.name }}{% endblock %}
+{% block title %}{{ list.name }} - Book List{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -10,6 +10,17 @@
         <p class="text-gray-600">{{ "Public list" if list.is_public else "Private list" }}</p>
         <p class="text-gray-600">{{ books|length }} books</p>
         <p class="text-gray-600">Read: <span id="read-percentage">{{ read_percentage|round(1) }}</span>%</p>
+    </div>
+
+    <!-- Sorting dropdown -->
+    <div class="mb-4">
+        <label for="sort-select" class="block text-sm font-medium text-gray-700">Sort by:</label>
+        <select id="sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+            <option value="rank" {% if sort_by == 'rank' %}selected{% endif %}>Rank</option>
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>
+            <option value="author" {% if sort_by == 'author' %}selected{% endif %}>Author</option>
+            <option value="read_status" {% if sort_by == 'read_status' %}selected{% endif %}>Read Status</option>
+        </select>
     </div>
 
     <!-- Add book search form -->
@@ -22,28 +33,33 @@
         <div id="search-results" class="mt-2"></div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <ul id="book-list" class="space-y-4" data-list-id="{{ list.id }}">
         {% for book in books %}
-            <div class="bg-white shadow-md rounded-lg p-4 relative book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}">
-                <a href="{{ url_for('book.book_detail', id=book.id) }}" class="block">
-                    <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover rounded-lg mb-2">
-                    <h3 class="font-semibold text-blue-600 hover:text-blue-800">{{ book.title }}</h3>
-                </a>
-                <a href="{{ url_for('author.author_detail', id=book.author_id) }}" class="block">
-                    <p class="text-gray-600">{{ book.author }}</p>
-                </a>
-                <button class="toggle-read-status absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center">
-                    <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
-                </button>
-                <button class="remove-book absolute bottom-2 right-2 bg-red-500 text-white p-1 rounded">
-                    Remove
-                </button>
-            </div>
+            <li class="bg-white shadow-md rounded-lg p-4 flex items-center justify-between book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}" data-rank="{{ book.rank }}">
+                <div class="flex items-center">
+                    <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-16 h-24 object-cover mr-4">
+                    <div>
+                        <h3 class="font-semibold">{{ book.title }}</h3>
+                        <p class="text-gray-600">{{ book.author }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="mr-2">Rank: {{ book.rank }}</span>
+                    <button class="toggle-read-status w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center mr-2">
+                        <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                    </button>
+                    <button class="remove-book bg-red-500 text-white p-1 rounded">
+                        Remove
+                    </button>
+                </div>
+            </li>
         {% endfor %}
-    </div>
+    </ul>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/list.js') }}"></script>
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/list_sort.js') }}"></script>
 {% endblock %}
