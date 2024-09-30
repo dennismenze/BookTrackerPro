@@ -15,7 +15,7 @@ def book_detail(id):
     # Fetch all lists containing the book
     lists_containing_book = List.query.filter(List.books.any(id=book.id)).all()
     
-    return render_template('book_detail.html', book=book, book_in_list=book_in_list, is_read=is_read, lists_containing_book=lists_containing_book)
+    return render_template('book/detail.html', book=book, book_in_list=book_in_list, is_read=is_read, lists_containing_book=lists_containing_book)
 
 @bp.route('/books')
 @login_required

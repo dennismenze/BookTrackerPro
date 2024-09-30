@@ -25,9 +25,9 @@ def lists():
         list_item.preview_books = list_item.books[:5]
         list_item.book_count = len(list_item.books)
 
-    return render_template('list/lists.html', lists=lists, search_query=search_query)
+    return render_template('list/list.html', lists=lists, search_query=search_query)
 
-@bp.route('/list/<int:id>')
+@bp.route('/<int:id>')
 @login_required
 def list_detail(id):
     book_list = List.query.get_or_404(id)
@@ -50,6 +50,7 @@ def list_detail(id):
             'id': book.id,
             'title': book.title,
             'author': book.author.name,
+            'author_id': book.author_id,
             'cover_image_url': book.cover_image_url,
             'is_read': is_read
         })

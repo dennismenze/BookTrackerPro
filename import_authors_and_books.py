@@ -1,9 +1,10 @@
+import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 import undetected_chromedriver as uc
-from models import db, Author, Book, UserBook, BookList, User
+from models import db, Author, Book, UserBook, BookList, User, List
 import sys	
 
 from app import create_app
@@ -30,82 +31,94 @@ with app.app_context():
         db.session.commit()
         print("Database has been setup.")
 
-    #if data cache file exists, load data from file
-    try:
-        with open('authors_books.txt', 'r', encoding="utf-8") as f:
-            authors_books = {}
-            for line in f:
-                author, books = line.strip().split(': ')
-                authors_books[author] = books[1:-1].split(', ')
-    except FileNotFoundError:
-        authors_books = {}
+    base_url = "https://thegreatestbooks.org/authors"
+    pages_to_scrape = 10  # Anzahl der Seiten, die gescraped werden sollen
 
-    if not authors_books:
+    options = Options()
+    #options.add_argument('--headless')  # Optional: Webbrowser im Hintergrund ausführen
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
 
-        base_url = "https://thegreatestbooks.org/authors"
-        pages_to_scrape = 10  # Anzahl der Seiten, die gescraped werden sollen
-
-        options = Options()
-        #options.add_argument('--headless')  # Optional: Webbrowser im Hintergrund ausführen
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-
-        # Starte den WebDriver
-        driver = uc.Chrome(options=options)
+    # Starte den WebDriver
+    driver = uc.Chrome(options=options)
 
 
-        for page in range(1, pages_to_scrape + 1):
-            url = f"{base_url}/page/{page}"
-            driver.get(url)
+    for page in range(1, pages_to_scrape + 1):
+        url = f"{base_url}/page/{page}"
+        driver.get(url)
 
-            time.sleep(2)  # Warte auf das Laden der Seite
+        time.sleep(1)  # Warte auf das Laden der Seite
 
-            # Finde die Container für Autoren und deren Bücher
-            authors = driver.find_elements(By.CLASS_NAME, 'mb-4')
+        # Finde die Container für Autoren und deren Bücher
+        authors = driver.find_elements(By.CLASS_NAME, 'mb-4')
+        driver.switch_to.new_window('tab')
 
-            for author in authors:
-                author_name = author.find_element(By.TAG_NAME, 'h3').find_element(
-                    By.TAG_NAME, 'a').text.strip()  # Name des Autors
-                books = author.find_elements(
-                    By.CLASS_NAME, 'default-book-image')  # Container für Bücher
+        for author in authors:
+            driver.switch_to.window(driver.window_handles[0])
+            author_name = author.find_element(By.TAG_NAME, 'h3').find_element(
+                By.TAG_NAME, 'a').text.strip()  # Name des Autors
+            aut = Author(name=author_name)
+            db.session.add(aut)
+            db.session.commit()
 
-                # Füge den Autor und seine Bücher zur Liste hinzu
-                author_books = []
-                for book in books:
-                    book_title = book.find_element(By.TAG_NAME, 'img').get_attribute(
-                        'alt')  # Titel des Buches aus dem alt-Attribut
-                    book_title = book_title.split(' by ')[0][10:-1]
-                    author_books.append(book_title)
+            books = author.find_elements(
+                By.CLASS_NAME, 'default-book-image')  # Container für Bücher
 
-                authors_books[author_name] = author_books
+            # Füge den Autor und seine Bücher zur Liste hinzu
+            
+            for book in books:
+                driver.switch_to.window(driver.window_handles[0])
+                book_href = book.find_element(By.TAG_NAME, 'a').get_attribute('href')  # Link zum Buch
+                book_title = book.find_element(By.TAG_NAME, 'img').get_attribute('alt')  # Titel des Buches aus dem alt-Attribut
+                book_title = book_title.split(' by ')[0][10:-1]
 
-        driver.quit()  # Schließe den WebDriver
+                driver.switch_to.window(driver.window_handles[1])
+                driver.get(book_href)
+                time.sleep(1)
+                listitems = driver.find_elements(By.CLASS_NAME, 'list-group-item')
+                for listitem in listitems:
+                    # <li class="list-group-item">
+                    #     79th on 
+                    #   <a href="/lists/278">The Main Works of Russian literature</a> (Polka Academy)
+                    # </li>
+                    list_name = listitem.find_element(By.TAG_NAME, 'a').text
+                    list_owner = listitem.text.split(' (')[-1][:-1]
+                    list_rank = listitem.text.split(' ')[0]
+                    list_rank = re.sub(r'[^\d]', '', list_rank)
+                    if list_rank == '':
+                        list_rank = 0
+                    else:
+                        list_rank = int(list_rank)
 
-        #cache data to file
-        with open('authors_books.txt', 'w', encoding="utf-8") as f:
-            for author, books in authors_books.items():
-                f.write(f"{author}: {books}\n")
+                list = List.query.filter_by(name=list_name, user_id=1).first()
+                if not list:
+                    list = List(name=list_name + ' (' + list_owner + ')', user_id=1)
+                    db.session.add(list)
+                    db.session.commit()
 
-    # Ausgabe der gesammelten Daten
-    for authorName, books in authors_books.items():
 
-        # Finde den Autor oder erstelle ihn neu
-        author = Author.query.filter_by(name=authorName).first()
-        if not author:
-            author = Author(name=authorName)
-            db.session.add(author)
-
-        for bookName in books:
-            # Finde das Buch oder erstelle es neu
-            book = Book.query.filter_by(title=bookName,
-                                        author_id=author.id).first()
-            if not book:
-                book = Book(
-                    title=bookName,
-                    author=author,
-                    is_main_work=True  # Da wir uns auf die Hauptwerke fokussieren
+                rank = driver.find_element("tag name", "h3").text
+                rank = rank.split(' ')[1]
+                rank = int(re.sub(r'[^\d]', '', rank))
+                
+                bk = Book(
+                    title=book_title,
+                    author=aut,
+                    is_main_work=rank < 1000
                 )
-                db.session.add(book)
+                db.session.add(bk)
+                db.session.commit()
+
+                book_list = BookList.query.filter_by(book_id=bk.id, list_id=list.id).first()	
+                if not book_list:
+                    book_list = BookList(book_id=bk.id, list_id=list.id)
+                    book_list.rank = list_rank
+                    db.session.add(book_list)
+                    db.session.commit()          
+                
+
+
+    driver.quit()  # Schließe den WebDriver
 
     # Änderungen speichern
     db.session.commit()

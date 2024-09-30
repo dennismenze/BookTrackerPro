@@ -29,7 +29,9 @@
                     <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover rounded-lg mb-2">
                     <h3 class="font-semibold text-blue-600 hover:text-blue-800">{{ book.title }}</h3>
                 </a>
-                <p class="text-gray-600">{{ book.author }}</p>
+                <a href="{{ url_for('author.author_detail', id=book.author_id) }}" class="block">
+                    <p class="text-gray-600">{{ book.author }}</p>
+                </a>
                 <button class="toggle-read-status absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center">
                     <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                 </button>

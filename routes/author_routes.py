@@ -21,7 +21,7 @@ def authors():
                                                    per_page=per_page,
                                                    error_out=False)
 
-    return render_template('authors.html',
+    return render_template('author/list.html',
                            authors=authors,
                            search_query=search_query)
 
@@ -43,7 +43,7 @@ def author_detail(id):
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
         book.is_read = user_book.is_read if user_book else False
     
-    return render_template('author_detail.html', 
+    return render_template('author/detail.html', 
                            author=author, 
                            books=books, 
                            total_books=total_books, 

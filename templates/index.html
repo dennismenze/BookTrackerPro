@@ -26,6 +26,25 @@
         {% endif %}
     </div>
 
+    <!-- My Authors Section -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">My Authors</h2>
+        {% if user_authors %}
+            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for author in user_authors %}
+                    <li class="bg-white shadow-md rounded-lg p-4">
+                        <a href="{{ url_for('author.author_detail', id=author.id) }}" class="flex items-center">
+                            <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ author.name }}" class="w-12 h-12 object-cover rounded-full mr-4">
+                            <span class="text-blue-600 hover:text-blue-800">{{ author.name }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-600">No authors added yet.</p>
+        {% endif %}
+    </div>
+
     <!-- Search Books Section -->
     <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Search Books</h2>
@@ -73,25 +92,6 @@
             {% else %}
                 <p class="text-gray-600 text-center mt-4">No books found matching your search.</p>
             {% endif %}
-        {% endif %}
-    </div>
-
-    <!-- My Authors Section -->
-    <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">My Authors</h2>
-        {% if user_authors %}
-            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {% for author in user_authors %}
-                    <li class="bg-white shadow-md rounded-lg p-4">
-                        <a href="{{ url_for('author.author_detail', id=author.id) }}" class="flex items-center">
-                            <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ author.name }}" class="w-12 h-12 object-cover rounded-full mr-4">
-                            <span class="text-blue-600 hover:text-blue-800">{{ author.name }}</span>
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-gray-600">No authors added yet.</p>
         {% endif %}
     </div>
 
@@ -150,8 +150,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/book.js') }}"></script>
-<script src="{{ url_for('static', filename='js/author.js') }}"></script>
-<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+
 {% endblock %}
