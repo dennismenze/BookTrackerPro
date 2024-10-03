@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const bookItems = document.querySelectorAll('.book-item');
     const readPercentage = document.getElementById('read-percentage');
+    const readProgressBar = document.getElementById('read-progress-bar');
     const addBookForm = document.getElementById('add-book-form');
     const bookSearchInput = document.getElementById('book-search');
     const searchResults = document.getElementById('search-results');
@@ -58,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (readPercentage) {
             readPercentage.textContent = percentage.toFixed(1);
         }
+        if (readProgressBar) {
+            readProgressBar.style.width = `${percentage}%`;
+        }
     }
 
     addBookForm.addEventListener('submit', function(event) {
@@ -114,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 alert('Book added to list successfully');
-                location.reload(); // Refresh the page to show the updated list
+                location.reload();
             } else {
                 alert(data.error || 'Failed to add book to list');
             }
@@ -135,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 alert('Book removed from list successfully');
-                location.reload(); // Refresh the page to show the updated list
+                location.reload();
             } else {
                 alert(data.error || 'Failed to remove book from list');
             }

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookItems = document.querySelectorAll('.book-item');
     const readBooksCount = document.getElementById('read-books-count');
     const readPercentage = document.getElementById('read-percentage');
+    const readProgressBar = document.getElementById('read-progress-bar');
 
     bookItems.forEach(bookItem => {
         const toggleButton = bookItem.querySelector('.toggle-read-status');
@@ -45,5 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateReadStats(readBooks, readPercent) {
         if (readBooksCount) readBooksCount.textContent = readBooks;
         if (readPercentage) readPercentage.textContent = readPercent.toFixed(1);
+        if (readProgressBar) readProgressBar.style.width = `${readPercent}%`;
     }
 });
