@@ -20,7 +20,6 @@ def lists():
 
     lists = query.order_by(List.name).paginate(page=page, per_page=per_page, error_out=False)
 
-    # Fetch the first 5 books for each list
     for list_item in lists.items:
         list_item.preview_books = list_item.books[:5]
         list_item.book_count = len(list_item.books)
@@ -32,14 +31,12 @@ def lists():
 def list_detail(id):
     book_list = List.query.get_or_404(id)
     
-    # Ensure the user has permission to view this list
     if book_list.user_id != current_user.id and not book_list.is_public:
         flash('You do not have permission to view this list.', 'error')
         return redirect(url_for('list.lists'))
     
     sort_by = request.args.get('sort', 'rank')
     
-    # Fetch all books in the list with their read status and rank
     books_query = db.session.query(Book, BookList.rank, UserBook.is_read)\
         .join(BookList, Book.id == BookList.book_id)\
         .outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id))\
@@ -72,7 +69,6 @@ def list_detail(id):
             'rank': rank
         })
     
-    # Calculate the percentage of books read
     read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
     
     return render_template('list/detail.html', list=book_list, books=books, read_percentage=read_percentage, sort_by=sort_by)
@@ -98,7 +94,6 @@ def toggle_read_status():
 
     db.session.commit()
 
-    # Recalculate the read percentage
     book_list = List.query.get(list_id)
     total_books = len(book_list.books)
     read_books = UserBook.query.filter(UserBook.user_id == current_user.id, 
@@ -181,7 +176,6 @@ def remove_book_from_list():
     db.session.delete(book_list_entry)
     db.session.commit()
 
-    # Update ranks of remaining books
     remaining_books = BookList.query.filter_by(list_id=list_id).order_by(BookList.rank).all()
     for i, book in enumerate(remaining_books, start=1):
         book.rank = i
@@ -225,10 +219,12 @@ def toggle_visibility():
         return jsonify({'success': False, 'error': 'Invalid data'}), 400
 
     book_list = List.query.get(list_id)
-    if not book_list or book_list.user_id != current_user.id:
+    if not book_list or (not book_list.is_public and book_list.user_id != current_user.id):
         return jsonify({'success': False, 'error': 'List not found or access denied'}), 404
 
     book_list.is_public = is_public
+    if not is_public:
+        book_list.user_id = current_user.id
     db.session.commit()
 
     return jsonify({
