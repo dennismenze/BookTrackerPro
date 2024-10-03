@@ -5,7 +5,6 @@ from sqlalchemy.orm import joinedload
 
 bp = Blueprint('book', __name__)
 
-
 @bp.route('/<int:id>')
 @login_required
 def book_detail(id):
@@ -16,9 +15,6 @@ def book_detail(id):
     user_rating = user_book.rating if user_book and user_book.rating is not None else 0
     user_review = user_book.review if user_book else None
 
-    # Fetch all lists containing the book
-    lists_containing_book = List.query.filter(List.books.any(id=book.id)).all()
-
     # Fetch all reviews for the book
     reviews = UserBook.query.filter_by(book_id=book.id).filter(
         UserBook.review.isnot(None)).all()
@@ -26,11 +22,20 @@ def book_detail(id):
     return render_template('book/detail.html',
                            book=book,
                            is_read=is_read,
-                           lists_containing_book=lists_containing_book,
                            user_rating=user_rating,
                            user_review=user_review,
                            reviews=reviews)
 
+@bp.route('/<int:id>/lists')
+@login_required
+def book_lists(id):
+    book = Book.query.get_or_404(id)
+    lists = List.query.filter(List.books.any(id=book.id)).all()
+    return jsonify([{
+        'id': list.id,
+        'name': list.name,
+        'is_public': list.is_public
+    } for list in lists])
 
 @bp.route('/books')
 @login_required
@@ -43,7 +48,6 @@ def api_books():
         'author': book.author.name,
         'cover_image_url': book.cover_image_url
     } for book in books])
-
 
 @bp.route('toggle_read_status', methods=['POST'])
 @login_required
@@ -69,7 +73,6 @@ def toggle_read_status():
     db.session.commit()
 
     return jsonify({'success': True, 'is_read': is_read})
-
 
 @bp.route('/rate', methods=['POST'])
 @login_required
@@ -100,7 +103,6 @@ def rate_book():
         'rating': rating,
         'average_rating': book.average_rating
     })
-
 
 @bp.route('/review', methods=['POST'])
 @login_required
