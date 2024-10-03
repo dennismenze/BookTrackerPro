@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(`/book/${bookId}/lists?page=${page}&sort=${sort}&order=${order}`)
             .then(response => response.json())
             .then(data => {
-                listsTable.innerHTML = ''; // Clear existing rows
+                listsTable.innerHTML = '';
                 data.lists.forEach(list => {
                     const row = listsTable.insertRow();
                     row.innerHTML = `
@@ -153,5 +153,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    fetchLists(); // Call the function to load lists when the page loads
+    fetchLists();
 });

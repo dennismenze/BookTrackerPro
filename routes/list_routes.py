@@ -105,15 +105,12 @@ def toggle_read_status():
     if book_id is None or list_id is None or is_read is None:
         return jsonify({'success': False, 'error': 'Invalid data'}), 400
 
-    user_book = UserBook.query.filter_by(user_id=current_user.id,
-                                         book_id=book_id).first()
+    user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
 
     if user_book:
         user_book.read_date = date.today() if is_read else None
     else:
-        user_book = UserBook(user_id=current_user.id,
-                             book_id=book_id,
-                             read_date=date.today() if is_read else None)
+        user_book = UserBook(user_id=current_user.id, book_id=book_id, read_date=date.today() if is_read else None)
         db.session.add(user_book)
 
     db.session.commit()

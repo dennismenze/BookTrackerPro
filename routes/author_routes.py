@@ -116,5 +116,3 @@ def toggle_read_status():
         'main_works_read': main_works_read,
         'main_works_read_percentage': main_works_read_percentage
     })
-
-# Add other author-related routes here
