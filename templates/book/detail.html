@@ -1,33 +1,45 @@
-{% extends "base.html" %}
-
-{% block title %}{{ book.title }} - Book Detail{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}{{ book.title }} - Book Detail{%
+endblock %} {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col md:flex-row">
         <div class="md:w-1/3 mb-4 md:mb-0">
-            <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-auto object-cover rounded-lg shadow-lg">
+            <img
+                src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}"
+                alt="{{ book.title }} cover"
+                class="w-full h-auto object-cover rounded-lg shadow-lg"
+            />
         </div>
         <div class="md:w-2/3 md:pl-8">
             <h1 class="text-3xl font-bold mb-4">{{ book.title }}</h1>
-            <p class="text-xl mb-4">by <a href="{{ url_for('author.author_detail', id=book.author.id) }}" class="text-blue-500 hover:underline">{{ book.author.name }}</a></p>
-            
+            <p class="text-xl mb-4">
+                by
+                <a
+                    href="{{ url_for('author.author_detail', id=book.author.id) }}"
+                    class="text-blue-500 hover:underline"
+                    >{{ book.author.name }}</a
+                >
+            </p>
+
             <div class="mb-4">
                 <span class="text-lg font-semibold">Average Rating:</span>
                 <span id="average-rating" class="text-lg">
-                    {% if book.average_rating %}
-                        {{ "%.1f"|format(book.average_rating) }} / 5
-                    {% else %}
-                        No ratings yet
-                    {% endif %}
+                    {% if book.average_rating %} {{
+                    "%.1f"|format(book.average_rating) }} / 5 {% else %} No
+                    ratings yet {% endif %}
                 </span>
             </div>
 
             <p class="mb-4">{{ book.description }}</p>
-            
+
             <div class="mb-4">
-                <button id="toggle-read-status" data-book-id="{{ book.id }}" data-is-read="{{ is_read|lower }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    {% if is_read %}Mark as Unread{% else %}Mark as Read{% endif %}
+                <button
+                    id="toggle-read-status"
+                    data-book-id="{{ book.id }}"
+                    data-is-read="{{ is_read|lower }}"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    {% if is_read %}Mark as Unread{% else %}Mark as Read{% endif
+                    %}
                 </button>
             </div>
 
@@ -35,149 +47,171 @@
                 <h2 class="text-2xl font-bold mb-2">Your Rating</h2>
                 <div id="user-rating" class="flex items-center">
                     {% for i in range(1, 6) %}
-                        <button class="text-3xl {% if i <= user_rating %}text-yellow-500{% else %}text-gray-300{% endif %} hover:text-yellow-500 focus:outline-none" data-rating="{{ i }}">★</button>
+                    <button
+                        class="text-3xl {% if i <= user_rating %}text-yellow-500{% else %}text-gray-300{% endif %} hover:text-yellow-500 focus:outline-none"
+                        data-rating="{{ i }}"
+                    >
+                        ★
+                    </button>
                     {% endfor %}
                 </div>
                 <p class="mt-2 text-sm text-gray-600">
-                    {% if user_rating == 0 %}
-                        You haven't rated this book yet.
-                    {% else %}
-                        Your rating: {{ user_rating }} / 5
-                    {% endif %}
+                    {% if user_rating == 0 %} You haven't rated this book yet.
+                    {% else %} Your rating: {{ user_rating }} / 5 {% endif %}
                 </p>
             </div>
 
             <div class="mb-4">
                 <h2 class="text-2xl font-bold mb-2">Your Review</h2>
-                <textarea id="user-review" class="w-full p-2 border rounded" rows="4">{{ user_review or '' }}</textarea>
-                <button id="submit-review" class="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Submit Review</button>
+                <textarea
+                    id="user-review"
+                    class="w-full p-2 border rounded"
+                    rows="4"
+                >
+{{ user_review or '' }}</textarea
+                >
+                <button
+                    id="submit-review"
+                    class="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    Submit Review
+                </button>
             </div>
 
-            {% if book_in_list %}
-                <p class="text-green-600">This book is in your list</p>
-            {% endif %}
-
             {% if lists_containing_book %}
-                <div class="mt-4">
-                    <h2 class="text-xl font-bold mb-2">Lists containing this book:</h2>
-                    <ul class="list-disc list-inside">
-                        {% for list in lists_containing_book %}
-                            <li>
-                                <a href="{{ url_for('list.list_detail', id=list.id) }}" class="text-blue-500 hover:underline">
-                                    {{ list.name }} ({{ 'Public' if list.is_public else 'Private' }})
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+            <div class="mt-4">
+                <h2 class="text-xl font-bold mb-2">
+                    Lists containing this book:
+                </h2>
+                <ul class="list-disc list-inside">
+                    {% for list in lists_containing_book %}
+                    <li>
+                        <a
+                            href="{{ url_for('list.list_detail', id=list.id) }}"
+                            class="text-blue-500 hover:underline"
+                        >
+                            {{ list.name }} ({{ 'Public' if list.is_public else
+                            'Private' }})
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% endif %}
         </div>
     </div>
 
     <div class="mt-8">
         <h2 class="text-2xl font-bold mb-4">Reviews</h2>
-        {% if reviews %}
-            {% for review in reviews %}
-                <div class="bg-white shadow-md rounded-lg p-4 mb-4">
-                    <div class="flex items-center mb-2">
-                        <span class="font-semibold mr-2">{{ review.user.username }}</span>
-                        <span class="text-yellow-500">
-                            {% for i in range(review.rating or 0) %}★{% endfor %}
-                        </span>
-                    </div>
-                    <p>{{ review.review }}</p>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No reviews yet. Be the first to review this book!</p>
+        {% if reviews %} {% for review in reviews %}
+        <div class="bg-white shadow-md rounded-lg p-4 mb-4">
+            <div class="flex items-center mb-2">
+                <span class="font-semibold mr-2"
+                    >{{ review.user.username }}</span
+                >
+                <span class="text-yellow-500">
+                    {% for i in range(review.rating or 0) %}★{% endfor %}
+                </span>
+            </div>
+            <p>{{ review.review }}</p>
+        </div>
+        {% endfor %} {% else %}
+        <p>No reviews yet. Be the first to review this book!</p>
         {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
+{% endblock %} {% block scripts %} {{ super() }}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleReadStatusButton = document.getElementById('toggle-read-status');
-    const userRatingButtons = document.querySelectorAll('#user-rating button');
-    const userReviewTextarea = document.getElementById('user-review');
-    const submitReviewButton = document.getElementById('submit-review');
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleReadStatusButton =
+            document.getElementById("toggle-read-status");
+        const userRatingButtons = document.querySelectorAll(
+            "#user-rating button",
+        );
+        const userReviewTextarea = document.getElementById("user-review");
+        const submitReviewButton = document.getElementById("submit-review");
 
-    if (toggleReadStatusButton) {
-        toggleReadStatusButton.addEventListener('click', function() {
-            const bookId = this.dataset.bookId;
-            const isRead = this.dataset.isRead === 'true';
-            
-            fetch('/book/toggle_read_status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ book_id: bookId, is_read: !isRead }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.dataset.isRead = (!isRead).toString();
-                    this.textContent = isRead ? 'Mark as Read' : 'Mark as Unread';
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        });
-    }
+        if (toggleReadStatusButton) {
+            toggleReadStatusButton.addEventListener("click", function () {
+                const bookId = this.dataset.bookId;
+                const isRead = this.dataset.isRead === "true";
 
-    userRatingButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const rating = this.dataset.rating;
-            const bookId = toggleReadStatusButton.dataset.bookId;
-
-            fetch('/book/rate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ book_id: bookId, rating: rating }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    userRatingButtons.forEach(btn => {
-                        btn.classList.remove('text-yellow-500');
-                        btn.classList.add('text-gray-300');
-                        if (btn.dataset.rating <= rating) {
-                            btn.classList.remove('text-gray-300');
-                            btn.classList.add('text-yellow-500');
+                fetch("/book/toggle_read_status", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ book_id: bookId, is_read: !isRead }),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.success) {
+                            this.dataset.isRead = (!isRead).toString();
+                            this.textContent = isRead
+                                ? "Mark as Read"
+                                : "Mark as Unread";
                         }
-                    });
-                    document.getElementById('average-rating').textContent = data.average_rating.toFixed(1) + ' / 5';
-                    document.querySelector('#user-rating + p').textContent = `Your rating: ${rating} / 5`;
-                }
+                    })
+                    .catch((error) => console.error("Error:", error));
+            });
+        }
+
+        userRatingButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                const rating = this.dataset.rating;
+                const bookId = toggleReadStatusButton.dataset.bookId;
+
+                fetch("/book/rate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ book_id: bookId, rating: rating }),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.success) {
+                            userRatingButtons.forEach((btn) => {
+                                btn.classList.remove("text-yellow-500");
+                                btn.classList.add("text-gray-300");
+                                if (btn.dataset.rating <= rating) {
+                                    btn.classList.remove("text-gray-300");
+                                    btn.classList.add("text-yellow-500");
+                                }
+                            });
+                            document.getElementById(
+                                "average-rating",
+                            ).textContent =
+                                data.average_rating.toFixed(1) + " / 5";
+                            document.querySelector(
+                                "#user-rating + p",
+                            ).textContent = `Your rating: ${rating} / 5`;
+                        }
+                    })
+                    .catch((error) => console.error("Error:", error));
+            });
+        });
+
+        submitReviewButton.addEventListener("click", function () {
+            const bookId = toggleReadStatusButton.dataset.bookId;
+            const review = userReviewTextarea.value;
+
+            fetch("/book/review", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ book_id: bookId, review: review }),
             })
-            .catch(error => console.error('Error:', error));
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        alert("Review submitted successfully!");
+                        location.reload();
+                    }
+                })
+                .catch((error) => console.error("Error:", error));
         });
     });
-
-    submitReviewButton.addEventListener('click', function() {
-        const bookId = toggleReadStatusButton.dataset.bookId;
-        const review = userReviewTextarea.value;
-
-        fetch('/book/review', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ book_id: bookId, review: review }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Review submitted successfully!');
-                location.reload();
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    });
-});
 </script>
 {% endblock %}
