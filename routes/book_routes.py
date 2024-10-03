@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import db, Book, UserBook, Author, List
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc
+from datetime import date
 
 bp = Blueprint('book', __name__)
 
@@ -12,7 +13,8 @@ def book_detail(id):
     book = Book.query.options(joinedload(Book.user_books)).get_or_404(id)
     user_book = UserBook.query.filter_by(user_id=current_user.id,
                                          book_id=book.id).first()
-    is_read = user_book.is_read if user_book else False
+    is_read = user_book.read_date is not None if user_book else False
+    read_date = user_book.read_date if user_book else None
     user_rating = user_book.rating if user_book and user_book.rating is not None else 0
     user_review = user_book.review if user_book else None
 
@@ -23,6 +25,7 @@ def book_detail(id):
     return render_template('book/detail.html',
                            book=book,
                            is_read=is_read,
+                           read_date=read_date,
                            user_rating=user_rating,
                            user_review=user_review,
                            reviews=reviews)
@@ -82,16 +85,16 @@ def toggle_read_status():
                                          book_id=book_id).first()
 
     if user_book:
-        user_book.is_read = is_read
+        user_book.read_date = date.today() if is_read else None
     else:
         user_book = UserBook(user_id=current_user.id,
                              book_id=book_id,
-                             is_read=is_read)
+                             read_date=date.today() if is_read else None)
         db.session.add(user_book)
 
     db.session.commit()
 
-    return jsonify({'success': True, 'is_read': is_read})
+    return jsonify({'success': True, 'is_read': is_read, 'read_date': user_book.read_date.isoformat() if user_book.read_date else None})
 
 @bp.route('/rate', methods=['POST'])
 @login_required

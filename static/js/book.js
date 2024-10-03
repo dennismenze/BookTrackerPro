@@ -31,6 +31,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (data.success) {
                         this.dataset.isRead = (!isRead).toString();
                         this.textContent = isRead ? "Mark as Read" : "Mark as Unread";
+                        
+                        const readDateElement = document.getElementById("read-date");
+                        if (data.read_date) {
+                            if (readDateElement) {
+                                readDateElement.textContent = new Date(data.read_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                            } else {
+                                const newReadDateElement = document.createElement("p");
+                                newReadDateElement.id = "read-date";
+                                newReadDateElement.className = "mt-2 text-sm text-gray-600";
+                                newReadDateElement.textContent = `Read on: ${new Date(data.read_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+                                this.insertAdjacentElement('afterend', newReadDateElement);
+                            }
+                        } else if (readDateElement) {
+                            readDateElement.remove();
+                        }
                     }
                 })
                 .catch((error) => console.error("Error:", error));

@@ -30,6 +30,9 @@
                 <button id="toggle-read-status" data-book-id="{{ book.id }}" data-is-read="{{ is_read|lower }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     {% if is_read %}Mark as Unread{% else %}Mark as Read{% endif %}
                 </button>
+                {% if read_date %}
+                    <p class="mt-2 text-sm text-gray-600">Read on: <span id="read-date">{{ read_date.strftime('%B %d, %Y') }}</span></p>
+                {% endif %}
             </div>
 
             <div class="mb-4">

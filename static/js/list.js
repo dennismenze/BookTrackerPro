@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortSelect = document.getElementById('sort-select');
     const toggleVisibilityButton = document.getElementById('toggle-visibility');
 
+    let currentPage = 1;
+    let totalPages = 1;
+    let currentSort = 'name';
+    let currentOrder = 'asc';
+
     bookItems.forEach(bookItem => {
         const toggleButton = bookItem.querySelector('.toggle-read-status');
         toggleButton.addEventListener('click', function(event) {

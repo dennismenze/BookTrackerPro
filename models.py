@@ -19,11 +19,15 @@ class UserBook(db.Model):
     __tablename__ = 'user_books'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
-    is_read = db.Column(db.Boolean, default=False)
+    read_date = db.Column(db.Date, nullable=True)  # New field to replace is_read
     rating = db.Column(db.Integer)
     review = db.Column(db.Text)
     user = db.relationship("User", back_populates="user_books")
     book = db.relationship("Book", back_populates="user_books")
+
+    @property
+    def is_read(self):
+        return self.read_date is not None
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'

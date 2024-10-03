@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import Author, db, List, Book, UserBook, BookList
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_, func
+from datetime import date
 
 bp = Blueprint('list', __name__)
 
@@ -41,7 +42,7 @@ def list_detail(id):
 
     sort_by = request.args.get('sort', 'rank')
 
-    books_query = db.session.query(Book, BookList.rank, UserBook.is_read)\
+    books_query = db.session.query(Book, BookList.rank, UserBook.read_date)\
         .join(BookList, Book.id == BookList.book_id)\
         .outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id))\
         .filter(BookList.list_id == id)
@@ -53,7 +54,7 @@ def list_detail(id):
     elif sort_by == 'author':
         books_query = books_query.join(Book.author).order_by(Author.name)
     elif sort_by == 'read_status':
-        books_query = books_query.order_by(UserBook.is_read.desc())
+        books_query = books_query.order_by(UserBook.read_date.desc().nullslast())
 
     books_data = books_query.all()
 
@@ -62,7 +63,8 @@ def list_detail(id):
     read_books = 0
     total_main_works = 0
     main_works_read = 0
-    for book, rank, is_read in books_data:
+    for book, rank, read_date in books_data:
+        is_read = read_date is not None
         if is_read:
             read_books += 1
         if book.is_main_work:
@@ -75,7 +77,7 @@ def list_detail(id):
             'author': book.author.name,
             'author_id': book.author_id,
             'cover_image_url': book.cover_image_url,
-            'is_read': is_read or False,
+            'is_read': is_read,
             'rank': "" if rank == 0 else str(rank) +("th" if 4<=rank%100<=20 else {1:"st",2:"nd",3:"rd"}.get(rank%10, "th")),
             'is_main_work': book.is_main_work
         })
@@ -107,11 +109,11 @@ def toggle_read_status():
                                          book_id=book_id).first()
 
     if user_book:
-        user_book.is_read = is_read
+        user_book.read_date = date.today() if is_read else None
     else:
         user_book = UserBook(user_id=current_user.id,
                              book_id=book_id,
-                             is_read=is_read)
+                             read_date=date.today() if is_read else None)
         db.session.add(user_book)
 
     db.session.commit()
@@ -121,7 +123,7 @@ def toggle_read_status():
     read_books = UserBook.query.filter(
         UserBook.user_id == current_user.id,
         UserBook.book_id.in_([book.id for book in book_list.books]),
-        UserBook.is_read == True).count()
+        UserBook.read_date.isnot(None)).count()
     read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
 
     main_works = [book for book in book_list.books if book.is_main_work]
@@ -129,7 +131,7 @@ def toggle_read_status():
     main_works_read = UserBook.query.filter(
         UserBook.user_id == current_user.id,
         UserBook.book_id.in_([book.id for book in main_works]),
-        UserBook.is_read == True).count()
+        UserBook.read_date.isnot(None)).count()
     main_works_read_percentage = (main_works_read / total_main_works * 100) if total_main_works > 0 else 0
 
     return jsonify({
