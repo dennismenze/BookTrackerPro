@@ -60,6 +60,15 @@
 
             <div class="mt-4">
                 <h2 class="text-xl font-bold mb-2">Lists containing this book:</h2>
+                <div class="mb-4 flex items-center">
+                    <label for="sort-select" class="mr-2">Sort by:</label>
+                    <select id="sort-select" class="border rounded p-1">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="visibility-asc">Visibility (Private first)</option>
+                        <option value="visibility-desc">Visibility (Public first)</option>
+                    </select>
+                </div>
                 <table id="lists-table" class="min-w-full bg-white">
                     <thead class="bg-gray-100">
                         <tr>

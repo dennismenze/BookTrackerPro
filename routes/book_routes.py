@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, Book, UserBook, Author, List
 from sqlalchemy.orm import joinedload
+from sqlalchemy import desc
 
 bp = Blueprint('book', __name__)
 
@@ -32,9 +33,17 @@ def book_lists(id):
     book = Book.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = 5  # Number of lists per page
+    sort = request.args.get('sort', 'name')
+    order = request.args.get('order', 'asc')
 
-    lists = List.query.filter(List.books.any(id=book.id)).paginate(
-        page=page, per_page=per_page, error_out=False)
+    query = List.query.filter(List.books.any(id=book.id))
+
+    if sort == 'name':
+        query = query.order_by(List.name.asc() if order == 'asc' else List.name.desc())
+    elif sort == 'visibility':
+        query = query.order_by(List.is_public.asc() if order == 'asc' else List.is_public.desc())
+
+    lists = query.paginate(page=page, per_page=per_page, error_out=False)
 
     return jsonify({
         'lists': [{

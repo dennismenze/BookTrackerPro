@@ -7,9 +7,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const prevPageButton = document.getElementById("prev-page");
     const nextPageButton = document.getElementById("next-page");
     const pageInfo = document.getElementById("page-info");
+    const sortSelect = document.getElementById("sort-select");
 
     let currentPage = 1;
     let totalPages = 1;
+    let currentSort = 'name';
+    let currentOrder = 'asc';
 
     if (toggleReadStatusButton) {
         toggleReadStatusButton.addEventListener("click", function () {
@@ -86,9 +89,9 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch((error) => console.error("Error:", error));
     });
 
-    function fetchLists(page = 1) {
+    function fetchLists(page = 1, sort = currentSort, order = currentOrder) {
         const bookId = toggleReadStatusButton.dataset.bookId;
-        fetch(`/book/${bookId}/lists?page=${page}`)
+        fetch(`/book/${bookId}/lists?page=${page}&sort=${sort}&order=${order}`)
             .then(response => response.json())
             .then(data => {
                 listsTable.innerHTML = ''; // Clear existing rows
@@ -126,6 +129,15 @@ document.addEventListener("DOMContentLoaded", function () {
             fetchLists(currentPage + 1);
         }
     });
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            const [newSort, newOrder] = this.value.split('-');
+            currentSort = newSort;
+            currentOrder = newOrder;
+            fetchLists(1, currentSort, currentOrder);
+        });
+    }
 
     fetchLists(); // Call the function to load lists when the page loads
 });
