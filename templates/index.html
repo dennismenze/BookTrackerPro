@@ -6,6 +6,18 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">Welcome to Book Tracker</h1>
     
+    {% if current_user.is_authenticated %}
+    <div id="reading-goal-progress" class="mb-8 bg-white shadow-md rounded-lg p-4">
+        <h2 class="text-2xl font-semibold mb-4">Reading Goal Progress</h2>
+        <div id="goal-details"></div>
+        <div class="mt-2">
+            <div class="bg-gray-200 rounded-full h-4">
+                <div id="progress-bar" class="bg-blue-500 rounded-full h-4" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- My Latest Books Section -->
     <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">My Latest Books</h2>
@@ -150,5 +162,35 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('reading-goal-progress')) {
+        updateGoalProgress();
+        setInterval(updateGoalProgress, 60000); // Update every minute
+    }
+});
 
+function updateGoalProgress() {
+    fetch('/goal/goal_progress')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('goal-details').innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                document.getElementById('progress-bar').style.width = '0%';
+            } else {
+                const goalType = data.goal_type === 'books' ? 'Books' : 'Pages';
+                const progressText = `${data.progress.toFixed(1)}% (${Math.round(data.progress * data.target / 100)} / ${data.target} ${goalType})`;
+                document.getElementById('goal-details').innerHTML = `
+                    <p>Goal: ${data.target} ${goalType}</p>
+                    <p>Progress: ${progressText}</p>
+                    <p>Expected Progress: ${data.expected_progress.toFixed(1)}%</p>
+                `;
+                document.getElementById('progress-bar').style.width = `${data.progress}%`;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching goal progress:', error);
+        });
+}
+</script>
 {% endblock %}
