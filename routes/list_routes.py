@@ -60,9 +60,15 @@ def list_detail(id):
     books = []
     total_books = len(books_data)
     read_books = 0
+    total_main_works = 0
+    main_works_read = 0
     for book, rank, is_read in books_data:
         if is_read:
             read_books += 1
+        if book.is_main_work:
+            total_main_works += 1
+            if is_read:
+                main_works_read += 1
         books.append({
             'id': book.id,
             'title': book.title,
@@ -70,17 +76,21 @@ def list_detail(id):
             'author_id': book.author_id,
             'cover_image_url': book.cover_image_url,
             'is_read': is_read or False,
-            'rank': "" if rank == 0 else str(rank) +("th" if 4<=rank%100<=20 else {1:"st",2:"nd",3:"rd"}.get(rank%10, "th"))
+            'rank': "" if rank == 0 else str(rank) +("th" if 4<=rank%100<=20 else {1:"st",2:"nd",3:"rd"}.get(rank%10, "th")),
+            'is_main_work': book.is_main_work
         })
 
-    read_percentage = (read_books / total_books *
-                       100) if total_books > 0 else 0
+    read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+    main_works_read_percentage = (main_works_read / total_main_works * 100) if total_main_works > 0 else 0
 
     return render_template('list/detail.html',
                            list=book_list,
                            books=books,
                            read_percentage=read_percentage,
-                           sort_by=sort_by)
+                           sort_by=sort_by,
+                           total_main_works=total_main_works,
+                           main_works_read=main_works_read,
+                           main_works_read_percentage=main_works_read_percentage)
 
 @bp.route('/toggle_read_status', methods=['POST'])
 @login_required
@@ -112,13 +122,22 @@ def toggle_read_status():
         UserBook.user_id == current_user.id,
         UserBook.book_id.in_([book.id for book in book_list.books]),
         UserBook.is_read == True).count()
-    read_percentage = (read_books / total_books *
-                       100) if total_books > 0 else 0
+    read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+
+    main_works = [book for book in book_list.books if book.is_main_work]
+    total_main_works = len(main_works)
+    main_works_read = UserBook.query.filter(
+        UserBook.user_id == current_user.id,
+        UserBook.book_id.in_([book.id for book in main_works]),
+        UserBook.is_read == True).count()
+    main_works_read_percentage = (main_works_read / total_main_works * 100) if total_main_works > 0 else 0
 
     return jsonify({
         'success': True,
         'is_read': is_read,
-        'read_percentage': round(read_percentage, 1)
+        'read_percentage': round(read_percentage, 1),
+        'main_works_read': main_works_read,
+        'main_works_read_percentage': round(main_works_read_percentage, 1)
     })
 
 @bp.route('/search_books', methods=['GET'])

@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const readBooksCount = document.getElementById('read-books-count');
     const readPercentage = document.getElementById('read-percentage');
     const readProgressBar = document.getElementById('read-progress-bar');
+    const mainWorksReadCount = document.getElementById('main-works-read-count');
+    const mainWorksReadPercentage = document.getElementById('main-works-read-percentage');
+    const mainWorksProgressBar = document.getElementById('main-works-progress-bar');
 
     bookItems.forEach(bookItem => {
         const toggleButton = bookItem.querySelector('.toggle-read-status');
@@ -26,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 updateBookItemStatus(bookId, newStatus);
-                updateReadStats(data.read_books, data.read_percentage);
+                updateReadStats(data.read_books, data.read_percentage, data.main_works_read, data.main_works_read_percentage);
             }
         })
         .catch(error => console.error('Error:', error));
@@ -43,9 +46,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateReadStats(readBooks, readPercent) {
+    function updateReadStats(readBooks, readPercent, mainWorksRead, mainWorksReadPercent) {
         if (readBooksCount) readBooksCount.textContent = readBooks;
         if (readPercentage) readPercentage.textContent = readPercent.toFixed(1);
         if (readProgressBar) readProgressBar.style.width = `${readPercent}%`;
+        if (mainWorksReadCount) mainWorksReadCount.textContent = mainWorksRead;
+        if (mainWorksReadPercentage) mainWorksReadPercentage.textContent = mainWorksReadPercent.toFixed(1);
+        if (mainWorksProgressBar) mainWorksProgressBar.style.width = `${mainWorksReadPercent}%`;
     }
 });

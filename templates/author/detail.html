@@ -12,13 +12,26 @@
 
     <div class="mb-6">
         <h2 class="text-2xl font-semibold mb-2">Reading Progress</h2>
-        <div class="bg-gray-200 rounded-full h-4 w-full">
-            <div id="read-progress-bar" class="bg-blue-500 rounded-full h-4" style="width: {{ read_percentage }}%;"></div>
+        <div class="mb-2">
+            <p class="text-sm text-gray-600">All Books:</p>
+            <div class="bg-gray-200 rounded-full h-4 w-full">
+                <div id="read-progress-bar" class="bg-blue-500 rounded-full h-4" style="width: {{ read_percentage }}%;"></div>
+            </div>
+            <p class="mt-1 text-sm">
+                <span id="read-books-count">{{ read_books }}</span> out of {{ total_books }} books read
+                (<span id="read-percentage">{{ read_percentage|round(1) }}</span>%)
+            </p>
         </div>
-        <p class="mt-2">
-            <span id="read-books-count">{{ read_books }}</span> out of {{ total_books }} books read
-            (<span id="read-percentage">{{ read_percentage|round(1) }}</span>%)
-        </p>
+        <div>
+            <p class="text-sm text-gray-600">Main Works:</p>
+            <div class="bg-gray-200 rounded-full h-4 w-full">
+                <div id="main-works-progress-bar" class="bg-green-500 rounded-full h-4" style="width: {{ main_works_read_percentage }}%;"></div>
+            </div>
+            <p class="mt-1 text-sm">
+                <span id="main-works-read-count">{{ main_works_read }}</span> out of {{ total_main_works }} main works read
+                (<span id="main-works-read-percentage">{{ main_works_read_percentage|round(1) }}</span>%)
+            </p>
+        </div>
     </div>
 
     <h2 class="text-2xl font-semibold mb-4">Books by {{ author.name }}</h2>

@@ -31,12 +31,20 @@ def author_detail(id):
     author = Author.query.get_or_404(id)
     books = Book.query.filter_by(author_id=author.id).all()
     
-    # Calculate statistics
+    # Calculate statistics for all books
     total_books = len(books)
     read_books = UserBook.query.filter(UserBook.book_id.in_([book.id for book in books]), 
                                        UserBook.user_id == current_user.id, 
                                        UserBook.is_read == True).count()
     read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+    
+    # Calculate statistics for main works
+    main_works = [book for book in books if book.is_main_work]
+    total_main_works = len(main_works)
+    main_works_read = UserBook.query.filter(UserBook.book_id.in_([book.id for book in main_works]),
+                                            UserBook.user_id == current_user.id,
+                                            UserBook.is_read == True).count()
+    main_works_read_percentage = (main_works_read / total_main_works * 100) if total_main_works > 0 else 0
     
     # Add is_read status to books
     for book in books:
@@ -48,7 +56,10 @@ def author_detail(id):
                            books=books, 
                            total_books=total_books, 
                            read_books=read_books, 
-                           read_percentage=read_percentage)
+                           read_percentage=read_percentage,
+                           total_main_works=total_main_works,
+                           main_works_read=main_works_read,
+                           main_works_read_percentage=main_works_read_percentage)
 
 @bp.route('/author/authors')
 def api_authors():
@@ -89,10 +100,20 @@ def toggle_read_status():
                                        UserBook.is_read == True).count()
     read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
 
+    # Calculate statistics for main works
+    main_works = [book for book in books if book.is_main_work]
+    total_main_works = len(main_works)
+    main_works_read = UserBook.query.filter(UserBook.book_id.in_([book.id for book in main_works]),
+                                            UserBook.user_id == current_user.id,
+                                            UserBook.is_read == True).count()
+    main_works_read_percentage = (main_works_read / total_main_works * 100) if total_main_works > 0 else 0
+
     return jsonify({
         'success': True,
         'read_books': read_books,
-        'read_percentage': read_percentage
+        'read_percentage': read_percentage,
+        'main_works_read': main_works_read,
+        'main_works_read_percentage': main_works_read_percentage
     })
 
 # Add other author-related routes here

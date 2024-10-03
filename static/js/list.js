@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookItems = document.querySelectorAll('.book-item');
     const readPercentage = document.getElementById('read-percentage');
     const readProgressBar = document.getElementById('read-progress-bar');
+    const mainWorksReadCount = document.getElementById('main-works-read-count');
+    const mainWorksReadPercentage = document.getElementById('main-works-read-percentage');
+    const mainWorksProgressBar = document.getElementById('main-works-progress-bar');
     const addBookForm = document.getElementById('add-book-form');
     const bookSearchInput = document.getElementById('book-search');
     const searchResults = document.getElementById('search-results');
@@ -19,12 +22,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         const removeButton = bookItem.querySelector('.remove-book');
-        removeButton.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            const bookId = bookItem.dataset.bookId;
-            removeBookFromList(bookId);
-        });
+        if (removeButton) {
+            removeButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                const bookId = bookItem.dataset.bookId;
+                removeBookFromList(bookId);
+            });
+        }
     });
 
     function toggleReadStatus(bookId, newStatus) {
@@ -40,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 updateBookItemStatus(bookId, newStatus);
-                updateReadPercentage(data.read_percentage);
+                updateReadStats(data.read_percentage, data.main_works_read, data.main_works_read_percentage);
             }
         })
         .catch(error => console.error('Error:', error));
@@ -56,13 +61,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateReadPercentage(percentage) {
-        if (readPercentage) {
-            readPercentage.textContent = percentage.toFixed(1);
-        }
-        if (readProgressBar) {
-            readProgressBar.style.width = `${percentage}%`;
-        }
+    function updateReadStats(readPercent, mainWorksRead, mainWorksReadPercent) {
+        if (readPercentage) readPercentage.textContent = readPercent.toFixed(1);
+        if (readProgressBar) readProgressBar.style.width = `${readPercent}%`;
+        if (mainWorksReadCount) mainWorksReadCount.textContent = mainWorksRead;
+        if (mainWorksReadPercentage) mainWorksReadPercentage.textContent = mainWorksReadPercent.toFixed(1);
+        if (mainWorksProgressBar) mainWorksProgressBar.style.width = `${mainWorksReadPercent}%`;
     }
 
     addBookForm.addEventListener('submit', function(event) {
