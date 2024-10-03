@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class Base(DeclarativeBase):
@@ -74,6 +74,13 @@ class List(db.Model):
     @property
     def is_public(self):
         return self.user_id is None
+
+    @is_public.setter
+    def is_public(self, value):
+        if value:
+            self.user_id = None
+        else:
+            self.user_id = current_user.id
 
 class BookList(db.Model):
     __tablename__ = 'book_list'
