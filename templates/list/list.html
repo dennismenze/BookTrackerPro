@@ -26,9 +26,6 @@
                             </h2>
                             <p class="text-gray-600">{{ list.book_count }} books</p>
                         </div>
-                        <a href="{{ url_for('list.list_detail', id=list.id) }}" class="mt-2 md:mt-0 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            View Full List
-                        </a>
                     </div>
                     <div class="grid grid-cols-12 sm:grid-cols-8 md:grid-cols-12">
                         {% for book in list.preview_books %}
