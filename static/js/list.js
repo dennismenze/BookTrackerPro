@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBookForm = document.getElementById('add-book-form');
     const bookSearchInput = document.getElementById('book-search');
     const searchResults = document.getElementById('search-results');
+    const sortSelect = document.getElementById('sort-select');
 
     bookItems.forEach(bookItem => {
         const toggleButton = bookItem.querySelector('.toggle-read-status');
@@ -138,5 +139,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => console.error('Error:', error));
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('sort', this.value);
+            window.location.href = currentUrl.toString();
+        });
     }
 });
