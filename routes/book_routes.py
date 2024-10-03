@@ -12,7 +12,7 @@ def book_detail(id):
     user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
     book_in_list = user_book is not None
     is_read = user_book.is_read if user_book else False
-    user_rating = user_book.rating if user_book else None
+    user_rating = user_book.rating if user_book and user_book.rating is not None else 0
     user_review = user_book.review if user_book else None
     
     # Fetch all lists containing the book
@@ -112,5 +112,3 @@ def review_book():
         'success': True,
         'review': review
     })
-
-# Add other book-related routes here

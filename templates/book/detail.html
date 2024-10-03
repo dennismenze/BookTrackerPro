@@ -38,6 +38,13 @@
                         <button class="text-3xl {% if i <= user_rating %}text-yellow-500{% else %}text-gray-300{% endif %} hover:text-yellow-500 focus:outline-none" data-rating="{{ i }}">★</button>
                     {% endfor %}
                 </div>
+                <p class="mt-2 text-sm text-gray-600">
+                    {% if user_rating == 0 %}
+                        You haven't rated this book yet.
+                    {% else %}
+                        Your rating: {{ user_rating }} / 5
+                    {% endif %}
+                </p>
             </div>
 
             <div class="mb-4">
@@ -144,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                     document.getElementById('average-rating').textContent = data.average_rating.toFixed(1) + ' / 5';
+                    document.querySelector('#user-rating + p').textContent = `Your rating: ${rating} / 5`;
                 }
             })
             .catch(error => console.error('Error:', error));
