@@ -118,10 +118,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Book added to list successfully');
                 location.reload();
             } else {
-                alert(data.error || 'Failed to add book to list');
+                console.error(data.error || 'Failed to add book to list');
             }
         })
         .catch(error => console.error('Error:', error));
@@ -139,10 +138,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Book removed from list successfully');
                 location.reload();
             } else {
-                alert(data.error || 'Failed to remove book from list');
+                console.error(data.error || 'Failed to remove book from list');
             }
         })
         .catch(error => console.error('Error:', error));
@@ -176,10 +174,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 toggleVisibilityButton.dataset.isPublic = newStatus.toString();
-                toggleVisibilityButton.previousElementSibling.textContent = newStatus ? 'Public' : 'Private';
-                alert(`List is now ${newStatus ? 'public' : 'private'}`);
+                const visibilityText = toggleVisibilityButton.previousElementSibling;
+                visibilityText.textContent = newStatus ? 'Public' : 'Private';
             } else {
-                alert(data.error || 'Failed to update list visibility');
+                console.error(data.error || 'Failed to update list visibility');
             }
         })
         .catch(error => console.error('Error:', error));
