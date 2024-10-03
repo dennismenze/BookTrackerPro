@@ -49,7 +49,7 @@ def goal_progress():
     if goal.goal_type == 'books':
         books_read = UserBook.query.filter(
             UserBook.user_id == current_user.id,
-            UserBook.is_read == True,
+            UserBook.read_date.isnot(None),
             UserBook.book_id.in_(
                 Book.query.with_entities(Book.id).filter(
                     func.date(Book.published_date) >= goal.start_date,
@@ -62,7 +62,7 @@ def goal_progress():
     else:  # pages
         pages_read = db.session.query(func.sum(Book.page_count)).join(UserBook).filter(
             UserBook.user_id == current_user.id,
-            UserBook.is_read == True,
+            UserBook.read_date.isnot(None),
             func.date(Book.published_date) >= goal.start_date,
             func.date(Book.published_date) <= today
         ).scalar() or 0
@@ -77,4 +77,3 @@ def goal_progress():
         'start_date': goal.start_date.isoformat(),
         'end_date': goal.end_date.isoformat()
     })
-
