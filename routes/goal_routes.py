@@ -49,13 +49,8 @@ def goal_progress():
     if goal.goal_type == 'books':
         books_read = UserBook.query.filter(
             UserBook.user_id == current_user.id,
-            UserBook.read_date.isnot(None),
-            UserBook.book_id.in_(
-                Book.query.with_entities(Book.id).filter(
-                    func.date(Book.published_date) >= goal.start_date,
-                    func.date(Book.published_date) <= today
-                )
-            )
+            UserBook.read_date >= goal.start_date,
+            UserBook.read_date <= today
         ).count()
         progress = (books_read / goal.target) * 100
         expected_progress = (days_passed / total_days) * 100
@@ -63,8 +58,8 @@ def goal_progress():
         pages_read = db.session.query(func.sum(Book.page_count)).join(UserBook).filter(
             UserBook.user_id == current_user.id,
             UserBook.read_date.isnot(None),
-            func.date(Book.published_date) >= goal.start_date,
-            func.date(Book.published_date) <= today
+            UserBook.read_date >= goal.start_date,
+            UserBook.read_date <= today
         ).scalar() or 0
         progress = (pages_read / goal.target) * 100
         expected_progress = (days_passed / total_days) * 100

@@ -179,13 +179,13 @@ function updateGoalProgress() {
                 document.getElementById('progress-bar').style.width = '0%';
             } else {
                 const goalType = data.goal_type === 'books' ? 'Books' : 'Pages';
-                const progressText = `${data.progress.toFixed(1)}% (${Math.round(data.progress * data.target / 100)} / ${data.target} ${goalType})`;
+                const progressText = `${Math.min(data.progress.toFixed(1), 100)}% (${Math.round(data.progress * data.target / 100)} / ${data.target} ${goalType})`;
                 document.getElementById('goal-details').innerHTML = `
                     <p>Goal: ${data.target} ${goalType}</p>
                     <p>Progress: ${progressText}</p>
                     <p>Expected Progress: ${data.expected_progress.toFixed(1)}%</p>
                 `;
-                document.getElementById('progress-bar').style.width = `${data.progress}%`;
+                document.getElementById('progress-bar').style.width = `${Math.min(data.progress, 100)}%`;
             }
         })
         .catch(error => {
