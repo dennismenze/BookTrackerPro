@@ -6,7 +6,6 @@ from sqlalchemy import or_, func
 
 bp = Blueprint('list', __name__)
 
-
 @bp.route('/lists')
 @login_required
 def lists():
@@ -30,7 +29,6 @@ def lists():
     return render_template('list/list.html',
                            lists=lists,
                            search_query=search_query)
-
 
 @bp.route('/<int:id>')
 @login_required
@@ -84,7 +82,6 @@ def list_detail(id):
                            read_percentage=read_percentage,
                            sort_by=sort_by)
 
-
 @bp.route('/toggle_read_status', methods=['POST'])
 @login_required
 def toggle_read_status():
@@ -124,7 +121,6 @@ def toggle_read_status():
         'read_percentage': round(read_percentage, 1)
     })
 
-
 @bp.route('/search_books', methods=['GET'])
 @login_required
 def search_books():
@@ -142,7 +138,6 @@ def search_books():
         'author': book.author.name,
         'cover_image_url': book.cover_image_url
     } for book in books])
-
 
 @bp.route('/add_book_to_list', methods=['POST'])
 @login_required
@@ -183,7 +178,6 @@ def add_book_to_list():
 
     return jsonify({'success': True, 'message': 'Book added to list'})
 
-
 @bp.route('/remove_book_from_list', methods=['POST'])
 @login_required
 def remove_book_from_list():
@@ -217,7 +211,6 @@ def remove_book_from_list():
 
     return jsonify({'success': True, 'message': 'Book removed from list'})
 
-
 @bp.route('/update_ranks', methods=['POST'])
 @login_required
 def update_ranks():
@@ -250,7 +243,6 @@ def update_ranks():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-
 @bp.route('/toggle_visibility', methods=['POST'])
 @login_required
 def toggle_visibility():
@@ -270,8 +262,6 @@ def toggle_visibility():
         }), 404
 
     book_list.is_public = is_public
-    if not is_public:
-        book_list.user_id = current_user.id
     db.session.commit()
 
     return jsonify({'success': True, 'is_public': book_list.is_public})

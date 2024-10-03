@@ -70,17 +70,7 @@ class List(db.Model):
     name = db.Column(db.String(100), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     books = db.relationship('Book', secondary='book_list', back_populates='lists')
-
-    @property
-    def is_public(self):
-        return self.user_id is None
-
-    @is_public.setter
-    def is_public(self, value):
-        if value:
-            self.user_id = None
-        else:
-            self.user_id = current_user.id
+    is_public = db.Column(db.Boolean, default=False)
 
 class BookList(db.Model):
     __tablename__ = 'book_list'
