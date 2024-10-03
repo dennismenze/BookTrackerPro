@@ -19,6 +19,7 @@ with app.app_context():
         BookList.query.delete()
         Book.query.delete()
         Author.query.delete()
+        List.query.delete()
         db.session.commit()
         print("Database has been cleared.")
 
@@ -77,12 +78,9 @@ with app.app_context():
                 time.sleep(1)
                 listitems = driver.find_elements(By.CLASS_NAME, 'list-group-item')
                 for listitem in listitems:
-                    # <li class="list-group-item">
-                    #     79th on 
-                    #   <a href="/lists/278">The Main Works of Russian literature</a> (Polka Academy)
-                    # </li>
                     list_name = listitem.find_element(By.TAG_NAME, 'a').text
-                    list_owner = listitem.text.split(' (')[-1][:-1]
+                    list_owner = listitem.text.split(' (')[1][:-1]
+                    list_name = list_name + ' (' + list_owner + ')'
                     list_rank = listitem.text.split(' ')[0]
                     list_rank = re.sub(r'[^\d]', '', list_rank)
                     if list_rank == '':
@@ -92,14 +90,19 @@ with app.app_context():
 
                 list = List.query.filter_by(name=list_name, user_id=1).first()
                 if not list:
-                    list = List(name=list_name + ' (' + list_owner + ')', user_id=1)
+                    list = List(name=list_name, user_id=1)
                     db.session.add(list)
                     db.session.commit()
 
-
-                rank = driver.find_element("tag name", "h3").text
-                rank = rank.split(' ')[1]
-                rank = int(re.sub(r'[^\d]', '', rank))
+                r = driver.find_elements("tag name", "h3")
+                i = 0
+                for h3 in r:
+                    rank = r[i].text
+                    rank = rank.split(' ')[1]
+                    rank = re.sub(r'[^\d]', '', rank)
+                    if rank != '':
+                        rank = int(rank)
+                        break
                 
                 bk = Book(
                     title=book_title,
