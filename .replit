@@ -1,4 +1,4 @@
-modules = ["python-3.11"]
+modules = ["python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
@@ -18,6 +18,10 @@ args = "Run Flask App"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Add Books to Test List"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build Tailwind CSS"
 
 [[workflows.workflow]]
 name = "Run Flask App"
@@ -41,6 +45,17 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python add_books_to_list.py"
+
+[[workflows.workflow]]
+name = "Build Tailwind CSS"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tailwindcss -i ./static/css/styles.css -o ./static/css/tailwind.css --minify"
 
 [deployment]
 run = ["sh", "-c", "python app.py"]
