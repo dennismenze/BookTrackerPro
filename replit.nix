@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.geckodriver
     pkgs.sqlite-interactive
     pkgs.pg-dump-anon
     pkgs.rustc
