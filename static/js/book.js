@@ -98,11 +98,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 data.lists.forEach(list => {
                     const row = listsTable.insertRow();
                     row.innerHTML = `
-                        <td class="py-2 px-4">${list.name}</td>
-                        <td class="py-2 px-4">${list.is_public ? 'Public' : 'Private'}</td>
                         <td class="py-2 px-4">
-                            <a href="/list/${list.id}" class="text-blue-500 hover:underline">View</a>
+                            <a href="/list/${list.id}" class="text-blue-500 hover:underline">${list.name}</a>
                         </td>
+                        <td class="py-2 px-4">${list.is_public ? 'Public' : 'Private'}</td>
                     `;
                 });
                 currentPage = data.current_page;
