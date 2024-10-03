@@ -30,12 +30,22 @@ def book_detail(id):
 @login_required
 def book_lists(id):
     book = Book.query.get_or_404(id)
-    lists = List.query.filter(List.books.any(id=book.id)).all()
-    return jsonify([{
-        'id': list.id,
-        'name': list.name,
-        'is_public': list.is_public
-    } for list in lists])
+    page = request.args.get('page', 1, type=int)
+    per_page = 5  # Number of lists per page
+
+    lists = List.query.filter(List.books.any(id=book.id)).paginate(
+        page=page, per_page=per_page, error_out=False)
+
+    return jsonify({
+        'lists': [{
+            'id': list.id,
+            'name': list.name,
+            'is_public': list.is_public
+        } for list in lists.items],
+        'total': lists.total,
+        'pages': lists.pages,
+        'current_page': lists.page
+    })
 
 @bp.route('/books')
 @login_required
