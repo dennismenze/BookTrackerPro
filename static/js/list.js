@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const toggleButton = bookItem.querySelector('.toggle-read-status');
         toggleButton.addEventListener('click', function(event) {
             event.preventDefault();
+            event.stopPropagation();
             const bookId = bookItem.dataset.bookId;
             const isRead = bookItem.classList.contains('read');
             toggleReadStatus(bookId, !isRead);
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const removeButton = bookItem.querySelector('.remove-book');
         removeButton.addEventListener('click', function(event) {
             event.preventDefault();
+            event.stopPropagation();
             const bookId = bookItem.dataset.bookId;
             removeBookFromList(bookId);
         });

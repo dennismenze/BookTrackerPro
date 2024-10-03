@@ -36,21 +36,21 @@
     <ul id="book-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" data-list-id="{{ list.id }}">
         {% for book in books %}
             <li class="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}" data-rank="{{ book.rank }}">
-                <div>
+                <div class="relative">
                     <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2">
+                    <button class="toggle-read-status absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center">
+                        <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                    </button>
+                </div>
+                <div>
                     <h3 class="font-semibold truncate">{{ book.title }}</h3>
                     <p class="text-gray-600 text-sm truncate">{{ book.author }}</p>
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <span class="text-sm text-gray-500">Rank: {{ book.rank }}</span>
-                    <div class="flex items-center">
-                        <button class="toggle-read-status w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center mr-2">
-                            <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
-                        </button>
-                        <button class="remove-book bg-red-500 text-white p-1 rounded text-sm">
-                            Remove
-                        </button>
-                    </div>
+                    <button class="remove-book bg-red-500 text-white p-1 rounded text-sm">
+                        Remove
+                    </button>
                 </div>
             </li>
         {% endfor %}
