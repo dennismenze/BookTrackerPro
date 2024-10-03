@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleButton.addEventListener('click', function(event) {
             event.preventDefault();
             const bookId = bookItem.dataset.bookId;
-            const isRead = bookItem.dataset.isRead === 'true';
+            const isRead = bookItem.classList.contains('read');
             toggleReadStatus(bookId, !isRead);
         });
     });
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateBookItemStatus(bookId, isRead) {
         const bookItem = document.querySelector(`.book-item[data-book-id="${bookId}"]`);
         if (bookItem) {
-            bookItem.dataset.isRead = isRead.toString();
             bookItem.classList.toggle('read', isRead);
             const icon = bookItem.querySelector('.toggle-read-status i');
             icon.classList.toggle('fa-eye', !isRead);

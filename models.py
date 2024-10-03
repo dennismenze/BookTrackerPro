@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date
 
 class Base(DeclarativeBase):
     pass
@@ -18,9 +19,15 @@ class UserBook(db.Model):
     __tablename__ = 'user_books'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
-    is_read = db.Column(db.Boolean, default=False)
+    read_date = db.Column(db.Date, nullable=True)  # New field to replace is_read
+    rating = db.Column(db.Integer)
+    review = db.Column(db.Text)
     user = db.relationship("User", back_populates="user_books")
     book = db.relationship("Book", back_populates="user_books")
+
+    @property
+    def is_read(self):
+        return self.read_date is not None
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -32,6 +39,7 @@ class User(UserMixin, db.Model):
     user_books = db.relationship("UserBook", back_populates="user", cascade='all, delete-orphan')
     lists = db.relationship('List', backref='user', lazy='dynamic')
     is_admin = db.Column(db.Boolean, default=False)
+    reading_goal = db.relationship('ReadingGoal', uselist=False, back_populates='user')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -57,12 +65,17 @@ class Book(db.Model):
     
     is_main_work = db.Column(db.Boolean, default=False)
 
+    @property
+    def average_rating(self):
+        ratings = [ub.rating for ub in self.user_books if ub.rating is not None]
+        return sum(ratings) / len(ratings) if ratings else None
+
 class Author(db.Model):
     __tablename__ = 'authors'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     books = db.relationship('Book', back_populates='author')
-    image_url = db.Column(db.String(255))  # New field for author image
+    image_url = db.Column(db.String(255))
 
 class List(db.Model):
     __tablename__ = 'lists'
@@ -76,4 +89,14 @@ class BookList(db.Model):
     __tablename__ = 'book_list'
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
-    rank = db.Column(db.Integer, default=0)  # New field for book rank
+    rank = db.Column(db.Integer, default=0)
+
+class ReadingGoal(db.Model):
+    __tablename__ = 'reading_goals'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True)
+    goal_type = db.Column(db.String(20), nullable=False)  # 'books' or 'pages'
+    target = db.Column(db.Integer, nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    user = db.relationship('User', back_populates='reading_goal')

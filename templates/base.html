@@ -20,6 +20,7 @@
                         {% if current_user.is_authenticated %}
                             <a href="{{ url_for('author.authors') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Authors</a>
                             <a href="{{ url_for('list.lists') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Lists</a>
+                            <a href="{{ url_for('goal.set_goal') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Set Reading Goal</a>
                             {% if current_user.is_admin %}
                                 <a href="{{ url_for('admin') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Admin</a>
                             {% endif %}

@@ -8,8 +8,7 @@ from models import db, User, Book, Author, List, UserBook
 from functools import wraps
 from sqlalchemy import func
 from flask_migrate import Migrate
-from routes import book_routes, author_routes, list_routes
-
+from routes import book_routes, author_routes, list_routes, goal_routes
 
 def create_app():
     app = Flask(__name__)
@@ -27,6 +26,7 @@ def create_app():
     app.register_blueprint(book_routes.bp, url_prefix='/book')
     app.register_blueprint(author_routes.bp, url_prefix='/author')
     app.register_blueprint(list_routes.bp, url_prefix='/list')
+    app.register_blueprint(goal_routes.bp, url_prefix='/goal')
 
     login_manager = LoginManager()
     login_manager.login_view = 'login'

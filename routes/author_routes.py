@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, Author, Book, UserBook
 from sqlalchemy import func
+from datetime import date
 
 bp = Blueprint('author', __name__)
 
@@ -35,7 +36,7 @@ def author_detail(id):
     total_books = len(books)
     read_books = UserBook.query.filter(UserBook.book_id.in_([book.id for book in books]), 
                                        UserBook.user_id == current_user.id, 
-                                       UserBook.is_read == True).count()
+                                       UserBook.read_date.isnot(None)).count()
     read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
     
     # Calculate statistics for main works
@@ -43,13 +44,13 @@ def author_detail(id):
     total_main_works = len(main_works)
     main_works_read = UserBook.query.filter(UserBook.book_id.in_([book.id for book in main_works]),
                                             UserBook.user_id == current_user.id,
-                                            UserBook.is_read == True).count()
+                                            UserBook.read_date.isnot(None)).count()
     main_works_read_percentage = (main_works_read / total_main_works * 100) if total_main_works > 0 else 0
     
     # Add is_read status to books
     for book in books:
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
-        book.is_read = user_book.is_read if user_book else False
+        book.is_read = user_book.read_date is not None if user_book else False
     
     return render_template('author/detail.html', 
                            author=author, 
@@ -84,9 +85,9 @@ def toggle_read_status():
     user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
 
     if user_book:
-        user_book.is_read = is_read
+        user_book.read_date = date.today() if is_read else None
     else:
-        user_book = UserBook(user_id=current_user.id, book_id=book_id, is_read=is_read)
+        user_book = UserBook(user_id=current_user.id, book_id=book_id, read_date=date.today() if is_read else None)
         db.session.add(user_book)
 
     db.session.commit()
@@ -97,7 +98,7 @@ def toggle_read_status():
     total_books = len(books)
     read_books = UserBook.query.filter(UserBook.book_id.in_([book.id for book in books]), 
                                        UserBook.user_id == current_user.id, 
-                                       UserBook.is_read == True).count()
+                                       UserBook.read_date.isnot(None)).count()
     read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
 
     # Calculate statistics for main works
@@ -105,7 +106,7 @@ def toggle_read_status():
     total_main_works = len(main_works)
     main_works_read = UserBook.query.filter(UserBook.book_id.in_([book.id for book in main_works]),
                                             UserBook.user_id == current_user.id,
-                                            UserBook.is_read == True).count()
+                                            UserBook.read_date.isnot(None)).count()
     main_works_read_percentage = (main_works_read / total_main_works * 100) if total_main_works > 0 else 0
 
     return jsonify({
@@ -115,5 +116,3 @@ def toggle_read_status():
         'main_works_read': main_works_read,
         'main_works_read_percentage': main_works_read_percentage
     })
-
-# Add other author-related routes here
