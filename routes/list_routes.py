@@ -213,5 +213,3 @@ def update_ranks():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
-
-# Add other list-related routes here

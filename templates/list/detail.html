@@ -16,7 +16,10 @@
         <div class="bg-gray-200 rounded-full h-4 w-full">
             <div id="read-progress-bar" class="bg-blue-500 rounded-full h-4" style="width: {{ read_percentage }}%;"></div>
         </div>
-        <p class="mt-2">Read: <span id="read-percentage">{{ read_percentage|round(1) }}</span>%</p>
+        <p class="mt-2">
+            <span id="read-books-count">{{ (books|selectattr('is_read', 'eq', true)|list|length) }}</span> out of {{ books|length }} books read
+            (<span id="read-percentage">{{ read_percentage|round(1) }}</span>%)
+        </p>
     </div>
 
     <!-- Sorting dropdown -->
