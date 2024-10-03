@@ -213,3 +213,25 @@ def update_ranks():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/toggle_visibility', methods=['POST'])
+@login_required
+def toggle_visibility():
+    data = request.json
+    list_id = data.get('list_id')
+    is_public = data.get('is_public')
+
+    if list_id is None or is_public is None:
+        return jsonify({'success': False, 'error': 'Invalid data'}), 400
+
+    book_list = List.query.get(list_id)
+    if not book_list or book_list.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'List not found or access denied'}), 404
+
+    book_list.is_public = is_public
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'is_public': book_list.is_public
+    })

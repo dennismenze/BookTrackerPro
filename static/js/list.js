@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookSearchInput = document.getElementById('book-search');
     const searchResults = document.getElementById('search-results');
     const sortSelect = document.getElementById('sort-select');
+    const toggleVisibilityButton = document.getElementById('toggle-visibility');
 
     bookItems.forEach(bookItem => {
         const toggleButton = bookItem.querySelector('.toggle-read-status');
@@ -153,5 +154,34 @@ document.addEventListener('DOMContentLoaded', function() {
             currentUrl.searchParams.set('sort', this.value);
             window.location.href = currentUrl.toString();
         });
+    }
+
+    if (toggleVisibilityButton) {
+        toggleVisibilityButton.addEventListener('click', function() {
+            const listId = this.dataset.listId;
+            const isPublic = this.dataset.isPublic === 'true';
+            toggleListVisibility(listId, !isPublic);
+        });
+    }
+
+    function toggleListVisibility(listId, newStatus) {
+        fetch('/list/toggle_visibility', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ list_id: listId, is_public: newStatus }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                toggleVisibilityButton.dataset.isPublic = newStatus.toString();
+                toggleVisibilityButton.previousElementSibling.textContent = newStatus ? 'Public' : 'Private';
+                alert(`List is now ${newStatus ? 'public' : 'private'}`);
+            } else {
+                alert(data.error || 'Failed to update list visibility');
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 });
