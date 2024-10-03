@@ -7,15 +7,15 @@ from utils import fetch_google_books_info, get_author_image_from_wikimedia
 app = create_app()
 
 with app.app_context():
-    # cnt = 0
-    # authors = Author.query.all()
-    # for author in authors:
-    #     author.image_url = get_author_image_from_wikimedia(author.name)
-    #     cnt += 1
-    #     if cnt % 50 == 0:
-    #         db.session.commit()
+    cnt = 0
+    authors = Author.query.all()
+    for author in authors:
+        author.image_url = get_author_image_from_wikimedia(author.name)
+        cnt += 1
+        if cnt % 50 == 0:
+            db.session.commit()
 
-    # db.session.commit()
+    db.session.commit()
 
     cnt = 0
     books = Book.query.all()
