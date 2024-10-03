@@ -20,6 +20,8 @@ class UserBook(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     is_read = db.Column(db.Boolean, default=False)
+    rating = db.Column(db.Integer)
+    review = db.Column(db.Text)
     user = db.relationship("User", back_populates="user_books")
     book = db.relationship("Book", back_populates="user_books")
 
@@ -59,6 +61,11 @@ class Book(db.Model):
     
     is_main_work = db.Column(db.Boolean, default=False)
 
+    @property
+    def average_rating(self):
+        ratings = [ub.rating for ub in self.user_books if ub.rating is not None]
+        return sum(ratings) / len(ratings) if ratings else None
+
 class Author(db.Model):
     __tablename__ = 'authors'
     id = db.Column(db.Integer, primary_key=True)
@@ -89,4 +96,3 @@ class ReadingGoal(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     user = db.relationship('User', back_populates='reading_goal')
-
