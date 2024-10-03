@@ -29,8 +29,6 @@
         </p>
     </div>
 
-    <!-- Rest of the content remains the same -->
-    
     <!-- Sorting dropdown -->
     <div class="mb-4">
         <label for="sort-select" class="block text-sm font-medium text-gray-700">Sort by:</label>
@@ -56,14 +54,20 @@
         {% for book in books %}
             <li class="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}" data-rank="{{ book.rank }}">
                 <div class="relative">
-                    <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2">
+                    <a href="{{ url_for('book.book_detail', id=book.id) }}">
+                        <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2">
+                    </a>
                     <button class="toggle-read-status absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center">
                         <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                     </button>
                 </div>
                 <div>
-                    <h3 class="font-semibold truncate">{{ book.title }}</h3>
-                    <p class="text-gray-600 text-sm truncate">{{ book.author }}</p>
+                    <h3 class="font-semibold truncate">
+                        <a href="{{ url_for('book.book_detail', id=book.id) }}" class="hover:text-blue-500">{{ book.title }}</a>
+                    </h3>
+                    <p class="text-gray-600 text-sm truncate">
+                        <a href="{{ url_for('author.author_detail', id=book.author_id) }}" class="hover:text-blue-500">{{ book.author }}</a>
+                    </p>
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <span class="text-sm text-gray-500">Rank: {{ book.rank }}</span>
