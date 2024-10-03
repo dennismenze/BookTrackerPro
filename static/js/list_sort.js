@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const doc = parser.parseFromString(html, 'text/html');
                 const newBookList = doc.getElementById('book-list');
                 bookList.innerHTML = newBookList.innerHTML;
-                updateRanks(Array.from(bookList.children).map(li => li.dataset.bookId));
             });
     });
 

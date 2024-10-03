@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, List, Book, UserBook, BookList
+from models import Author, db, List, Book, UserBook, BookList
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_, func
 
@@ -70,7 +70,7 @@ def list_detail(id):
             'author_id': book.author_id,
             'cover_image_url': book.cover_image_url,
             'is_read': is_read or False,
-            'rank': rank
+            'rank': "" if rank == 0 else str(rank) +("th" if 4<=rank%100<=20 else {1:"st",2:"nd",3:"rd"}.get(rank%10, "th"))
         })
 
     read_percentage = (read_books / total_books *
