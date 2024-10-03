@@ -12,9 +12,11 @@
         </div>
         <div class="flex items-center">
             <span class="mr-2">{{ "Public" if list.is_public else "Private" }}</span>
+        {% if list.user_id == current_user.id %}
             <button id="toggle-visibility" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" data-list-id="{{ list.id }}" data-is-public="{{ 'true' if list.is_public else 'false' }}">
                 Toggle Visibility
             </button>
+        {% endif %}
         </div>
     </div>
 
@@ -87,11 +89,11 @@
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <span class="text-sm text-gray-500">{{ book.rank }}</span>
-                    {% if book.user_id == current_user.id %}
+                {% if list.user_id == current_user.id %}
                     <button class="remove-book bg-red-500 text-white p-1 rounded text-sm">
                         Remove
                     </button>
-                    {% endif %}
+                {% endif %}
                 </div>
             </li>
         {% endfor %}
@@ -103,5 +105,7 @@
 {{ super() }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 <script src="{{ url_for('static', filename='js/list.js') }}"></script>
+{% if list.user_id == current_user.id %}
 <script src="{{ url_for('static', filename='js/list_sort.js') }}"></script>
+{% endif %}
 {% endblock %}
