@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, send_file
-from flask_login import login_required, current_user, logout_user
+from flask_login import login_required, current_user, logout_user, login_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post
 from sqlalchemy import func, desc
 from io import BytesIO
@@ -42,6 +43,58 @@ def index():
                            author_search_query=author_search_query,
                            latest_books=latest_books,
                            user_authors=user_authors)
+
+@bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home.index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if user:
+            flash('Username or email already exists.')
+            return redirect(url_for('home.register'))
+        
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('Registration successful. Please log in.')
+        return redirect(url_for('home.login'))
+    
+    return render_template('register.html')
+
+@bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home.index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            flash('Logged in successfully.')
+            return redirect(url_for('home.index'))
+        else:
+            flash('Invalid username or password.')
+    
+    return render_template('login.html')
+
+@bp.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.')
+    return redirect(url_for('home.index'))
 
 @bp.route('/profile/<username>')
 @login_required
@@ -95,15 +148,21 @@ def profile_image(user_id):
     else:
         return send_file('static/images/default-profile.png', mimetype='image/png')
 
-@bp.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('You have been logged out.')
-    return redirect(url_for('home.index'))
-
 @bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
-    # Add logic for handling GET and POST requests
+    if request.method == 'POST':
+        current_user.full_name = request.form.get('full_name')
+        current_user.bio = request.form.get('bio')
+        current_user.location = request.form.get('location')
+        current_user.website = request.form.get('website')
+        
+        profile_image = request.files.get('profile_image')
+        if profile_image:
+            current_user.profile_image = profile_image.read()
+        
+        db.session.commit()
+        flash('Your profile has been updated.')
+        return redirect(url_for('home.user_profile', username=current_user.username))
+    
     return render_template('edit_profile.html')
