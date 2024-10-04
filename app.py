@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from routes import book_routes, author_routes, list_routes, goal_routes, home_routes
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
+from sqlalchemy.orm import RelationshipProperty
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -16,22 +17,32 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
 db.init_app(app)
 migrate = Migrate(app, db)
 
-
 class CustomModelView(ModelView):
     column_display_pk = True
     column_hide_backrefs = False
     can_export = True
     column_auto_select_related = True
     column_display_all_relations = True
-    column_list = None  # This will display all columns including foreign keys
-    column_exclude_list = ['password_hash']  # Exclude sensitive information
-    form_excluded_columns = ['password_hash']  # Exclude sensitive information from forms
+    column_exclude_list = ['password_hash', 'profile_image']
+    form_excluded_columns = ['password_hash', 'profile_image']
+
+    def scaffold_list_columns(self):
+        columns = super(CustomModelView, self).scaffold_list_columns()
+        for name, prop in self.model.__mapper__.relationships.items():
+            if isinstance(prop, RelationshipProperty) and prop.direction.name != 'MANYTOMANY':
+                columns.append(f'{name}_str')
+        return columns
 
     def __init__(self, model, session, **kwargs):
-        # Dynamically set column_list to include all columns
-        self.column_list = [c.key for c in model.__table__.columns]
         super(CustomModelView, self).__init__(model, session, **kwargs)
 
+        self.column_formatters = {}
+        for name, prop in model.__mapper__.relationships.items():
+            if isinstance(prop, RelationshipProperty) and prop.direction.name != 'MANYTOMANY':
+                def formatter(view, context, model, name=name):
+                    related_obj = getattr(model, name)
+                    return str(related_obj) if related_obj else ''
+                self.column_formatters[f'{name}_str'] = formatter
 
 admin = Admin(app, name='admin', template_mode='bootstrap3')
 admin.add_view(CustomModelView(User, db.session, endpoint='users'))
@@ -52,11 +63,9 @@ login_manager = LoginManager()
 login_manager.login_view = 'home.login'
 login_manager.init_app(app)
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
 
 @app.before_request
 def before_request():
@@ -65,7 +74,6 @@ def before_request():
         if user:
             login_user(user)
     g.user = current_user
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
