@@ -60,7 +60,7 @@
     <!-- Search Books Section -->
     <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Search Books</h2>
-        <form action="{{ url_for('index') }}" method="GET" class="flex mb-4">
+        <form action="{{ url_for('home.index') }}" method="GET" class="flex mb-4">
             <input type="text" name="book_search" placeholder="Search books..." value="{{ book_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Search</button>
         </form>
@@ -92,13 +92,13 @@
 
                 <div class="mt-4 flex justify-center">
                     {% if books.has_prev %}
-                        <a href="{{ url_for('index', book_page=books.prev_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">Previous</a>
+                        <a href="{{ url_for('home.index', book_page=books.prev_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">Previous</a>
                     {% endif %}
                     <span class="bg-gray-200 text-gray-700 font-bold py-2 px-4">
                         Page {{ books.page }} of {{ books.pages }}
                     </span>
                     {% if books.has_next %}
-                        <a href="{{ url_for('index', book_page=books.next_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Next</a>
+                        <a href="{{ url_for('home.index', book_page=books.next_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Next</a>
                     {% endif %}
                 </div>
             {% else %}
@@ -110,7 +110,7 @@
     <!-- Search Authors Section -->
     <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Search Authors</h2>
-        <form action="{{ url_for('index') }}" method="GET" class="flex mb-4">
+        <form action="{{ url_for('home.index') }}" method="GET" class="flex mb-4">
             <input type="text" name="author_search" placeholder="Search authors..." value="{{ author_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Search</button>
         </form>
@@ -144,13 +144,13 @@
 
                 <div class="flex justify-center mt-4">
                     {% if authors.has_prev %}
-                        <a href="{{ url_for('index', author_page=authors.prev_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
+                        <a href="{{ url_for('home.index', author_page=authors.prev_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
                     {% endif %}
                     <span class="py-2 px-4">
                         Page {{ authors.page }} of {{ authors.pages }}
                     </span>
                     {% if authors.has_next %}
-                        <a href="{{ url_for('index', author_page=authors.next_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Next</a>
+                        <a href="{{ url_for('home.index', author_page=authors.next_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Next</a>
                     {% endif %}
                 </div>
             {% else %}

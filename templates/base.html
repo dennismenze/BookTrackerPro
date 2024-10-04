@@ -21,11 +21,11 @@
                             <a href="{{ url_for('author.authors') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Authors</a>
                             <a href="{{ url_for('list.lists') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Lists</a>
                             <a href="{{ url_for('goal.set_goal') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Set Reading Goal</a>
-                            <a href="{{ url_for('user_profile', username=current_user.username) }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Profile</a>
-                            <a href="{{ url_for('logout') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Logout</a>
+                            <a href="{{ url_for('home.user_profile', username=current_user.username) }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Profile</a>
+                            <a href="{{ url_for('home.logout') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Logout</a>
                         {% else %}
-                            <a href="{{ url_for('login') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Login</a>
-                            <a href="{{ url_for('register') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Register</a>
+                            <a href="{{ url_for('home.login') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                            <a href="{{ url_for('home.register') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Register</a>
                         {% endif %}
                     </div>
                 </div>
