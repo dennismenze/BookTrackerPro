@@ -30,7 +30,8 @@ class CustomModelView(ModelView):
         columns = super(CustomModelView, self).scaffold_list_columns()
         for name, prop in self.model.__mapper__.relationships.items():
             if isinstance(prop, RelationshipProperty) and prop.direction.name != 'MANYTOMANY':
-                columns.append(f'{name}_str')
+                if hasattr(self.model, f'{name}_str'):
+                    columns.append(f'{name}_str')
         return columns
 
     def __init__(self, model, session, **kwargs):
@@ -39,10 +40,11 @@ class CustomModelView(ModelView):
         self.column_formatters = {}
         for name, prop in model.__mapper__.relationships.items():
             if isinstance(prop, RelationshipProperty) and prop.direction.name != 'MANYTOMANY':
-                def formatter(view, context, model, name=name):
-                    related_obj = getattr(model, name)
-                    return str(related_obj) if related_obj else ''
-                self.column_formatters[f'{name}_str'] = formatter
+                if hasattr(model, f'{name}_str'):
+                    def formatter(view, context, model, name=name):
+                        related_obj = getattr(model, name)
+                        return str(related_obj) if related_obj else ''
+                    self.column_formatters[f'{name}_str'] = formatter
 
 admin = Admin(app, name='admin', template_mode='bootstrap3')
 admin.add_view(CustomModelView(User, db.session, endpoint='users'))
