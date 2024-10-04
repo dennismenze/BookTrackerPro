@@ -55,7 +55,7 @@ def user_profile(username):
         recent_activities.append({
             'type': 'book_read',
             'book': user_book.book,
-            'timestamp': user_book.read_date
+            'timestamp': datetime.combine(user_book.read_date, datetime.min.time())
         })
     
     # Recent lists created
