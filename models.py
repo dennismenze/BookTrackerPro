@@ -24,7 +24,7 @@ class UserBook(db.Model):
     __tablename__ = 'user_books'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
-    read_date = db.Column(db.Date, nullable=True)  # New field to replace is_read
+    read_date = db.Column(db.Date, nullable=True)
     rating = db.Column(db.Integer)
     review = db.Column(db.Text)
     user = db.relationship("User", back_populates="user_books")
@@ -42,24 +42,24 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255))
     books = db.relationship('Book', secondary=user_book, back_populates='users')
     user_books = db.relationship("UserBook", back_populates="user", cascade='all, delete-orphan')
-    lists = db.relationship('List', backref='user', lazy='select')  # Changed from 'dynamic' to 'select'
+    lists = db.relationship('List', backref='user', lazy='select')
     is_admin = db.Column(db.Boolean, default=False)
     reading_goal = db.relationship('ReadingGoal', uselist=False, back_populates='user')
     
-    # New fields for profile information
     full_name = db.Column(db.String(100))
     bio = db.Column(db.Text)
     location = db.Column(db.String(100))
     website = db.Column(db.String(200))
-    profile_image = db.Column(db.LargeBinary)  # New field to store profile image data
+    profile_image = db.Column(db.LargeBinary)
     date_joined = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # New fields for following/followers
     followed = db.relationship(
         'User', secondary=followers,
         primaryjoin=(followers.c.follower_id == id),
         secondaryjoin=(followers.c.followed_id == id),
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
+
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -145,4 +145,3 @@ class Post(db.Model):
     body = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=db.func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    user = db.relationship('User', backref='posts')

@@ -58,8 +58,26 @@
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
         <h3 class="text-xl font-semibold mb-4">Recent Activity</h3>
-        <!-- Add recent activity here (e.g., recently read books, created lists, etc.) -->
-        <p class="text-gray-600">No recent activity to display.</p>
+        {% if recent_activities %}
+            <ul class="space-y-4">
+            {% for activity in recent_activities %}
+                <li class="border-b pb-2">
+                    {% if activity.type == 'book_read' %}
+                        <p><i class="fas fa-book mr-2 text-blue-500"></i> Read <a href="{{ url_for('book.book_detail', id=activity.book.id) }}" class="text-blue-500 hover:underline">{{ activity.book.title }}</a> by {{ activity.book.author.name }}</p>
+                        <p class="text-sm text-gray-500">{{ activity.timestamp.strftime('%B %d, %Y') }}</p>
+                    {% elif activity.type == 'list_created' %}
+                        <p><i class="fas fa-list mr-2 text-green-500"></i> Created a new list: <a href="{{ url_for('list.list_detail', id=activity.list.id) }}" class="text-blue-500 hover:underline">{{ activity.list.name }}</a></p>
+                        <p class="text-sm text-gray-500">Recently</p>
+                    {% elif activity.type == 'post_created' %}
+                        <p><i class="fas fa-pencil-alt mr-2 text-yellow-500"></i> Posted: {{ activity.post.body[:50] }}{% if activity.post.body|length > 50 %}...{% endif %}</p>
+                        <p class="text-sm text-gray-500">{{ activity.timestamp.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-600">No recent activity to display.</p>
+        {% endif %}
     </div>
 
     {% if current_user.id == user.id %}

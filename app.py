@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from models import db, User, Book, Author, List, UserBook
+from models import db, User, Book, Author, List, UserBook, Post
 from functools import wraps
 from sqlalchemy import func
 from flask_migrate import Migrate
@@ -367,7 +367,41 @@ def create_app():
     @login_required
     def user_profile(username):
         user = User.query.filter_by(username=username).first_or_404()
-        return render_template('profile.html', user=user)
+        
+        # Fetch recent activities
+        recent_activities = []
+        
+        # Recent books read
+        recent_books = UserBook.query.filter_by(user_id=user.id).filter(UserBook.read_date.isnot(None)).order_by(UserBook.read_date.desc()).limit(5).all()
+        for user_book in recent_books:
+            recent_activities.append({
+                'type': 'book_read',
+                'book': user_book.book,
+                'timestamp': user_book.read_date
+            })
+        
+        # Recent lists created
+        recent_lists = List.query.filter_by(user_id=user.id).order_by(List.id.desc()).limit(5).all()
+        for list_item in recent_lists:
+            recent_activities.append({
+                'type': 'list_created',
+                'list': list_item,
+                'timestamp': list_item.id  # Using id as a proxy for creation time
+            })
+        
+        # Recent posts
+        recent_posts = Post.query.filter_by(user_id=user.id).order_by(Post.timestamp.desc()).limit(5).all()
+        for post in recent_posts:
+            recent_activities.append({
+                'type': 'post_created',
+                'post': post,
+                'timestamp': post.timestamp
+            })
+        
+        # Sort all activities by timestamp (most recent first)
+        recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return render_template('profile.html', user=user, recent_activities=recent_activities[:10])
 
     @app.route('/edit_profile', methods=['GET', 'POST'])
     @login_required
