@@ -34,6 +34,9 @@ class UserBook(db.Model):
     def is_read(self):
         return self.read_date is not None
 
+    def __str__(self):
+        return f"UserBook: {self.user.username} - {self.book.title}"
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -85,6 +88,9 @@ class User(UserMixin, db.Model):
                 followers.c.follower_id == self.id).order_by(
                     Post.timestamp.desc())
 
+    def __str__(self):
+        return self.username
+
 class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
@@ -108,12 +114,18 @@ class Book(db.Model):
         ratings = [ub.rating for ub in self.user_books if ub.rating is not None]
         return sum(ratings) / len(ratings) if ratings else None
 
+    def __str__(self):
+        return self.title
+
 class Author(db.Model):
     __tablename__ = 'authors'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     books = db.relationship('Book', back_populates='author')
     image_url = db.Column(db.String(255))
+
+    def __str__(self):
+        return self.name
 
 class List(db.Model):
     __tablename__ = 'lists'
@@ -123,11 +135,17 @@ class List(db.Model):
     books = db.relationship('Book', secondary='book_list', back_populates='lists')
     is_public = db.Column(db.Boolean, default=False)
 
+    def __str__(self):
+        return self.name
+
 class BookList(db.Model):
     __tablename__ = 'book_list'
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
     rank = db.Column(db.Integer, default=0)
+
+    def __str__(self):
+        return f"BookList: {self.book_id} - {self.list_id}"
 
 class ReadingGoal(db.Model):
     __tablename__ = 'reading_goals'
@@ -139,9 +157,15 @@ class ReadingGoal(db.Model):
     end_date = db.Column(db.Date, nullable=False)
     user = db.relationship('User', back_populates='reading_goal')
 
+    def __str__(self):
+        return f"ReadingGoal: {self.user.username} - {self.goal_type} ({self.target})"
+
 class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=db.func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    def __str__(self):
+        return f"Post: {self.author.username} - {self.timestamp}"
