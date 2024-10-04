@@ -4,6 +4,7 @@ from models import db, Book, UserBook, Author, List
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc
 from datetime import date
+from flask_babel import _, get_locale
 
 bp = Blueprint('book', __name__)
 
@@ -26,7 +27,8 @@ def book_detail(id):
                            read_date=read_date,
                            user_rating=user_rating,
                            user_review=user_review,
-                           reviews=reviews)
+                           reviews=reviews,
+                           _l=_)
 
 @bp.route('/<int:id>/lists')
 @login_required
@@ -77,7 +79,7 @@ def toggle_read_status():
     is_read = data.get('is_read')
 
     if book_id is None or is_read is None:
-        return jsonify({'success': False, 'error': 'Invalid data'}), 400
+        return jsonify({'success': False, 'error': _('Invalid data')}), 400
 
     user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
 
@@ -99,7 +101,7 @@ def rate_book():
     rating = data.get('rating')
 
     if book_id is None or rating is None:
-        return jsonify({'success': False, 'error': 'Invalid data'}), 400
+        return jsonify({'success': False, 'error': _('Invalid data')}), 400
 
     user_book = UserBook.query.filter_by(user_id=current_user.id,
                                          book_id=book_id).first()
@@ -129,7 +131,7 @@ def review_book():
     review = data.get('review')
 
     if book_id is None or review is None:
-        return jsonify({'success': False, 'error': 'Invalid data'}), 400
+        return jsonify({'success': False, 'error': _('Invalid data')}), 400
 
     user_book = UserBook.query.filter_by(user_id=current_user.id,
                                          book_id=book_id).first()
