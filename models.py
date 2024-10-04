@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
+from datetime import date, datetime
 
 class Base(DeclarativeBase):
     pass
@@ -52,6 +52,7 @@ class User(UserMixin, db.Model):
     location = db.Column(db.String(100))
     website = db.Column(db.String(200))
     profile_image_url = db.Column(db.String(200))
+    date_joined = db.Column(db.DateTime, default=datetime.utcnow)
     
     # New fields for following/followers
     followed = db.relationship(

@@ -361,8 +361,36 @@ def create_app():
             )
         return redirect(url_for('admin_authors'))
 
-    return app
+    @app.route('/profile/<username>')
+    @login_required
+    def user_profile(username):
+        user = User.query.filter_by(username=username).first_or_404()
+        return render_template('profile.html', user=user)
 
+    @app.route('/edit_profile', methods=['GET', 'POST'])
+    @login_required
+    def edit_profile():
+        if request.method == 'POST':
+            current_user.full_name = request.form.get('full_name')
+            current_user.bio = request.form.get('bio')
+            current_user.location = request.form.get('location')
+            current_user.website = request.form.get('website')
+
+            if 'profile_image' in request.files:
+                file = request.files['profile_image']
+                if file.filename != '':
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(file_path)
+                    current_user.profile_image_url = url_for('static', filename=f'uploads/{filename}')
+
+            db.session.commit()
+            flash('Your profile has been updated.', 'success')
+            return redirect(url_for('user_profile', username=current_user.username))
+
+        return render_template('edit_profile.html', user=current_user)
+
+    return app
 
 if __name__ == '__main__':
     app = create_app()
