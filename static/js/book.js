@@ -77,6 +77,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         });
                         document.getElementById("average-rating").textContent = data.average_rating.toFixed(1) + " / 5";
                         document.querySelector("#user-rating + p").textContent = `Your rating: ${rating} / 5`;
+
+                        if (toggleReadStatusButton.dataset.isRead.toLowerCase() === "false") {
+                            toggleReadStatusButton.click();
+                        }
                     }
                 })
                 .catch((error) => console.error("Error:", error));
