@@ -1,25 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Login{% endblock %}
+{% block title %}{{ _('Login') }}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Login</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ _('Login') }}</h1>
     <form method="POST" action="{{ url_for('home.login') }}" class="max-w-md mx-auto">
         <div class="mb-4">
-            <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+            <label for="username" class="block text-sm font-medium text-gray-700">{{ _('Username') }}</label>
             <input type="text" name="username" id="username" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
         </div>
         <div class="mb-4">
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Password') }}</label>
             <input type="password" name="password" id="password" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
         </div>
         <div class="flex items-center justify-between">
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Login
+                {{ _('Login') }}
             </button>
             <a href="{{ url_for('home.register') }}" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
-                Don't have an account? Register
+                {{ _("Don't have an account? Register") }}
             </a>
         </div>
     </form>

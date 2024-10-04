@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block title %}{{ _('Home') }}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Welcome to Book Tracker</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ _('Welcome to Book Tracker') }}</h1>
     
     {% if current_user.is_authenticated %}
     <div id="reading-goal-progress" class="mb-8 bg-white shadow-md rounded-lg p-4">
-        <h2 class="text-2xl font-semibold mb-4">Reading Goal Progress</h2>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('Reading Goal Progress') }}</h2>
         <div id="goal-details"></div>
         <div class="mt-2">
             <div class="bg-gray-200 rounded-full h-4">
@@ -20,13 +20,13 @@
 
     <!-- My Latest Books Section -->
     <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">My Latest Books</h2>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('My Latest Books') }}</h2>
         {% if latest_books %}
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {% for book in latest_books %}
                     <div class="bg-white shadow-md rounded-lg p-4">
                         <a href="{{ url_for('book.book_detail', id=book.id) }}">
-                            <img src="{{ book.cover_image_url or '/static/images/no-cover.png' }}" alt="{{ book.title }} cover" class="h-48 object-cover mb-2">
+                            <img src="{{ book.cover_image_url or '/static/images/no-cover.png' }}" alt="{{ _('%(title)s cover', title=book.title) }}" class="h-48 object-cover mb-2">
                             <h3 class="font-semibold">{{ book.title }}</h3>
                         </a>
                         <a href="{{ url_for('author.author_detail', id=book.author.id) }}" class="text-sm text-gray-600 hover:text-blue-500">{{ book.author.name }}</a>
@@ -34,35 +34,35 @@
                 {% endfor %}
             </div>
         {% else %}
-            <p class="text-gray-600">No books added yet.</p>
+            <p class="text-gray-600">{{ _('No books added yet.') }}</p>
         {% endif %}
     </div>
 
     <!-- My Authors Section -->
     <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">My Authors</h2>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('My Authors') }}</h2>
         {% if user_authors %}
             <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {% for author in user_authors %}
                     <li class="bg-white shadow-md rounded-lg p-4">
                         <a href="{{ url_for('author.author_detail', id=author.id) }}" class="flex items-center">
-                            <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ author.name }}" class="w-12 h-12 object-cover rounded-full mr-4">
+                            <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ _('%(name)s', name=author.name) }}" class="w-12 h-12 object-cover rounded-full mr-4">
                             <span class="text-blue-600 hover:text-blue-800">{{ author.name }}</span>
                         </a>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-600">No authors added yet.</p>
+            <p class="text-gray-600">{{ _('No authors added yet.') }}</p>
         {% endif %}
     </div>
 
     <!-- Search Books Section -->
     <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Search Books</h2>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('Search Books') }}</h2>
         <form action="{{ url_for('home.index') }}" method="GET" class="flex mb-4">
-            <input type="text" name="book_search" placeholder="Search books..." value="{{ book_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Search</button>
+            <input type="text" name="book_search" placeholder="{{ _('Search books...') }}" value="{{ book_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">{{ _('Search') }}</button>
         </form>
 
         {% if book_search_query %}
@@ -71,9 +71,9 @@
                     <table class="min-w-full">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Title') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Author') }}</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -82,7 +82,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">{{ book.title }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ book.author.name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <a href="{{ url_for('book.book_detail', id=book.id) }}" class="text-blue-600 hover:text-blue-900">View Details</a>
+                                    <a href="{{ url_for('book.book_detail', id=book.id) }}" class="text-blue-600 hover:text-blue-900">{{ _('View Details') }}</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -92,27 +92,27 @@
 
                 <div class="mt-4 flex justify-center">
                     {% if books.has_prev %}
-                        <a href="{{ url_for('home.index', book_page=books.prev_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">Previous</a>
+                        <a href="{{ url_for('home.index', book_page=books.prev_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">{{ _('Previous') }}</a>
                     {% endif %}
                     <span class="bg-gray-200 text-gray-700 font-bold py-2 px-4">
-                        Page {{ books.page }} of {{ books.pages }}
+                        {{ _('Page %(current)s of %(total)s', current=books.page, total=books.pages) }}
                     </span>
                     {% if books.has_next %}
-                        <a href="{{ url_for('home.index', book_page=books.next_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Next</a>
+                        <a href="{{ url_for('home.index', book_page=books.next_num, book_search=book_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">{{ _('Next') }}</a>
                     {% endif %}
                 </div>
             {% else %}
-                <p class="text-gray-600 text-center mt-4">No books found matching your search.</p>
+                <p class="text-gray-600 text-center mt-4">{{ _('No books found matching your search.') }}</p>
             {% endif %}
         {% endif %}
     </div>
 
     <!-- Search Authors Section -->
     <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Search Authors</h2>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('Search Authors') }}</h2>
         <form action="{{ url_for('home.index') }}" method="GET" class="flex mb-4">
-            <input type="text" name="author_search" placeholder="Search authors..." value="{{ author_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">Search</button>
+            <input type="text" name="author_search" placeholder="{{ _('Search authors...') }}" value="{{ author_search_query }}" class="flex-1 border rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">{{ _('Search') }}</button>
         </form>
 
         {% if author_search_query %}
@@ -120,22 +120,22 @@
                 <table class="w-full bg-white shadow-md rounded mb-4">
                     <thead>
                         <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                            <th class="py-3 px-6 text-left">Image</th>
-                            <th class="py-3 px-6 text-left">Name</th>
-                            <th class="py-3 px-6 text-center">Books Count</th>
-                            <th class="py-3 px-6 text-center">Actions</th>
+                            <th class="py-3 px-6 text-left">{{ _('Image') }}</th>
+                            <th class="py-3 px-6 text-left">{{ _('Name') }}</th>
+                            <th class="py-3 px-6 text-center">{{ _('Books Count') }}</th>
+                            <th class="py-3 px-6 text-center">{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="text-gray-600 text-sm font-light">
                         {% for author in authors.items %}
                         <tr class="border-b border-gray-200 hover:bg-gray-100">
                             <td class="py-3 px-6 text-left">
-                                <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ author.name }}" class="w-12 h-12 object-cover rounded-full">
+                                <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ _('%(name)s', name=author.name) }}" class="w-12 h-12 object-cover rounded-full">
                             </td>
                             <td class="py-3 px-6 text-left">{{ author.name }}</td>
                             <td class="py-3 px-6 text-center">{{ author.books|length }}</td>
                             <td class="py-3 px-6 text-center">
-                                <a href="{{ url_for('author.author_detail', id=author.id) }}" class="text-blue-500 hover:text-blue-700">View Details</a>
+                                <a href="{{ url_for('author.author_detail', id=author.id) }}" class="text-blue-500 hover:text-blue-700">{{ _('View Details') }}</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -144,17 +144,17 @@
 
                 <div class="flex justify-center mt-4">
                     {% if authors.has_prev %}
-                        <a href="{{ url_for('home.index', author_page=authors.prev_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
+                        <a href="{{ url_for('home.index', author_page=authors.prev_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">{{ _('Previous') }}</a>
                     {% endif %}
                     <span class="py-2 px-4">
-                        Page {{ authors.page }} of {{ authors.pages }}
+                        {{ _('Page %(current)s of %(total)s', current=authors.page, total=authors.pages) }}
                     </span>
                     {% if authors.has_next %}
-                        <a href="{{ url_for('home.index', author_page=authors.next_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Next</a>
+                        <a href="{{ url_for('home.index', author_page=authors.next_num, author_search=author_search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">{{ _('Next') }}</a>
                     {% endif %}
                 </div>
             {% else %}
-                <p class="text-gray-600 text-center mt-4">No authors found matching your search.</p>
+                <p class="text-gray-600 text-center mt-4">{{ _('No authors found matching your search.') }}</p>
             {% endif %}
         {% endif %}
     </div>
@@ -178,18 +178,18 @@ function updateGoalProgress() {
                 document.getElementById('goal-details').innerHTML = `<p class="text-red-500">${data.error}</p>`;
                 document.getElementById('progress-bar').style.width = '0%';
             } else {
-                const goalType = data.goal_type === 'books' ? 'Books' : 'Pages';
+                const goalType = data.goal_type === 'books' ? '{{ _("Books") }}' : '{{ _("Pages") }}';
                 const progressText = `${Math.min(data.progress.toFixed(1), 100)}% (${Math.round(data.progress * data.target / 100)} / ${data.target} ${goalType})`;
                 document.getElementById('goal-details').innerHTML = `
-                    <p>Goal: ${data.target} ${goalType}</p>
-                    <p>Progress: ${progressText}</p>
-                    <p>Expected Progress: ${data.expected_progress.toFixed(1)}%</p>
+                    <p>{{ _('Goal:') }} ${data.target} ${goalType}</p>
+                    <p>{{ _('Progress:') }} ${progressText}</p>
+                    <p>{{ _('Expected Progress:') }} ${data.expected_progress.toFixed(1)}%</p>
                 `;
                 document.getElementById('progress-bar').style.width = `${Math.min(data.progress, 100)}%`;
             }
         })
         .catch(error => {
-            console.error('Error fetching goal progress:', error);
+            console.error('{{ _("Error fetching goal progress:") }}', error);
         });
 }
 </script>

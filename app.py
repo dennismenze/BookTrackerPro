@@ -1,4 +1,4 @@
-from flask import Flask, g, request
+from flask import Flask, g, request, session
 from flask_login import LoginManager, login_user, current_user
 from models import Book, UserBook, db, User, ReadingGoal, Author, List, BookList
 from flask_migrate import Migrate
@@ -16,16 +16,24 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
 
 # Flask-Babel configuration
-app.config['LANGUAGES'] = ['en', 'es', 'fr']  # Add more languages as needed
+app.config['LANGUAGES'] = ['en', 'de', 'es', 'fr']
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 
 db.init_app(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
 
 def get_locale():
-    # Try to guess the language from the user accept
-    # header the browser transmits. The best match wins.
+    # 1. Check if user is logged in and has a preferred language
+    if current_user.is_authenticated and hasattr(current_user, 'preferred_language'):
+        return current_user.preferred_language
+    
+    # 2. Check for language in session
+    if 'language' in session:
+        return session['language']
+    
+    # 3. Try to guess the language from the user accept header the browser transmits
     return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 babel.init_app(app, locale_selector=get_locale)
@@ -54,6 +62,7 @@ class CustomModelView(ModelView):
         for name, prop in model.__mapper__.relationships.items():
             if isinstance(prop, RelationshipProperty) and prop.direction.name != 'MANYTOMANY':
                 if hasattr(model, f'{name}_str'):
+
                     def formatter(view, context, model, name=name):
                         related_obj = getattr(model, name)
                         return str(related_obj) if related_obj else ''

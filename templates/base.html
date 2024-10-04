@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ get_locale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Book Tracker{% endblock %}</title>
+    <title>{% block title %}{{ _('Book Tracker') }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -12,20 +12,20 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <a href="/" class="text-white text-2xl font-bold">Book Tracker</a>
+                    <a href="/" class="text-white text-2xl font-bold">{{ _('Book Tracker') }}</a>
                 </div>
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="/" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                        <a href="/" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Home') }}</a>
                         {% if current_user.is_authenticated %}
-                            <a href="{{ url_for('author.authors') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Authors</a>
-                            <a href="{{ url_for('list.lists') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Lists</a>
-                            <a href="{{ url_for('goal.set_goal') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Set Reading Goal</a>
-                            <a href="{{ url_for('home.user_profile', username=current_user.username) }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Profile</a>
-                            <a href="{{ url_for('home.logout') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Logout</a>
+                            <a href="{{ url_for('author.authors') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Authors') }}</a>
+                            <a href="{{ url_for('list.lists') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Lists') }}</a>
+                            <a href="{{ url_for('goal.set_goal') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Set Reading Goal') }}</a>
+                            <a href="{{ url_for('home.user_profile', username=current_user.username) }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Profile') }}</a>
+                            <a href="{{ url_for('home.logout') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Logout') }}</a>
                         {% else %}
-                            <a href="{{ url_for('home.login') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Login</a>
-                            <a href="{{ url_for('home.register') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Register</a>
+                            <a href="{{ url_for('home.login') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Login') }}</a>
+                            <a href="{{ url_for('home.register') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">{{ _('Register') }}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -39,7 +39,7 @@
                 <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
                     <ul>
                         {% for message in messages %}
-                            <li>{{ message }}</li>
+                            <li>{{ _(message) }}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -49,7 +49,7 @@
     </main>
 
     <footer class="bg-gray-200 text-center p-4 mt-8">
-        <p>&copy; 2024 Book Tracker. All rights reserved.</p>
+        <p>{{ _('© 2024 Book Tracker. All rights reserved.') }}</p>
     </footer>
 
     {% block scripts %}{% endblock %}
