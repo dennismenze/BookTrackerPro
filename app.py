@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, g
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, g, send_file
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -9,6 +9,7 @@ from functools import wraps
 from sqlalchemy import func
 from flask_migrate import Migrate
 from routes import book_routes, author_routes, list_routes, goal_routes
+from io import BytesIO
 
 def create_app():
     app = Flask(__name__)
@@ -16,6 +17,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = 'static/uploads'
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
@@ -379,16 +381,29 @@ def create_app():
             if 'profile_image' in request.files:
                 file = request.files['profile_image']
                 if file.filename != '':
-                    filename = secure_filename(file.filename)
-                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(file_path)
-                    current_user.profile_image_url = url_for('static', filename=f'uploads/{filename}')
+                    # Read the file content
+                    file_content = file.read()
+                    # Store the image data in the database
+                    current_user.profile_image = file_content
 
             db.session.commit()
             flash('Your profile has been updated.', 'success')
             return redirect(url_for('user_profile', username=current_user.username))
 
         return render_template('edit_profile.html', user=current_user)
+
+    @app.route('/profile_image/<int:user_id>')
+    def profile_image(user_id):
+        user = User.query.get_or_404(user_id)
+        if user.profile_image:
+            return send_file(
+                BytesIO(user.profile_image),
+                mimetype='image/jpeg',
+                as_attachment=False,
+                download_name=f'{user.username}_profile.jpg'
+            )
+        else:
+            return send_file('static/images/default-profile.png', mimetype='image/png')
 
     return app
 

@@ -8,7 +8,7 @@
     
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
         <div class="flex items-center mb-4">
-            <img src="{{ user.profile_image_url or url_for('static', filename='images/default-profile.png') }}" alt="{{ user.username }}" class="w-24 h-24 rounded-full mr-4">
+            <img src="{{ url_for('profile_image', user_id=user.id) }}" alt="{{ user.username }}" class="w-24 h-24 rounded-full mr-4 object-cover">
             <div>
                 <h2 class="text-2xl font-semibold">{{ user.full_name or user.username }}</h2>
                 <p class="text-gray-600">@{{ user.username }}</p>

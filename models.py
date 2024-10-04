@@ -51,7 +51,7 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.Text)
     location = db.Column(db.String(100))
     website = db.Column(db.String(200))
-    profile_image_url = db.Column(db.String(200))
+    profile_image = db.Column(db.LargeBinary)  # New field to store profile image data
     date_joined = db.Column(db.DateTime, default=datetime.utcnow)
     
     # New fields for following/followers
