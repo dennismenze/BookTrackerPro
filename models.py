@@ -42,7 +42,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255))
     books = db.relationship('Book', secondary=user_book, back_populates='users')
     user_books = db.relationship("UserBook", back_populates="user", cascade='all, delete-orphan')
-    lists = db.relationship('List', backref='user', lazy='dynamic')
+    lists = db.relationship('List', backref='user', lazy='select')  # Changed from 'dynamic' to 'select'
     is_admin = db.Column(db.Boolean, default=False)
     reading_goal = db.relationship('ReadingGoal', uselist=False, back_populates='user')
     
