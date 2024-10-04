@@ -23,11 +23,12 @@ db.init_app(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
 
-@babel.localeselector
 def get_locale():
     # Try to guess the language from the user accept
     # header the browser transmits. The best match wins.
     return request.accept_languages.best_match(app.config['LANGUAGES'])
+
+babel.init_app(app, locale_selector=get_locale)
 
 class CustomModelView(ModelView):
     column_display_pk = True
