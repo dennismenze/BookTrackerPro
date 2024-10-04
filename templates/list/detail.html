@@ -29,7 +29,7 @@
             </div>
             <p class="mt-1 text-sm">
                 <span id="read-books-count">{{ (books|selectattr('is_read', 'eq', true)|list|length) }}</span> out of {{ books|length }} books read
-                (<span id="read-percentage">{{ read_percentage|round(1) }}</span>%)
+                (<span id="read-percentage">{{ read_percentage|int }}</span>%)
             </p>
         </div>
         <div>
@@ -39,7 +39,7 @@
             </div>
             <p class="mt-1 text-sm">
                 <span id="main-works-read-count">{{ main_works_read }}</span> out of {{ total_main_works }} main works read
-                (<span id="main-works-read-percentage">{{ main_works_read_percentage|round(1) }}</span>%)
+                (<span id="main-works-read-percentage">{{ main_works_read_percentage|int }}</span>%)
             </p>
         </div>
     </div>
