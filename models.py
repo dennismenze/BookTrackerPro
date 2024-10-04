@@ -128,6 +128,8 @@ class BookList(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
     rank = db.Column(db.Integer, default=0)
+    book = db.relationship('Book', backref="book")
+    list = db.relationship('List', backref="list")
 
 class ReadingGoal(db.Model):
     __tablename__ = 'reading_goals'
