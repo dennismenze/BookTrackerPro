@@ -46,6 +46,20 @@ class CustomModelView(ModelView):
                         return str(related_obj) if related_obj else ''
                     self.column_formatters[f'{name}_str'] = formatter
 
+class BookListModelView(CustomModelView):
+    column_list = ('book_id', 'list_id', 'rank', 'book', 'list')
+    column_labels = {
+        'book_id': 'Book ID',
+        'list_id': 'List ID',
+        'rank': 'Rank',
+        'book': 'Book',
+        'list': 'List'
+    }
+    column_formatters = {
+        'book': lambda v, c, m, p: f"{m.book.title} by {m.book.author.name}",
+        'list': lambda v, c, m, p: f"{m.list.name} (User: {m.list.user.username})"
+    }
+
 admin = Admin(app, name='admin', template_mode='bootstrap3')
 admin.add_view(CustomModelView(User, db.session, endpoint='users'))
 admin.add_view(CustomModelView(Book, db.session, endpoint='books'))
@@ -53,7 +67,7 @@ admin.add_view(CustomModelView(UserBook, db.session, endpoint='userbooks'))
 admin.add_view(CustomModelView(ReadingGoal, db.session, endpoint='readinggoals'))
 admin.add_view(CustomModelView(Author, db.session, endpoint='authors'))
 admin.add_view(CustomModelView(List, db.session, endpoint='lists'))
-admin.add_view(CustomModelView(BookList, db.session, endpoint='booklists'))
+admin.add_view(BookListModelView(BookList, db.session, endpoint='booklists'))
 
 app.register_blueprint(book_routes.bp, url_prefix='/book')
 app.register_blueprint(author_routes.bp, url_prefix='/author')

@@ -115,7 +115,7 @@ class Book(db.Model):
         return sum(ratings) / len(ratings) if ratings else None
 
     def __str__(self):
-        return self.title
+        return f"{self.title} by {self.author.name}"
 
 class Author(db.Model):
     __tablename__ = 'authors'
@@ -136,16 +136,18 @@ class List(db.Model):
     is_public = db.Column(db.Boolean, default=False)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} (User: {self.user.username})"
 
 class BookList(db.Model):
     __tablename__ = 'book_list'
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
     rank = db.Column(db.Integer, default=0)
+    book = db.relationship("Book")
+    list = db.relationship("List")
 
     def __str__(self):
-        return f"BookList: {self.book_id} - {self.list_id}"
+        return f"BookList: {self.book.title} - {self.list.name}"
 
 class ReadingGoal(db.Model):
     __tablename__ = 'reading_goals'
