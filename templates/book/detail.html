@@ -17,7 +17,7 @@
                 <span class="text-lg font-semibold">{{ _('Average Rating:') }}</span>
                 <span id="average-rating" class="text-lg">
                     {% if book.average_rating %}
-                        {{ "%.1f"|format(book.average_rating) }} / 5
+                        {{ "%.1f"|format(book.average_rating) }}
                     {% else %}
                         {{ _('No ratings yet') }}
                     {% endif %}

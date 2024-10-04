@@ -181,12 +181,17 @@ class BookList(db.Model):
                         db.ForeignKey('lists.id'),
                         primary_key=True)
     rank = db.Column(db.Integer, default=0)
+<<<<<<< HEAD
     book = db.relationship("Book", backref="book", viewonly=True)
     list = db.relationship("List", backref="list", viewonly=True)
 
     def __str__(self):
         return f"BookList: {self.book.title} - {self.list.name}"
 
+=======
+    book = db.relationship('Book', backref="book")
+    list = db.relationship('List', backref="list")
+>>>>>>> 67682a219661ebdd945417ab58034e005afd3f8b
 
 class ReadingGoal(db.Model):
     __tablename__ = 'reading_goals'

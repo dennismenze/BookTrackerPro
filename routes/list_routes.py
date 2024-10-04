@@ -134,9 +134,9 @@ def toggle_read_status():
     return jsonify({
         'success': True,
         'is_read': is_read,
-        'read_percentage': round(read_percentage, 1),
+        'read_percentage': round(read_percentage, 0),
         'main_works_read': main_works_read,
-        'main_works_read_percentage': round(main_works_read_percentage, 1)
+        'main_works_read_percentage': round(main_works_read_percentage, 0)
     })
 
 @bp.route('/search_books', methods=['GET'])

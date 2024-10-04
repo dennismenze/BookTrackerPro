@@ -67,10 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateReadStats(readPercent, mainWorksRead, mainWorksReadPercent) {
-        if (readPercentage) readPercentage.textContent = readPercent.toFixed(1);
+        if (readPercentage) readPercentage.textContent = readPercent.toFixed(0);
         if (readProgressBar) readProgressBar.style.width = `${readPercent}%`;
         if (mainWorksReadCount) mainWorksReadCount.textContent = mainWorksRead;
-        if (mainWorksReadPercentage) mainWorksReadPercentage.textContent = mainWorksReadPercent.toFixed(1);
+        if (mainWorksReadPercentage) mainWorksReadPercentage.textContent = mainWorksReadPercent.toFixed(0);
         if (mainWorksProgressBar) mainWorksProgressBar.style.width = `${mainWorksReadPercent}%`;
     }
 

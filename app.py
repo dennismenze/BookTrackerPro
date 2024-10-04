@@ -5,8 +5,12 @@ from flask_migrate import Migrate
 from routes import book_routes, author_routes, list_routes, goal_routes, home_routes
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
+<<<<<<< HEAD
 from sqlalchemy.orm import RelationshipProperty
 from flask_babel import Babel, lazy_gettext as _l
+=======
+from sqlalchemy import inspect
+>>>>>>> 67682a219661ebdd945417ab58034e005afd3f8b
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -90,6 +94,22 @@ app.register_blueprint(author_routes.bp, url_prefix='/author')
 app.register_blueprint(list_routes.bp, url_prefix='/list')
 app.register_blueprint(goal_routes.bp, url_prefix='/goal')
 app.register_blueprint(home_routes.bp)
+
+class CustomModelView(ModelView):
+    column_display_pk = True
+    column_hide_backrefs = False
+    can_export = True
+
+admin = Admin(app, name='admin')
+admin.add_view(CustomModelView(User, db.session, endpoint='users'))
+admin.add_view(CustomModelView(Book, db.session, endpoint='books'))
+userbooks = CustomModelView(UserBook, db.session, endpoint='userbooks')
+userbooks.column_list = [c_attr.key for c_attr in inspect(UserBook).mapper.column_attrs]
+admin.add_view(userbooks)
+admin.add_view(CustomModelView(ReadingGoal, db.session, endpoint='readinggoals'))
+admin.add_view(CustomModelView(Author, db.session, endpoint='authors'))
+admin.add_view(CustomModelView(List, db.session, endpoint='lists'))
+admin.add_view(CustomModelView(BookList, db.session, endpoint='booklists'))
 
 login_manager = LoginManager()
 login_manager.login_view = 'home.login'
