@@ -15,6 +15,11 @@ user_book = db.Table(
     db.Column('book_id', db.Integer, db.ForeignKey('books.id'), primary_key=True)
 )
 
+followers = db.Table('followers',
+    db.Column('follower_id', db.Integer, db.ForeignKey('users.id')),
+    db.Column('followed_id', db.Integer, db.ForeignKey('users.id'))
+)
+
 class UserBook(db.Model):
     __tablename__ = 'user_books'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
@@ -40,12 +45,44 @@ class User(UserMixin, db.Model):
     lists = db.relationship('List', backref='user', lazy='dynamic')
     is_admin = db.Column(db.Boolean, default=False)
     reading_goal = db.relationship('ReadingGoal', uselist=False, back_populates='user')
+    
+    # New fields for profile information
+    full_name = db.Column(db.String(100))
+    bio = db.Column(db.Text)
+    location = db.Column(db.String(100))
+    website = db.Column(db.String(200))
+    profile_image_url = db.Column(db.String(200))
+    
+    # New fields for following/followers
+    followed = db.relationship(
+        'User', secondary=followers,
+        primaryjoin=(followers.c.follower_id == id),
+        secondaryjoin=(followers.c.followed_id == id),
+        backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def follow(self, user):
+        if not self.is_following(user):
+            self.followed.append(user)
+
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.followed.remove(user)
+
+    def is_following(self, user):
+        return self.followed.filter(
+            followers.c.followed_id == user.id).count() > 0
+
+    def followed_posts(self):
+        return Post.query.join(
+            followers, (followers.c.followed_id == Post.user_id)).filter(
+                followers.c.follower_id == self.id).order_by(
+                    Post.timestamp.desc())
 
 class Book(db.Model):
     __tablename__ = 'books'
@@ -100,3 +137,11 @@ class ReadingGoal(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     user = db.relationship('User', back_populates='reading_goal')
+
+class Post(db.Model):
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=db.func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.relationship('User', backref='posts')
