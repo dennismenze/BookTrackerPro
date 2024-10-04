@@ -22,9 +22,6 @@
                             <a href="{{ url_for('list.lists') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Lists</a>
                             <a href="{{ url_for('goal.set_goal') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Set Reading Goal</a>
                             <a href="{{ url_for('user_profile', username=current_user.username) }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Profile</a>
-                            {% if current_user.is_admin %}
-                                <a href="{{ url_for('admin') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Admin</a>
-                            {% endif %}
                             <a href="{{ url_for('logout') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Logout</a>
                         {% else %}
                             <a href="{{ url_for('login') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">Login</a>

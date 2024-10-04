@@ -9,22 +9,22 @@
     <form method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded-lg p-6">
         <div class="mb-4">
             <label for="full_name" class="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
-            <input type="text" name="full_name" id="full_name" value="{{ user.full_name or '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <input type="text" name="full_name" id="full_name" value="{{ current_user.full_name or '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
         </div>
         
         <div class="mb-4">
             <label for="bio" class="block text-gray-700 text-sm font-bold mb-2">Bio</label>
-            <textarea name="bio" id="bio" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{{ user.bio or '' }}</textarea>
+            <textarea name="bio" id="bio" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{{ current_user.bio or '' }}</textarea>
         </div>
         
         <div class="mb-4">
             <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location</label>
-            <input type="text" name="location" id="location" value="{{ user.location or '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <input type="text" name="location" id="location" value="{{ current_user.location or '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
         </div>
         
         <div class="mb-4">
             <label for="website" class="block text-gray-700 text-sm font-bold mb-2">Website</label>
-            <input type="url" name="website" id="website" value="{{ user.website or '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <input type="url" name="website" id="website" value="{{ current_user.website or '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
         </div>
         
         <div class="mb-6">
