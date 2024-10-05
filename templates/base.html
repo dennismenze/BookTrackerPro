@@ -71,6 +71,15 @@
                                 >{{ _('Register') }}</a
                             >
                             {% endif %}
+                            <form action="{{ url_for('home.set_language') }}" method="post" class="inline">
+                                <select name="language" onchange="this.form.submit()" class="bg-blue-500 text-white rounded-md px-2 py-1">
+                                    {% for lang in ['en', 'de', 'es', 'fr'] %}
+                                        <option value="{{ lang }}" {% if lang == get_locale() %}selected{% endif %}>
+                                            {{ lang|upper }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
                         </div>
                     </div>
                 </div>

@@ -160,7 +160,7 @@ def edit_profile():
 @bp.route('/set_language', methods=['POST'])
 def set_language():
     language = request.form.get('language')
-    if language and language in app.config['LANGUAGES']:
+    if language and language in ['en', 'de', 'es', 'fr']:
         session['language'] = language
         if current_user.is_authenticated:
             current_user.preferred_language = language
