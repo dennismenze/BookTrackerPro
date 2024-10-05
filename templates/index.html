@@ -26,10 +26,10 @@
                 {% for book in latest_books %}
                     <div class="bg-white shadow-md rounded-lg p-4">
                         <a href="{{ url_for('book.book_detail', id=book.id) }}">
-                            <img src="{{ book.cover_image_url or '/static/images/no-cover.png' }}" alt="{{ _('%(title)s cover', title=book.get_title()) }}" class="h-48 object-cover mb-2">
-                            <h3 class="font-semibold">{{ book.get_title() }}</h3>
+                            <img src="{{ book.cover_image_url or '/static/images/no-cover.png' }}" alt="{{ _('%(title)s cover', title=book.title) }}" class="h-48 object-cover mb-2">
+                            <h3 class="font-semibold">{{ book.title }}</h3>
                         </a>
-                        <a href="{{ url_for('author.author_detail', id=book.author.id) }}" class="text-sm text-gray-600 hover:text-blue-500">{{ book.author.get_name() }}</a>
+                        <a href="{{ url_for('author.author_detail', id=book.author.id) }}" class="text-sm text-gray-600 hover:text-blue-500">{{ book.author.name }}</a>
                     </div>
                 {% endfor %}
             </div>
@@ -46,8 +46,8 @@
                 {% for author in user_authors %}
                     <li class="bg-white shadow-md rounded-lg p-4">
                         <a href="{{ url_for('author.author_detail', id=author.id) }}" class="flex items-center">
-                            <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ _('%(name)s', name=author.get_name()) }}" class="w-12 h-12 object-cover rounded-full mr-4">
-                            <span class="text-blue-600 hover:text-blue-800">{{ author.get_name() }}</span>
+                            <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ _('%(name)s', name=author.name) }}" class="w-12 h-12 object-cover rounded-full mr-4">
+                            <span class="text-blue-600 hover:text-blue-800">{{ author.name }}</span>
                         </a>
                     </li>
                 {% endfor %}
@@ -79,8 +79,8 @@
                         <tbody class="divide-y divide-gray-200">
                             {% for book in books.items %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ book.get_title() }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ book.author.get_name() }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ book.title }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ book.author.name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <a href="{{ url_for('book.book_detail', id=book.id) }}" class="text-blue-600 hover:text-blue-900">{{ _('View Details') }}</a>
                                 </td>

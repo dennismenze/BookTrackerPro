@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import Author, db, List, Book, UserBook, BookList
+from models import Author, db, List, Book, UserBook, BookList, Translation
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_, func
 from datetime import date
+from flask_babel import _, get_locale
 
 bp = Blueprint('list', __name__)
 
@@ -14,22 +15,27 @@ def lists():
     per_page = 10
     search_query = request.args.get('search', '')
 
-    query = List.query.filter(or_(List.user_id == current_user.id, List.is_public == True))
+    query = List.query.join(Translation, List.name_id == Translation.id).filter(
+        or_(List.user_id == current_user.id, List.is_public == True)
+    )
 
     if search_query:
-        query = query.filter(List.name.ilike(f'%{search_query}%'))
+        query = query.filter(or_(
+            Translation.text_en.ilike(f'%{search_query}%'),
+            Translation.text_de.ilike(f'%{search_query}%')
+        ))
 
-    lists = query.order_by(List.name).paginate(page=page,
-                                               per_page=per_page,
-                                               error_out=False)
+    lists = query.order_by(Translation.text_en).paginate(page=page, per_page=per_page, error_out=False)
 
     for list_item in lists.items:
         list_item.preview_books = list_item.books[:5]
         list_item.book_count = len(list_item.books)
 
+    lang = str(get_locale())
     return render_template('list/list.html',
                            lists=lists,
-                           search_query=search_query)
+                           search_query=search_query,
+                           lang=lang)
 
 @bp.route('/<int:id>')
 @login_required

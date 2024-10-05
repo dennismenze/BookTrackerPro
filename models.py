@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 import json
+from flask_babel import get_locale
 
 db = SQLAlchemy()
 
@@ -33,7 +34,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     books = db.relationship('Book', secondary=user_book, back_populates='users')
     user_books = db.relationship("UserBook", back_populates="user")
-    lists = db.relationship('List', backref='user', lazy='dynamic')
+    lists = db.relationship('List', back_populates='user', lazy='dynamic')
     reading_goal = db.relationship('ReadingGoal', back_populates='user', uselist=False)
     full_name = db.Column(db.String(100))
     bio = db.Column(db.Text)
@@ -60,18 +61,26 @@ class User(UserMixin, db.Model):
     def __str__(self):
         return self.username
 
+    @property
+    def list_count(self):
+        return self.lists.count()
+
 class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.Text, nullable=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
+    title_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)  # Korrigiert von 'author.id' zu 'authors.id'
+    description_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
+    cover_image_url = db.Column(db.String(255))
+    isbn = db.Column(db.String(13), unique=True)
+    
+    title = db.relationship('Translation', foreign_keys=[title_id])
+    description = db.relationship('Translation', foreign_keys=[description_id])
+    author = db.relationship('Author', back_populates='books')
     users = db.relationship('User', secondary=user_book, back_populates='books')
     user_books = db.relationship("UserBook", back_populates="book")
-    author = db.relationship('Author', back_populates='books')
     lists = db.relationship('List', secondary='book_list', back_populates='books')
 
-    isbn = db.Column(db.String(20))
-    description = db.Column(db.Text)
     cover_image_url = db.Column(db.String(255))
     page_count = db.Column(db.Integer)
     published_date = db.Column(db.String(20))
@@ -84,92 +93,38 @@ class Book(db.Model):
         return sum(ratings) / len(ratings) if ratings else None
 
     def __str__(self):
-        return f"{self.get_title()} by {self.author.get_name()}"
-
-    def get_title(self, lang='en'):
-        if isinstance(self.title, str):
-            try:
-                title_dict = json.loads(self.title)
-            except json.JSONDecodeError:
-                return self.title
-        else:
-            title_dict = self.title
-        
-        if isinstance(title_dict, dict):
-            return title_dict.get(lang, title_dict.get('en', ''))
-        else:
-            return str(title_dict)
-
-    def get_description(self, lang='en'):
-        if self.description:
-            try:
-                desc_dict = json.loads(self.description)
-                return desc_dict.get(lang, desc_dict.get('en', ''))
-            except json.JSONDecodeError:
-                return self.description
-        return ''
+        return f"{self.title} by {self.author}"
 
 class Author(db.Model):
     __tablename__ = 'authors'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text, nullable=False)
+    name_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
+    bio_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
+    
+    name = db.relationship('Translation', foreign_keys=[name_id])
+    bio = db.relationship('Translation', foreign_keys=[bio_id])
     books = db.relationship('Book', back_populates='author')
     image_url = db.Column(db.String(255))
-    bio = db.Column(db.Text)
 
     def __str__(self):
-        return self.get_name()
+        return self.name
 
-    def get_name(self, lang='en'):
-        if isinstance(self.name, str):
-            try:
-                name_dict = json.loads(self.name)
-            except json.JSONDecodeError:
-                return self.name
-        else:
-            name_dict = self.name
-        
-        if isinstance(name_dict, dict):
-            return name_dict.get(lang, name_dict.get('en', ''))
-        else:
-            return str(name_dict)
-
-    def get_bio(self, lang='en'):
-        if self.bio:
-            try:
-                bio_dict = json.loads(self.bio)
-                return bio_dict.get(lang, bio_dict.get('en', ''))
-            except json.JSONDecodeError:
-                return self.bio
-        return ''
 
 class List(db.Model):
     __tablename__ = 'lists'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    books = db.relationship('Book', secondary='book_list', back_populates='lists')
+    name_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
+    description_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     is_public = db.Column(db.Boolean, default=False)
-    description = db.Column(db.Text)
+    
+    name = db.relationship('Translation', foreign_keys=[name_id])
+    description = db.relationship('Translation', foreign_keys=[description_id])
+    user = db.relationship('User', back_populates='lists')
+    books = db.relationship('Book', secondary='book_list', back_populates='lists')
 
     def __str__(self):
-        return f"{self.get_name()} (User: {self.user.username})"
-
-    def get_name(self, lang='en'):
-        try:
-            name_dict = json.loads(self.name)
-            return name_dict.get(lang, name_dict.get('en', ''))
-        except json.JSONDecodeError:
-            return self.name
-
-    def get_description(self, lang='en'):
-        if self.description:
-            try:
-                desc_dict = json.loads(self.description)
-                return desc_dict.get(lang, desc_dict.get('en', ''))
-            except json.JSONDecodeError:
-                return self.description
-        return ''
+        return f"{self.name} (User: {self.user.username})"
 
 class BookList(db.Model):
     __tablename__ = 'book_list'
@@ -181,7 +136,7 @@ class BookList(db.Model):
     list = db.relationship("List", backref="list", viewonly=True)
 
     def __str__(self):
-        return f"BookList: {self.book.get_title()} - {self.list.get_name()}"
+        return f"BookList: {self.book.title} - {self.list.name}"
 
 class ReadingGoal(db.Model):
     __tablename__ = 'reading_goals'
@@ -214,3 +169,15 @@ class Post(db.Model):
             except json.JSONDecodeError:
                 return self.body
         return ''
+
+class Translation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text_de = db.Column(db.Text, nullable=False)
+    text_en = db.Column(db.Text, nullable=False)
+
+    def __str__(self):
+        locale = str(get_locale())
+        if locale == 'de':
+            return self.text_de
+        else:
+            return self.text_en

@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, jsonify
+from models import db, Author, Book, Translation, UserBook
+from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
-from models import db, Author, Book, UserBook
-from sqlalchemy import func
+from flask_babel import _, get_locale
 from datetime import date
 
 bp = Blueprint('author', __name__)
@@ -13,14 +14,12 @@ def authors():
     per_page = 12  # Number of authors per page
     search_query = request.args.get('search', '')
 
-    query = Author.query
+    query = Author.query.join(Translation, Author.name_id == Translation.id)
 
     if search_query:
-        query = query.filter(Author.name.ilike(f'%{search_query}%'))
+        query = query.filter(Translation.text_en.ilike(f'%{search_query}%') | Translation.text_de.ilike(f'%{search_query}%'))
 
-    authors = query.order_by(Author.name).paginate(page=page,
-                                                   per_page=per_page,
-                                                   error_out=False)
+    authors = query.order_by(Translation.text_en).paginate(page=page, per_page=per_page, error_out=False)
 
     return render_template('author/list.html',
                            authors=authors,
@@ -52,6 +51,7 @@ def author_detail(id):
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
         book.is_read = user_book.read_date is not None if user_book else False
     
+    lang = str(get_locale())
     return render_template('author/detail.html', 
                            author=author, 
                            books=books, 
@@ -60,19 +60,35 @@ def author_detail(id):
                            read_percentage=read_percentage,
                            total_main_works=total_main_works,
                            main_works_read=main_works_read,
-                           main_works_read_percentage=main_works_read_percentage)
+                           main_works_read_percentage=main_works_read_percentage,
+                           lang=lang)
 
 @bp.route('/author/authors')
 def api_authors():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 12, type=int)
     search_query = request.args.get('search', '')
-    authors = Author.query.filter(Author.name.ilike(f'%{search_query}%')).all()
-    return jsonify([{
-        'id': author.id,
-        'name': author.name,
-        'image_url': author.image_url
-    } for author in authors])
+    
+    query = Author.query.join(Translation, Author.name_id == Translation.id)
 
-@bp.route('toggle_read_status', methods=['POST'])
+    if search_query:
+        query = query.filter(Translation.text_en.ilike(f'%{search_query}%') | Translation.text_de.ilike(f'%{search_query}%'))
+
+    authors = query.order_by(Translation.text_en).paginate(page=page, per_page=per_page, error_out=False)
+    
+    lang = str(get_locale())
+    return jsonify({
+        'authors': [{
+            'id': author.id,
+            'name': author.name.text_en if lang == 'en' else author.name.text_de,
+            'image_url': author.image_url
+        } for author in authors.items],
+        'total': authors.total,
+        'pages': authors.pages,
+        'current_page': authors.page
+    })
+
+@bp.route('/toggle_read_status', methods=['POST'])
 @login_required
 def toggle_read_status():
     data = request.json

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Book, UserBook, Author, List
+from models import db, Book, UserBook, Author, List, Translation
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc
 from datetime import date
@@ -18,9 +18,9 @@ def book_detail(id):
     user_rating = user_book.rating if user_book and user_book.rating is not None else 0
     user_review = user_book.review if user_book else None
 
-    # Fetch all reviews for the book
     reviews = UserBook.query.filter_by(book_id=book.id).filter(UserBook.review.isnot(None)).all()
 
+    lang = str(get_locale())
     return render_template('book/detail.html',
                            book=book,
                            is_read=is_read,
@@ -28,6 +28,7 @@ def book_detail(id):
                            user_rating=user_rating,
                            user_review=user_review,
                            reviews=reviews,
+                           lang=lang,
                            _l=_)
 
 @bp.route('/<int:id>/lists')
@@ -35,7 +36,7 @@ def book_detail(id):
 def book_lists(id):
     book = Book.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
-    per_page = 5  # Number of lists per page
+    per_page = 5
     sort = request.args.get('sort', 'name')
     order = request.args.get('order', 'asc')
 
@@ -48,10 +49,11 @@ def book_lists(id):
 
     lists = query.paginate(page=page, per_page=per_page, error_out=False)
 
+    lang = str(get_locale())
     return jsonify({
         'lists': [{
             'id': list.id,
-            'name': list.name,
+            'name': list.name.text_de if lang == 'de' else list.name.text_en,
             'is_public': list.is_public
         } for list in lists.items],
         'total': lists.total,
@@ -64,14 +66,15 @@ def book_lists(id):
 def api_books():
     books = Book.query.join(UserBook).filter(
         UserBook.user_id == current_user.id).all()
+    lang = str(get_locale())
     return jsonify([{
         'id': book.id,
-        'title': book.title,
-        'author': book.author.name,
+        'title': book.title.text_de if lang == 'de' else book.title.text_en,
+        'author': book.author.name.text_de if lang == 'de' else book.author.name.text_en,
         'cover_image_url': book.cover_image_url
     } for book in books])
 
-@bp.route('toggle_read_status', methods=['POST'])
+@bp.route('/toggle_read_status', methods=['POST'])
 @login_required
 def toggle_read_status():
     data = request.json
