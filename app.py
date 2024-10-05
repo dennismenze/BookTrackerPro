@@ -1,6 +1,6 @@
 from flask import Flask, g, request, session
 from flask_login import LoginManager, login_user, current_user
-from models import Book, UserBook, db, User, ReadingGoal, Author, List, BookList
+from models import Book, Translation, UserBook, db, User, ReadingGoal, Author, List, BookList
 from flask_migrate import Migrate
 from routes import book_routes, author_routes, list_routes, goal_routes, home_routes
 from flask_admin import Admin
@@ -42,6 +42,7 @@ babel = Babel(app, locale_selector=get_locale)
 
 # Add get_locale to Jinja2 environment
 app.jinja_env.globals['get_locale'] = get_locale
+
 
 class CustomModelView(ModelView):
     column_display_pk = True
@@ -86,6 +87,8 @@ admin.add_view(
 admin.add_view(CustomModelView(Author, db.session, endpoint='authors'))
 admin.add_view(CustomModelView(List, db.session, endpoint='lists'))
 admin.add_view(CustomModelView(BookList, db.session, endpoint='booklists'))
+admin.add_view(
+    CustomModelView(Translation, db.session, endpoint='translations'))
 
 app.register_blueprint(book_routes.bp, url_prefix='/book')
 app.register_blueprint(author_routes.bp, url_prefix='/author')
