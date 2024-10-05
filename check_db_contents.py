@@ -1,6 +1,5 @@
-
 from app import app, db
-from models import Book, Author, List, Post
+from models import Book, Author, List, Post, Translation
 import json
 
 def print_table_contents(model, fields):
@@ -9,7 +8,9 @@ def print_table_contents(model, fields):
         print(f"ID: {item.id}")
         for field in fields:
             value = getattr(item, field)
-            if isinstance(value, str):
+            if isinstance(value, Translation):
+                print(f"{field}: {{de: {value.text_de}, en: {value.text_en}}}")
+            elif isinstance(value, str):
                 try:
                     parsed_json = json.loads(value)
                     print(f"{field}: {parsed_json}")
