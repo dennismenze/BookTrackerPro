@@ -1,5 +1,6 @@
+
 from app import app, db
-from models import Book, Author, List, Post, Translation
+from models import Book, Author, List, Post
 import json
 
 def print_table_contents(model, fields):
@@ -23,4 +24,3 @@ with app.app_context():
     print_table_contents(Author, ['name', 'bio'])
     print_table_contents(List, ['name', 'description'])
     print_table_contents(Post, ['body'])
-    print_table_contents(Translation, ['table_name', 'row_id', 'column_name', 'language', 'content'])

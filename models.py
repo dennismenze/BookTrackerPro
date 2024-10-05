@@ -87,20 +87,27 @@ class Book(db.Model):
         return f"{self.get_title()} by {self.author.get_name()}"
 
     def get_title(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='books', row_id=self.id, column_name='title', language=lang
-        ).first()
-        if translation:
-            return translation.content
-        return self.title
+        if isinstance(self.title, str):
+            try:
+                title_dict = json.loads(self.title)
+            except json.JSONDecodeError:
+                return self.title
+        else:
+            title_dict = self.title
+        
+        if isinstance(title_dict, dict):
+            return title_dict.get(lang, title_dict.get('en', ''))
+        else:
+            return str(title_dict)
 
     def get_description(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='books', row_id=self.id, column_name='description', language=lang
-        ).first()
-        if translation:
-            return translation.content
-        return self.description or ''
+        if self.description:
+            try:
+                desc_dict = json.loads(self.description)
+                return desc_dict.get(lang, desc_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.description
+        return ''
 
 class Author(db.Model):
     __tablename__ = 'authors'
@@ -114,20 +121,27 @@ class Author(db.Model):
         return self.get_name()
 
     def get_name(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='authors', row_id=self.id, column_name='name', language=lang
-        ).first()
-        if translation:
-            return translation.content
-        return self.name
+        if isinstance(self.name, str):
+            try:
+                name_dict = json.loads(self.name)
+            except json.JSONDecodeError:
+                return self.name
+        else:
+            name_dict = self.name
+        
+        if isinstance(name_dict, dict):
+            return name_dict.get(lang, name_dict.get('en', ''))
+        else:
+            return str(name_dict)
 
     def get_bio(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='authors', row_id=self.id, column_name='bio', language=lang
-        ).first()
-        if translation:
-            return translation.content
-        return self.bio or ''
+        if self.bio:
+            try:
+                bio_dict = json.loads(self.bio)
+                return bio_dict.get(lang, bio_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.bio
+        return ''
 
 class List(db.Model):
     __tablename__ = 'lists'
@@ -142,20 +156,20 @@ class List(db.Model):
         return f"{self.get_name()} (User: {self.user.username})"
 
     def get_name(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='lists', row_id=self.id, column_name='name', language=lang
-        ).first()
-        if translation:
-            return translation.content
-        return self.name
+        try:
+            name_dict = json.loads(self.name)
+            return name_dict.get(lang, name_dict.get('en', ''))
+        except json.JSONDecodeError:
+            return self.name
 
     def get_description(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='lists', row_id=self.id, column_name='description', language=lang
-        ).first()
-        if translation:
-            return translation.content
-        return self.description or ''
+        if self.description:
+            try:
+                desc_dict = json.loads(self.description)
+                return desc_dict.get(lang, desc_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.description
+        return ''
 
 class BookList(db.Model):
     __tablename__ = 'book_list'
@@ -173,7 +187,7 @@ class ReadingGoal(db.Model):
     __tablename__ = 'reading_goals'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True)
-    goal_type = db.Column(db.String(20), nullable=False)
+    goal_type = db.Column(db.String(20), nullable=False)  # 'books' or 'pages'
     target = db.Column(db.Integer, nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
@@ -193,25 +207,10 @@ class Post(db.Model):
         return f"Post: {self.author.username} - {self.timestamp}"
 
     def get_body(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='posts', row_id=self.id, column_name='body', language=lang
-        ).first()
-        if translation:
-            return translation.content
-        return self.body or ''
-
-class Translation(db.Model):
-    __tablename__ = 'translations'
-    id = db.Column(db.Integer, primary_key=True)
-    table_name = db.Column(db.String(50), nullable=False)
-    row_id = db.Column(db.Integer, nullable=False)
-    column_name = db.Column(db.String(50), nullable=False)
-    language = db.Column(db.String(5), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-
-    __table_args__ = (
-        db.UniqueConstraint('table_name', 'row_id', 'column_name', 'language', name='uq_translation'),
-    )
-
-    def __str__(self):
-        return f"Translation: {self.table_name}.{self.column_name} ({self.language})"
+        if self.body:
+            try:
+                body_dict = json.loads(self.body)
+                return body_dict.get(lang, body_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.body
+        return ''
