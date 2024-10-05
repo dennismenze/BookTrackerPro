@@ -4,15 +4,20 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 import undetected_chromedriver as uc
-from models import db, Author, Book, UserBook, BookList, User, List
+from models import db, Author, Book, UserBook, BookList, User, List, Translation
 import sys
 
-from app import create_app
+from flask import Flask
 from utils import fetch_google_books_info, get_author_image_from_wikimedia
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-app = create_app()
+# Create Flask app
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
 with app.app_context():
     # If command arg '--clean_db' is provided, clear the database
     if True: #'--clean_db' in sys.argv:
@@ -21,6 +26,7 @@ with app.app_context():
         Book.query.delete()
         Author.query.delete()
         List.query.delete()
+        Translation.query.delete()
         db.session.commit()
         print("Database has been cleared.")
 
@@ -65,9 +71,19 @@ with app.app_context():
                 author_name = author.find_element(By.TAG_NAME, 'h3').find_element(By.TAG_NAME, 'a').text.strip()
                 
                 # Check if the author already exists in the database
-                aut = Author.query.filter_by(name=author_name).first()
+                aut = Author.query.join(Translation, Author.name_id == Translation.id).filter(
+                    (Translation.text_en == author_name) | (Translation.text_de == author_name)
+                ).first()
                 if not aut:
-                    aut = Author(name=author_name)
+                    name_translation = Translation(text_en=author_name, text_de=author_name)
+                    db.session.add(name_translation)
+                    db.session.flush()
+                    
+                    bio_translation = Translation(text_en="", text_de="")
+                    db.session.add(bio_translation)
+                    db.session.flush()
+                    
+                    aut = Author(name_id=name_translation.id, bio_id=bio_translation.id)
                     db.session.add(aut)
                     db.session.commit()
 
@@ -94,9 +110,18 @@ with app.app_context():
                             break
 
                     # Create Book object
+                    title_translation = Translation(text_en=book_title, text_de=book_title)
+                    db.session.add(title_translation)
+                    db.session.flush()
+                    
+                    description_translation = Translation(text_en="", text_de="")
+                    db.session.add(description_translation)
+                    db.session.flush()
+                    
                     bk = Book(
-                        title=book_title,
-                        author=aut,
+                        title_id=title_translation.id,
+                        description_id=description_translation.id,
+                        author_id=aut.id,
                         is_main_work=(rank < 1000 if rank else False)
                     )
                     db.session.add(bk)
@@ -127,23 +152,32 @@ with app.app_context():
                         list_owner = list_owner_match[-1] if list_owner_match else "Unknown Owner"
 
                         # Query or create the List in the database
-                        list_obj = List.query.filter_by(name=list_name, user_id=1).first()
+                        list_obj = List.query.join(Translation, List.name_id == Translation.id).filter(
+                            ((Translation.text_en == list_name) | (Translation.text_de == list_name)) &
+                            (List.user_id == 1)
+                        ).first()
                         if not list_obj:
-                            list_obj = List(name=list_name, user_id=1, is_public=True)
+                            name_translation = Translation(text_en=list_name, text_de=list_name)
+                            db.session.add(name_translation)
+                            db.session.flush()
+                            
+                            description_translation = Translation(text_en="", text_de="")
+                            db.session.add(description_translation)
+                            db.session.flush()
+                            
+                            list_obj = List(name_id=name_translation.id, description_id=description_translation.id, user_id=1, is_public=True)
                             db.session.add(list_obj)
-                            #db.session.commit()
+                            db.session.commit()
 
-                        
                         # Create relationship between Book and List
                         book_list = BookList.query.filter_by(book_id=bk.id, list_id=list_obj.id).first()
                         if not book_list:
                             book_list = BookList(book_id=bk.id, list_id=list_obj.id)
                             book_list.rank = list_rank
                             db.session.add(book_list)
-                            #db.session.commit()
+                            db.session.commit()
 
                 db.session.commit()
-
 
     except Exception as e:
         print(f"An error occurred: {e}")
