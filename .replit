@@ -35,6 +35,10 @@ args = "Check Database Contents"
 task = "workflow.run"
 args = "Run Manual Data Migration"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Create Migration"
+
 [[workflows.workflow]]
 name = "Run Flask App"
 author = "agent"
@@ -101,6 +105,17 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python manual_data_migration.py"
+
+[[workflows.workflow]]
+name = "Create Migration"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "flask db migrate -m \"Add Translation model and update existing models for multilingual support\""
 
 [deployment]
 run = ["sh", "-c", "python app.py"]
