@@ -1,82 +1,50 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase, backref
-from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date, datetime
+from flask_login import UserMixin
+from sqlalchemy.dialects.postgresql import JSON
+import json
 
+db = SQLAlchemy()
 
-class Base(DeclarativeBase):
-    pass
+user_book = db.Table('user_book',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('book_id', db.Integer, db.ForeignKey('books.id'), primary_key=True)
+)
 
-
-db = SQLAlchemy(model_class=Base)
-
-user_book = db.Table(
-    'user_book',
-    db.Column('user_id',
-              db.Integer,
-              db.ForeignKey('users.id'),
-              primary_key=True),
-    db.Column('book_id',
-              db.Integer,
-              db.ForeignKey('books.id'),
-              primary_key=True))
-
-followers = db.Table(
-    'followers', db.Column('follower_id', db.Integer,
-                           db.ForeignKey('users.id')),
-    db.Column('followed_id', db.Integer, db.ForeignKey('users.id')))
-
+followers = db.Table('followers',
+    db.Column('follower_id', db.Integer, db.ForeignKey('users.id')),
+    db.Column('followed_id', db.Integer, db.ForeignKey('users.id'))
+)
 
 class UserBook(db.Model):
     __tablename__ = 'user_books'
-    user_id = db.Column(db.Integer,
-                        db.ForeignKey('users.id'),
-                        primary_key=True)
-    book_id = db.Column(db.Integer,
-                        db.ForeignKey('books.id'),
-                        primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     read_date = db.Column(db.Date, nullable=True)
-    rating = db.Column(db.Integer)
-    review = db.Column(db.Text)
+    rating = db.Column(db.Integer, nullable=True)
+    review = db.Column(db.Text, nullable=True)
     user = db.relationship("User", back_populates="user_books")
     book = db.relationship("Book", back_populates="user_books")
-
-    @property
-    def is_read(self):
-        return self.read_date is not None
-
-    def __str__(self):
-        return f"UserBook: {self.user.username} - {self.book.title}"
-
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255))
-    books = db.relationship('Book',
-                            secondary=user_book,
-                            back_populates='users')
-    user_books = db.relationship("UserBook",
-                                 back_populates="user",
-                                 cascade='all, delete-orphan')
-    lists = db.relationship('List', backref='user', lazy='select')
-    is_admin = db.Column(db.Boolean, default=False)
-    reading_goal = db.relationship('ReadingGoal',
-                                   uselist=False,
-                                   back_populates='user')
-
+    username = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    password_hash = db.Column(db.String(128))
+    books = db.relationship('Book', secondary=user_book, back_populates='users')
+    user_books = db.relationship("UserBook", back_populates="user")
+    lists = db.relationship('List', backref='user', lazy='dynamic')
+    reading_goal = db.relationship('ReadingGoal', back_populates='user', uselist=False)
     full_name = db.Column(db.String(100))
     bio = db.Column(db.Text)
     location = db.Column(db.String(100))
     website = db.Column(db.String(200))
     profile_image = db.Column(db.LargeBinary)
-    date_joined = db.Column(db.DateTime, default=datetime.utcnow)
+    date_joined = db.Column(db.DateTime, default=db.func.now())
+    preferred_language = db.Column(db.String(5))
 
-    followed = db.relationship('User',
-                               secondary=followers,
+    followed = db.relationship('User', secondary=followers,
                                primaryjoin=(followers.c.follower_id == id),
                                secondaryjoin=(followers.c.followed_id == id),
                                backref=db.backref('followers', lazy='dynamic'),
@@ -99,37 +67,27 @@ class User(UserMixin, db.Model):
             self.followed.remove(user)
 
     def is_following(self, user):
-        return self.followed.filter(
-            followers.c.followed_id == user.id).count() > 0
+        return self.followed.filter(followers.c.followed_id == user.id).count() > 0
 
     def followed_posts(self):
-        return Post.query.join(
-            followers, (followers.c.followed_id == Post.user_id)).filter(
-                followers.c.follower_id == self.id).order_by(
-                    Post.timestamp.desc())
+        return Post.query.join(followers, (followers.c.followed_id == Post.user_id)).filter(
+            followers.c.follower_id == self.id).order_by(Post.timestamp.desc())
 
     def __str__(self):
         return self.username
 
-
 class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    author_id = db.Column(db.Integer,
-                          db.ForeignKey('authors.id'),
-                          nullable=False)
-    users = db.relationship('User',
-                            secondary=user_book,
-                            back_populates='books')
+    title = db.Column(JSON, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
+    users = db.relationship('User', secondary=user_book, back_populates='books')
     user_books = db.relationship("UserBook", back_populates="book")
     author = db.relationship('Author', back_populates='books')
-    lists = db.relationship('List',
-                            secondary='book_list',
-                            back_populates='books')
+    lists = db.relationship('List', secondary='book_list', back_populates='books')
 
     isbn = db.Column(db.String(20))
-    description = db.Column(db.Text)
+    description = db.Column(JSON)
     cover_image_url = db.Column(db.String(255))
     page_count = db.Column(db.Integer)
     published_date = db.Column(db.String(20))
@@ -138,55 +96,112 @@ class Book(db.Model):
 
     @property
     def average_rating(self):
-        ratings = [
-            ub.rating for ub in self.user_books if ub.rating is not None
-        ]
+        ratings = [ub.rating for ub in self.user_books if ub.rating is not None]
         return sum(ratings) / len(ratings) if ratings else None
 
     def __str__(self):
-        return f"{self.title} by {self.author.name}"
+        return f"{self.get_title()} by {self.author.get_name()}"
 
+    def get_title(self, lang='en'):
+        if isinstance(self.title, str):
+            try:
+                title_dict = json.loads(self.title)
+                return title_dict.get(lang, title_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.title
+        elif isinstance(self.title, dict):
+            return self.title.get(lang, self.title.get('en', ''))
+        return ''
+
+    def get_description(self, lang='en'):
+        if isinstance(self.description, str):
+            try:
+                desc_dict = json.loads(self.description)
+                return desc_dict.get(lang, desc_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.description
+        elif isinstance(self.description, dict):
+            return self.description.get(lang, self.description.get('en', ''))
+        return ''
 
 class Author(db.Model):
     __tablename__ = 'authors'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(JSON, nullable=False)
     books = db.relationship('Book', back_populates='author')
     image_url = db.Column(db.String(255))
+    bio = db.Column(JSON)
 
     def __str__(self):
-        return self.name
+        return self.get_name()
 
+    def get_name(self, lang='en'):
+        if isinstance(self.name, str):
+            try:
+                name_dict = json.loads(self.name)
+                return name_dict.get(lang, name_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.name
+        elif isinstance(self.name, dict):
+            return self.name.get(lang, self.name.get('en', ''))
+        return ''
+
+    def get_bio(self, lang='en'):
+        if isinstance(self.bio, str):
+            try:
+                bio_dict = json.loads(self.bio)
+                return bio_dict.get(lang, bio_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.bio
+        elif isinstance(self.bio, dict):
+            return self.bio.get(lang, self.bio.get('en', ''))
+        return ''
 
 class List(db.Model):
     __tablename__ = 'lists'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(JSON, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    books = db.relationship('Book',
-                            secondary='book_list',
-                            back_populates='lists')
+    books = db.relationship('Book', secondary='book_list', back_populates='lists')
     is_public = db.Column(db.Boolean, default=False)
+    description = db.Column(JSON)
 
     def __str__(self):
-        return f"{self.name} (User: {self.user.username})"
+        return f"{self.get_name()} (User: {self.user.username})"
 
+    def get_name(self, lang='en'):
+        if isinstance(self.name, str):
+            try:
+                name_dict = json.loads(self.name)
+                return name_dict.get(lang, name_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.name
+        elif isinstance(self.name, dict):
+            return self.name.get(lang, self.name.get('en', ''))
+        return ''
+
+    def get_description(self, lang='en'):
+        if isinstance(self.description, str):
+            try:
+                desc_dict = json.loads(self.description)
+                return desc_dict.get(lang, desc_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.description
+        elif isinstance(self.description, dict):
+            return self.description.get(lang, self.description.get('en', ''))
+        return ''
 
 class BookList(db.Model):
     __tablename__ = 'book_list'
-    book_id = db.Column(db.Integer,
-                        db.ForeignKey('books.id'),
-                        primary_key=True)
-    list_id = db.Column(db.Integer,
-                        db.ForeignKey('lists.id'),
-                        primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
+    list_id = db.Column(db.Integer, db.ForeignKey('lists.id'), primary_key=True)
     rank = db.Column(db.Integer, default=0)
     
     book = db.relationship("Book", backref="book", viewonly=True)
     list = db.relationship("List", backref="list", viewonly=True)
 
     def __str__(self):
-        return f"BookList: {self.book.title} - {self.list.name}"
+        return f"BookList: {self.book.get_title()} - {self.list.get_name()}"
 
 class ReadingGoal(db.Model):
     __tablename__ = 'reading_goals'
@@ -201,13 +216,23 @@ class ReadingGoal(db.Model):
     def __str__(self):
         return f"ReadingGoal: {self.user.username} - {self.goal_type} ({self.target})"
 
-
 class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.Text)
+    body = db.Column(JSON)
     timestamp = db.Column(db.DateTime, index=True, default=db.func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __str__(self):
         return f"Post: {self.author.username} - {self.timestamp}"
+
+    def get_body(self, lang='en'):
+        if isinstance(self.body, str):
+            try:
+                body_dict = json.loads(self.body)
+                return body_dict.get(lang, body_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.body
+        elif isinstance(self.body, dict):
+            return self.body.get(lang, self.body.get('en', ''))
+        return ''

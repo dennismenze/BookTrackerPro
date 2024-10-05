@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, g, send_file
-from flask_login import login_required, current_user, logout_user, login_user
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file
+from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post
-from sqlalchemy import func, desc
+from sqlalchemy import or_, func
+from datetime import datetime
 from io import BytesIO
-from datetime import datetime, date
+from flask_babel import _, get_locale
 
 bp = Blueprint('home', __name__)
 
@@ -16,84 +17,79 @@ def index():
     author_page = request.args.get('author_page', 1, type=int)
     per_page = 10
 
-    # Book search
-    book_query = Book.query
-    if book_search_query:
-        book_query = book_query.filter(Book.title.ilike(f'%{book_search_query}%'))
-    books = book_query.paginate(page=book_page, per_page=per_page, error_out=False)
-
-    # Author search
-    author_query = Author.query
-    if author_search_query:
-        author_query = author_query.filter(Author.name.ilike(f'%{author_search_query}%'))
-    authors = author_query.paginate(page=author_page, per_page=per_page, error_out=False)
-
-    # Get latest books for the current user
     if current_user.is_authenticated:
-        latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(desc(UserBook.read_date)).limit(5).all()
+        latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(UserBook.read_date.desc()).limit(5).all()
         user_authors = Author.query.join(Book).join(UserBook).filter(UserBook.user_id == current_user.id).distinct().limit(5).all()
     else:
         latest_books = []
         user_authors = []
 
-    return render_template('index.html', 
-                           books=books, 
-                           authors=authors, 
-                           book_search_query=book_search_query, 
-                           author_search_query=author_search_query,
+    books = None
+    if book_search_query:
+        books = Book.query.join(Author).filter(
+            or_(
+                Book.title.ilike(f'%{book_search_query}%'),
+                Author.name.ilike(f'%{book_search_query}%')
+            )
+        ).paginate(page=book_page, per_page=per_page, error_out=False)
+
+    authors = None
+    if author_search_query:
+        authors = Author.query.filter(Author.name.ilike(f'%{author_search_query}%')).paginate(page=author_page, per_page=per_page, error_out=False)
+
+    return render_template('index.html',
                            latest_books=latest_books,
-                           user_authors=user_authors)
+                           user_authors=user_authors,
+                           books=books,
+                           authors=authors,
+                           book_search_query=book_search_query,
+                           author_search_query=author_search_query)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('home.index'))
-    
     if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
         
-        user = User.query.filter((User.username == username) | (User.email == email)).first()
+        user = User.query.filter_by(username=username).first()
         if user:
-            flash('Username or email already exists.')
+            flash(_('Username already exists'))
+            return redirect(url_for('home.register'))
+        
+        user = User.query.filter_by(email=email).first()
+        if user:
+            flash(_('Email already exists'))
             return redirect(url_for('home.register'))
         
         new_user = User(username=username, email=email)
         new_user.set_password(password)
-        
         db.session.add(new_user)
         db.session.commit()
         
-        flash('Registration successful. Please log in.')
+        flash(_('Registration successful. Please log in.'))
         return redirect(url_for('home.login'))
     
     return render_template('register.html')
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('home.index'))
-    
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
+        username = request.form['username']
+        password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             login_user(user)
-            flash('Logged in successfully.')
             return redirect(url_for('home.index'))
         else:
-            flash('Invalid username or password.')
-    
+            flash(_('Invalid username or password'))
     return render_template('login.html')
 
 @bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.')
+    flash(_('You have been logged out.'))
     return redirect(url_for('home.index'))
 
 @bp.route('/profile/<username>')
@@ -162,7 +158,17 @@ def edit_profile():
             current_user.profile_image = profile_image.read()
         
         db.session.commit()
-        flash('Your profile has been updated.')
+        flash(_('Your profile has been updated.'))
         return redirect(url_for('home.user_profile', username=current_user.username))
     
     return render_template('edit_profile.html')
+
+@bp.route('/set_language', methods=['POST'])
+def set_language():
+    language = request.form.get('language')
+    if language and language in app.config['LANGUAGES']:
+        session['language'] = language
+        if current_user.is_authenticated:
+            current_user.preferred_language = language
+            db.session.commit()
+    return redirect(request.referrer or url_for('home.index'))
