@@ -15,19 +15,6 @@ followers = db.Table('followers',
     db.Column('followed_id', db.Integer, db.ForeignKey('users.id'))
 )
 
-class Translation(db.Model):
-    __tablename__ = 'translations'
-    id = db.Column(db.Integer, primary_key=True)
-    table_name = db.Column(db.String(50), nullable=False)
-    row_id = db.Column(db.Integer, nullable=False)
-    column_name = db.Column(db.String(50), nullable=False)
-    language = db.Column(db.String(5), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-
-    __table_args__ = (
-        db.UniqueConstraint('table_name', 'row_id', 'column_name', 'language', name='uix_translation'),
-    )
-
 class UserBook(db.Model):
     __tablename__ = 'user_books'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
@@ -76,7 +63,7 @@ class User(UserMixin, db.Model):
 class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
+    title = db.Column(db.Text, nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
     users = db.relationship('User', secondary=user_book, back_populates='books')
     user_books = db.relationship("UserBook", back_populates="book")
@@ -100,27 +87,32 @@ class Book(db.Model):
         return f"{self.get_title()} by {self.author.get_name()}"
 
     def get_title(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='books',
-            row_id=self.id,
-            column_name='title',
-            language=lang
-        ).first()
-        return translation.content if translation else self.title
+        if isinstance(self.title, str):
+            try:
+                title_dict = json.loads(self.title)
+            except json.JSONDecodeError:
+                return self.title
+        else:
+            title_dict = self.title
+        
+        if isinstance(title_dict, dict):
+            return title_dict.get(lang, title_dict.get('en', ''))
+        else:
+            return str(title_dict)
 
     def get_description(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='books',
-            row_id=self.id,
-            column_name='description',
-            language=lang
-        ).first()
-        return translation.content if translation else self.description
+        if self.description:
+            try:
+                desc_dict = json.loads(self.description)
+                return desc_dict.get(lang, desc_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.description
+        return ''
 
 class Author(db.Model):
     __tablename__ = 'authors'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.Text, nullable=False)
     books = db.relationship('Book', back_populates='author')
     image_url = db.Column(db.String(255))
     bio = db.Column(db.Text)
@@ -129,27 +121,32 @@ class Author(db.Model):
         return self.get_name()
 
     def get_name(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='authors',
-            row_id=self.id,
-            column_name='name',
-            language=lang
-        ).first()
-        return translation.content if translation else self.name
+        if isinstance(self.name, str):
+            try:
+                name_dict = json.loads(self.name)
+            except json.JSONDecodeError:
+                return self.name
+        else:
+            name_dict = self.name
+        
+        if isinstance(name_dict, dict):
+            return name_dict.get(lang, name_dict.get('en', ''))
+        else:
+            return str(name_dict)
 
     def get_bio(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='authors',
-            row_id=self.id,
-            column_name='bio',
-            language=lang
-        ).first()
-        return translation.content if translation else self.bio
+        if self.bio:
+            try:
+                bio_dict = json.loads(self.bio)
+                return bio_dict.get(lang, bio_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.bio
+        return ''
 
 class List(db.Model):
     __tablename__ = 'lists'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     books = db.relationship('Book', secondary='book_list', back_populates='lists')
     is_public = db.Column(db.Boolean, default=False)
@@ -159,22 +156,20 @@ class List(db.Model):
         return f"{self.get_name()} (User: {self.user.username})"
 
     def get_name(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='lists',
-            row_id=self.id,
-            column_name='name',
-            language=lang
-        ).first()
-        return translation.content if translation else self.name
+        try:
+            name_dict = json.loads(self.name)
+            return name_dict.get(lang, name_dict.get('en', ''))
+        except json.JSONDecodeError:
+            return self.name
 
     def get_description(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='lists',
-            row_id=self.id,
-            column_name='description',
-            language=lang
-        ).first()
-        return translation.content if translation else self.description
+        if self.description:
+            try:
+                desc_dict = json.loads(self.description)
+                return desc_dict.get(lang, desc_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.description
+        return ''
 
 class BookList(db.Model):
     __tablename__ = 'book_list'
@@ -212,10 +207,10 @@ class Post(db.Model):
         return f"Post: {self.author.username} - {self.timestamp}"
 
     def get_body(self, lang='en'):
-        translation = Translation.query.filter_by(
-            table_name='posts',
-            row_id=self.id,
-            column_name='body',
-            language=lang
-        ).first()
-        return translation.content if translation else self.body
+        if self.body:
+            try:
+                body_dict = json.loads(self.body)
+                return body_dict.get(lang, body_dict.get('en', ''))
+            except json.JSONDecodeError:
+                return self.body
+        return ''

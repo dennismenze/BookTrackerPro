@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Book, Author, List, UserBook, Post, Translation
+from models import db, User, Book, Author, List, UserBook, Post
 from sqlalchemy import or_, func
 from datetime import datetime
 from io import BytesIO
@@ -28,14 +28,14 @@ def index():
     if book_search_query:
         books = Book.query.join(Author).filter(
             or_(
-                Book.title.ilike(f'%{book_search_query}%'),
-                Author.name.ilike(f'%{book_search_query}%')
+                Book.title.cast(db.String).ilike(f'%{book_search_query}%'),
+                Author.name.cast(db.String).ilike(f'%{book_search_query}%')
             )
         ).paginate(page=book_page, per_page=per_page, error_out=False)
 
     authors = None
     if author_search_query:
-        authors = Author.query.filter(Author.name.ilike(f'%{author_search_query}%')).paginate(page=author_page, per_page=per_page, error_out=False)
+        authors = Author.query.filter(Author.name.cast(db.String).ilike(f'%{author_search_query}%')).paginate(page=author_page, per_page=per_page, error_out=False)
 
     return render_template('index.html',
                            latest_books=latest_books,
@@ -166,20 +166,3 @@ def set_language():
             current_user.preferred_language = language
             db.session.commit()
     return redirect(request.referrer or url_for('home.index'))
-
-@bp.route('/translate', methods=['POST'])
-@login_required
-def translate():
-    data = request.json
-    table_name = data.get('table_name')
-    row_id = data.get('row_id')
-    column_name = data.get('column_name')
-    language = data.get('language')
-    content = data.get('content')
-
-    if not all([table_name, row_id, column_name, language, content]):
-        return jsonify({'error': 'Missing required fields'}), 400
-
-    from app import add_translation
-    add_translation(table_name, row_id, column_name, language, content)
-    return jsonify({'success': True, 'message': 'Translation added successfully'})
