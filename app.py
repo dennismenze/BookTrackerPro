@@ -40,6 +40,8 @@ def get_locale():
 
 babel = Babel(app, locale_selector=get_locale)
 
+# Add get_locale to Jinja2 environment
+app.jinja_env.globals['get_locale'] = get_locale
 
 class CustomModelView(ModelView):
     column_display_pk = True

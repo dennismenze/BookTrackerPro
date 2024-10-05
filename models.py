@@ -87,11 +87,18 @@ class Book(db.Model):
         return f"{self.get_title()} by {self.author.get_name()}"
 
     def get_title(self, lang='en'):
-        try:
-            title_dict = json.loads(self.title)
+        if isinstance(self.title, str):
+            try:
+                title_dict = json.loads(self.title)
+            except json.JSONDecodeError:
+                return self.title
+        else:
+            title_dict = self.title
+        
+        if isinstance(title_dict, dict):
             return title_dict.get(lang, title_dict.get('en', ''))
-        except json.JSONDecodeError:
-            return self.title
+        else:
+            return str(title_dict)
 
     def get_description(self, lang='en'):
         if self.description:
@@ -114,11 +121,18 @@ class Author(db.Model):
         return self.get_name()
 
     def get_name(self, lang='en'):
-        try:
-            name_dict = json.loads(self.name)
+        if isinstance(self.name, str):
+            try:
+                name_dict = json.loads(self.name)
+            except json.JSONDecodeError:
+                return self.name
+        else:
+            name_dict = self.name
+        
+        if isinstance(name_dict, dict):
             return name_dict.get(lang, name_dict.get('en', ''))
-        except json.JSONDecodeError:
-            return self.name
+        else:
+            return str(name_dict)
 
     def get_bio(self, lang='en'):
         if self.bio:
