@@ -28,14 +28,14 @@ def index():
     if book_search_query:
         books = Book.query.join(Author).filter(
             or_(
-                Book.title.ilike(f'%{book_search_query}%'),
-                Author.name.ilike(f'%{book_search_query}%')
+                Book.title.cast(db.String).ilike(f'%{book_search_query}%'),
+                Author.name.cast(db.String).ilike(f'%{book_search_query}%')
             )
         ).paginate(page=book_page, per_page=per_page, error_out=False)
 
     authors = None
     if author_search_query:
-        authors = Author.query.filter(Author.name.ilike(f'%{author_search_query}%')).paginate(page=author_page, per_page=per_page, error_out=False)
+        authors = Author.query.filter(Author.name.cast(db.String).ilike(f'%{author_search_query}%')).paginate(page=author_page, per_page=per_page, error_out=False)
 
     return render_template('index.html',
                            latest_books=latest_books,
@@ -97,10 +97,8 @@ def logout():
 def user_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
     
-    # Fetch recent activities
     recent_activities = []
     
-    # Recent books read
     recent_books = UserBook.query.filter_by(user_id=user.id).filter(UserBook.read_date.isnot(None)).order_by(UserBook.read_date.desc()).limit(5).all()
     for user_book in recent_books:
         recent_activities.append({
@@ -109,16 +107,14 @@ def user_profile(username):
             'timestamp': datetime.combine(user_book.read_date, datetime.min.time())
         })
     
-    # Recent lists created
     recent_lists = List.query.filter_by(user_id=user.id).order_by(List.id.desc()).limit(5).all()
     for list_item in recent_lists:
         recent_activities.append({
             'type': 'list_created',
             'list': list_item,
-            'timestamp': datetime.fromtimestamp(list_item.id)  # Assuming id is a Unix timestamp
+            'timestamp': datetime.fromtimestamp(list_item.id)
         })
     
-    # Recent posts
     recent_posts = Post.query.filter_by(user_id=user.id).order_by(Post.timestamp.desc()).limit(5).all()
     for post in recent_posts:
         recent_activities.append({
@@ -127,10 +123,8 @@ def user_profile(username):
             'timestamp': post.timestamp
         })
     
-    # Sort all activities by timestamp (most recent first)
     recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
     
-    # Standardize timestamps
     for activity in recent_activities:
         activity['timestamp'] = activity['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
     
