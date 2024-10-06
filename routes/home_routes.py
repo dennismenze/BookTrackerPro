@@ -71,11 +71,12 @@ def index():
 
     authors = None
     if author_search_query:
-        authors = Author.query.join(Translation, Author.name_id == Translation.id)\
+        author_name_translation = aliased(Translation)
+        authors = Author.query.join(author_name_translation, Author.name_id == author_name_translation.id)\
             .filter(
                 or_(
-                    Translation.text_en.ilike(f'%{author_search_query}%'),
-                    Translation.text_de.ilike(f'%{author_search_query}%')
+                    author_name_translation.text_en.ilike(f'%{author_search_query}%'),
+                    author_name_translation.text_de.ilike(f'%{author_search_query}%')
                 )
             ).paginate(page=author_page, per_page=per_page, error_out=False)
 
