@@ -19,7 +19,23 @@ def index():
 
     if current_user.is_authenticated:
         latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(UserBook.read_date.desc()).limit(5).all()
-        user_authors = Author.query.join(Book).join(UserBook).filter(UserBook.user_id == current_user.id).distinct().limit(5).all()
+        
+        # Calculate the percentage of books read for each author
+        user_authors = db.session.query(
+            Author,
+            func.count(Book.id).label('total_books'),
+            func.count(UserBook.read_date).label('read_books')
+        ).join(Book, Author.id == Book.author_id)\
+         .outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id))\
+         .filter(UserBook.user_id == current_user.id)\
+         .group_by(Author.id)\
+         .order_by(func.count(UserBook.read_date).desc())\
+         .limit(5)\
+         .all()
+
+        # Calculate percentage for each author
+        for author, total_books, read_books in user_authors:
+            author.read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
     else:
         latest_books = []
         user_authors = []

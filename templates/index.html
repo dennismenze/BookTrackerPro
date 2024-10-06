@@ -43,12 +43,19 @@
         <h2 class="text-2xl font-semibold mb-4">{{ _('My Authors') }}</h2>
         {% if user_authors %}
             <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {% for author in user_authors %}
+                {% for author, total_books, read_books in user_authors %}
                     <li class="bg-white shadow-md rounded-lg p-4">
-                        <a href="{{ url_for('author.author_detail', id=author.id) }}" class="flex items-center">
+                        <a href="{{ url_for('author.author_detail', id=author.id) }}" class="flex items-center mb-2">
                             <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ _('%(name)s', name=author.name) }}" class="w-12 h-12 object-cover rounded-full mr-4">
                             <span class="text-blue-600 hover:text-blue-800">{{ author.name }}</span>
                         </a>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-600">{{ _('Books read:') }} {{ read_books }} / {{ total_books }}</p>
+                            <div class="bg-gray-200 rounded-full h-2 mt-1">
+                                <div class="bg-green-500 rounded-full h-2" style="width: {{ author.read_percentage }}%;"></div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">{{ author.read_percentage|round|int }}% {{ _('complete') }}</p>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>
