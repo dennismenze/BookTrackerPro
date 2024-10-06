@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, and_
 from datetime import datetime
 from io import BytesIO
 from flask_babel import _, get_locale
@@ -20,11 +20,13 @@ def index():
     if current_user.is_authenticated:
         latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(UserBook.read_date.desc()).limit(5).all()
         
-        # Calculate the percentage of books read for each author
+        # Calculate the percentage of books read for each author, including main works
         user_authors = db.session.query(
             Author,
             func.count(Book.id).label('total_books'),
-            func.count(UserBook.read_date).label('read_books')
+            func.count(UserBook.read_date).label('read_books'),
+            func.count(Book.id).filter(Book.is_main_work == True).label('total_main_works'),
+            func.count(and_(UserBook.read_date.isnot(None), Book.is_main_work == True)).label('read_main_works')
         ).join(Book, Author.id == Book.author_id)\
          .outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id))\
          .filter(UserBook.user_id == current_user.id)\
@@ -34,8 +36,9 @@ def index():
          .all()
 
         # Calculate percentage for each author
-        for author, total_books, read_books in user_authors:
+        for author, total_books, read_books, total_main_works, read_main_works in user_authors:
             author.read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+            author.main_works_read_percentage = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
     else:
         latest_books = []
         user_authors = []
