@@ -1,13 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file, current_app
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Book, Author, List, UserBook, Post
+from models import db, User, Book, Author, List, UserBook, Post, Translation
 from sqlalchemy import or_, func, and_, case
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 from flask_babel import _, get_locale
 import csv
 import io
+import logging
 
 bp = Blueprint('home', __name__)
 
@@ -147,12 +149,21 @@ def user_profile(username):
             'timestamp': post.timestamp
         })
     
+    # Add recent CSV imports
+    recent_imports = UserBook.query.filter_by(user_id=user.id).order_by(UserBook.id.desc()).limit(10).all()
+    for user_book in recent_imports:
+        recent_activities.append({
+            'type': 'book_imported',
+            'book': user_book.book,
+            'timestamp': datetime.now()  # Use current time as we don't have an import timestamp
+        })
+    
     recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
     
     for activity in recent_activities:
         activity['timestamp'] = activity['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
     
-    return render_template('profile.html', user=user, recent_activities=recent_activities[:10])
+    return render_template('profile.html', user=user, recent_activities=recent_activities[:15])
 
 @bp.route('/profile_image/<int:user_id>')
 def profile_image(user_id):
@@ -196,11 +207,13 @@ def set_language():
 def import_csv():
     if 'csv_file' not in request.files:
         flash(_('No file uploaded'), 'error')
+        current_app.logger.warning(f"CSV import attempt by user {current_user.username}: No file uploaded")
         return redirect(url_for('home.user_profile', username=current_user.username))
     
     file = request.files['csv_file']
     if file.filename == '':
         flash(_('No file selected'), 'error')
+        current_app.logger.warning(f"CSV import attempt by user {current_user.username}: No file selected")
         return redirect(url_for('home.user_profile', username=current_user.username))
     
     if file and file.filename.endswith('.csv'):
@@ -208,6 +221,7 @@ def import_csv():
             stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
             csv_reader = csv.DictReader(stream)
             
+            imported_count = 0
             for row in csv_reader:
                 title = row.get('title')
                 author_name = row.get('author')
@@ -219,12 +233,12 @@ def import_csv():
                 
                 author = Author.query.filter(Author.name.text == author_name).first()
                 if not author:
-                    author = Author(name=author_name)
+                    author = Author(name=Translation(text_en=author_name, text_de=author_name))
                     db.session.add(author)
                 
                 book = Book.query.filter((Book.title.text == title) & (Book.author == author)).first()
                 if not book:
-                    book = Book(title=title, author=author, isbn=isbn)
+                    book = Book(title=Translation(text_en=title, text_de=title), author=author, isbn=isbn)
                     db.session.add(book)
                 
                 user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
@@ -237,14 +251,20 @@ def import_csv():
                         read_date = datetime.strptime(read_date_str, '%Y-%m-%d').date()
                         user_book.read_date = read_date
                     except ValueError:
-                        pass
+                        current_app.logger.warning(f"Invalid date format for book '{title}': {read_date_str}")
+                
+                imported_count += 1
             
             db.session.commit()
-            flash(_('CSV file imported successfully'), 'success')
+            flash(_('CSV file imported successfully. {0} books imported.').format(imported_count), 'success')
+            current_app.logger.info(f"CSV import successful for user {current_user.username}. {imported_count} books imported.")
         except Exception as e:
             db.session.rollback()
-            flash(_('Error importing CSV file: {}').format(str(e)), 'error')
+            error_message = str(e)
+            flash(_('Error importing CSV file: {}').format(error_message), 'error')
+            current_app.logger.error(f"CSV import error for user {current_user.username}: {error_message}")
     else:
         flash(_('Invalid file format. Please upload a CSV file.'), 'error')
+        current_app.logger.warning(f"CSV import attempt by user {current_user.username}: Invalid file format")
     
     return redirect(url_for('home.user_profile', username=current_user.username))

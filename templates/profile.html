@@ -1,70 +1,20 @@
-{% extends "base.html" %} {% block title %}{{ user.username }}'s {{ _('Profile') }}{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+
+{% block title %}{{ _('%(username)s\'s Profile', username=user.username) }}{% endblock %}
+
+{% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">{{ user.username }}'s {{ _('Profile') }}</h1>
-
+    <h1 class="text-3xl font-bold mb-6">{{ _('%(username)s\'s Profile', username=user.username) }}</h1>
+    
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <div class="flex items-center mb-4">
-            <img
-                src="{{ url_for('home.profile_image', user_id=user.id) }}"
-                alt="{{ user.username }}"
-                class="w-24 h-24 rounded-full mr-4 object-cover"
-            />
-            <div>
-                <h2 class="text-2xl font-semibold">
-                    {{ user.full_name or user.username }}
-                </h2>
-                <p class="text-gray-600">@{{ user.username }}</p>
-            </div>
-        </div>
-
-        {% if user.bio %}
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">{{ _('About') }}</h3>
-            <p>{{ user.bio }}</p>
-        </div>
-        {% endif %} {% if user.location or user.website %}
-        <div class="mb-4">
-            {% if user.location %}
-            <p class="mb-1">
-                <i class="fas fa-map-marker-alt mr-2"></i>{{ user.location }}
-            </p>
-            {% endif %} {% if user.website %}
-            <p>
-                <i class="fas fa-link mr-2"></i
-                ><a
-                    href="{{ user.website }}"
-                    target="_blank"
-                    class="text-blue-500 hover:underline"
-                    >{{ user.website }}</a
-                >
-            </p>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        <div class="mb-4">
-            <p>
-                <strong>{{ _('Joined:') }}</strong> {{ user.date_joined.strftime('%B %Y')
-                if user.date_joined else 'N/A' }}
-            </p>
-        </div>
-    </div>
-
-    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h3 class="text-xl font-semibold mb-4">{{ _('Reading Stats') }}</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="text-center">
-                <p class="text-2xl font-bold">{{ user.list_count }}</p>
-                <p class="text-gray-600">{{ _('Lists') }}</p>
-            </div>
-            <div class="text-center">
-                <p class="text-2xl font-bold">
-                    {{ user.user_books|selectattr('is_read')|list|length }}
-                </p>
-                <p class="text-gray-600">{{ _('Books Read') }}</p>
-            </div>
-        </div>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('User Information') }}</h2>
+        <p><strong>{{ _('Username:') }}</strong> {{ user.username }}</p>
+        <p><strong>{{ _('Email:') }}</strong> {{ user.email }}</p>
+        <p><strong>{{ _('Full Name:') }}</strong> {{ user.full_name or _('Not provided') }}</p>
+        <p><strong>{{ _('Location:') }}</strong> {{ user.location or _('Not provided') }}</p>
+        <p><strong>{{ _('Website:') }}</strong> {% if user.website %}<a href="{{ user.website }}" target="_blank" class="text-blue-500 hover:underline">{{ user.website }}</a>{% else %}{{ _('Not provided') }}{% endif %}</p>
+        <p><strong>{{ _('Bio:') }}</strong> {{ user.bio or _('Not provided') }}</p>
+        <p><strong>{{ _('Date Joined:') }}</strong> {{ user.date_joined.strftime('%B %d, %Y') }}</p>
     </div>
 
     {% if current_user.id == user.id %}
@@ -96,27 +46,24 @@ endblock %} {% block content %}
                 {% if activity.type == 'book_read' %}
                 <p>
                     <i class="fas fa-book mr-2 text-blue-500"></i> {{ _('Read') }}
-                    <a
-                        href="{{ url_for('book.book_detail', id=activity.book.id) }}"
-                        class="text-blue-500 hover:underline"
-                        >{{ activity.book.title }}</a
-                    >
+                    <a href="{{ url_for('book.book_detail', id=activity.book.id) }}" class="text-blue-500 hover:underline">{{ activity.book.title }}</a>
                     {{ _('by') }} {{ activity.book.author.name }}
                 </p>
                 {% elif activity.type == 'list_created' %}
                 <p>
                     <i class="fas fa-list mr-2 text-green-500"></i> {{ _('Created a new list:') }}
-                    <a
-                        href="{{ url_for('list.list_detail', id=activity.list.id) }}"
-                        class="text-blue-500 hover:underline"
-                        >{{ activity.list.name }}</a
-                    >
+                    <a href="{{ url_for('list.list_detail', id=activity.list.id) }}" class="text-blue-500 hover:underline">{{ activity.list.name }}</a>
                 </p>
                 {% elif activity.type == 'post_created' %}
                 <p>
                     <i class="fas fa-pencil-alt mr-2 text-yellow-500"></i>
-                    {{ _('Posted:') }} {{ activity.post.body[:50] }}{% if
-                    activity.post.body|length > 50 %}...{% endif %}
+                    {{ _('Posted:') }} {{ activity.post.body[:50] }}{% if activity.post.body|length > 50 %}...{% endif %}
+                </p>
+                {% elif activity.type == 'book_imported' %}
+                <p>
+                    <i class="fas fa-file-import mr-2 text-purple-500"></i> {{ _('Imported') }}
+                    <a href="{{ url_for('book.book_detail', id=activity.book.id) }}" class="text-blue-500 hover:underline">{{ activity.book.title }}</a>
+                    {{ _('by') }} {{ activity.book.author.name }}
                 </p>
                 {% endif %}
                 <p class="text-sm text-gray-500">{{ activity.timestamp }}</p>
@@ -130,11 +77,8 @@ endblock %} {% block content %}
 
     {% if current_user.id == user.id %}
     <div class="text-center">
-        <a
-            href="{{ url_for('home.edit_profile') }}"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-            {{ _('Edit Profile') }} 
+        <a href="{{ url_for('home.edit_profile') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            {{ _('Edit Profile') }}
         </a>
     </div>
     {% endif %}
