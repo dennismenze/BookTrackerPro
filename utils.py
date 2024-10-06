@@ -1,7 +1,10 @@
-from models import db, Author, Book, UserBook, BookList
+from models import db, Author, Book, UserBook, BookList, Translation
 from flask import current_app
 import requests
 from typing import Dict, Any, Optional
+import csv
+import io
+from datetime import datetime
 
 
 def calculate_read_percentage(books, user_id):
@@ -260,3 +263,69 @@ def fetch_openlibrary_books_info(title: str, author: str) -> Optional[Dict[str, 
     except requests.RequestException as e:
         print(f"Error fetching book info from OpenLibrary: {e}")
         return None
+
+def process_csv(csv_file, mappings, user):
+    """
+    Verarbeitet die hochgeladene CSV-Datei basierend auf den Zuordnungen und importiert die Bücher für den Benutzer.
+
+    :param csv_file: Die hochgeladene CSV-Datei
+    :param mappings: Ein Dictionary, das die Zuordnung der erforderlichen Felder zu den CSV-Spalten enthält
+    :param user: Das aktuelle Benutzerobjekt
+    :return: Die Anzahl der erfolgreich importierten Bücher
+    """
+    try:
+        stream = io.StringIO(csv_file.stream.read().decode("UTF8"), newline=None)
+        csv_reader = csv.DictReader(stream, delimiter=';')  # Passe das Trennzeichen ggf. an
+
+        imported_count = 0
+        for row in csv_reader:
+            # Verwende die Zuordnungen, um die entsprechenden Felder auszulesen
+            title = row.get(mappings.get('title'), '').strip()
+            author_name = row.get(mappings.get('author'), '').strip()
+            isbn = row.get(mappings.get('isbn'), '').strip()
+            read_date_str = row.get(mappings.get('read_date'), '').strip()
+
+            if not title or not author_name:
+                continue
+
+            # Suche oder erstelle den Autor
+            author = Author.query.filter(Author.name == author_name).first()
+            if not author:
+                author_translation = Translation(text_en=author_name, text_de=author_name)
+                author = Author(name=author_translation)
+                db.session.add(author)
+
+            # Suche oder erstelle das Buch
+            book = Book.query.filter(
+                (Book.title.has(text_en=title)) & 
+                (Book.title.has(text_de=title)) & 
+                (Book.author == author)
+            ).first()
+            if not book:
+                book_translation = Translation(text_en=title, text_de=title)
+                book = Book(title=book_translation, author=author, isbn=isbn)
+                db.session.add(book)
+
+            # Verknüpfe das Buch mit dem Benutzer
+            user_book = UserBook.query.filter_by(user_id=user.id, book_id=book.id).first()
+            if not user_book:
+                user_book = UserBook(user_id=user.id, book_id=book.id)
+                db.session.add(user_book)
+
+            # Verarbeite das Lese-Datum, falls vorhanden
+            if read_date_str:
+                try:
+                    read_date = datetime.strptime(read_date_str, '%Y-%m-%d').date()
+                    user_book.read_date = read_date
+                except ValueError:
+                    current_app.logger.warning(f"Ungültiges Datumsformat für Buch '{title}': {read_date_str}")
+
+            imported_count += 1
+
+        db.session.commit()
+        return imported_count
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Fehler beim Verarbeiten der CSV-Datei: {e}")
+        raise e

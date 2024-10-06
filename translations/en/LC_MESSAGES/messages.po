@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-06 09:16+0200\n"
+"POT-Creation-Date: 2024-10-06 16:06+0200\n"
 "PO-Revision-Date: 2024-10-04 14:46+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -22,43 +22,61 @@ msgstr ""
 msgid "Invalid data"
 msgstr ""
 
-#: routes/home_routes.py:57
+#: routes/home_routes.py:86
 msgid "Username already exists"
 msgstr ""
 
-#: routes/home_routes.py:62
+#: routes/home_routes.py:91
 msgid "Email already exists"
 msgstr ""
 
-#: routes/home_routes.py:70
+#: routes/home_routes.py:99
 msgid "Registration successful. Please log in."
 msgstr ""
 
-#: routes/home_routes.py:85
+#: routes/home_routes.py:114
 msgid "Invalid username or password"
 msgstr ""
 
-#: routes/home_routes.py:92
+#: routes/home_routes.py:121
 msgid "You have been logged out."
 msgstr ""
 
-#: routes/home_routes.py:155
+#: routes/home_routes.py:184
 msgid "Your profile has been updated."
+msgstr ""
+
+#: routes/home_routes.py:279
+msgid "Database error occurred during import."
+msgstr ""
+
+#: routes/home_routes.py:281
+msgid "CSV import processed successfully."
+msgstr ""
+
+#: routes/home_routes.py:281 templates/list/detail.html:11
+#: templates/list/list.html:27
+msgid "books"
+msgstr ""
+
+#: routes/home_routes.py:281
+msgid "imported"
 msgstr ""
 
 #: templates/base.html:6 templates/base.html:26
 msgid "Book Tracker"
 msgstr ""
 
-#: templates/base.html:34 templates/index.html:3
+#: templates/base.html:34 templates/index.html:1
 msgid "Home"
 msgstr ""
 
+#: templates/author/list.html:3 templates/author/list.html:7
 #: templates/base.html:40
 msgid "Authors"
 msgstr ""
 
-#: templates/base.html:45 templates/profile.html:59
+#: templates/base.html:45 templates/profile.html:62
 msgid "Lists"
 msgstr ""
 
@@ -66,7 +84,7 @@ msgstr ""
 msgid "Set Reading Goal"
 msgstr ""
 
-#: templates/base.html:55 templates/profile.html:1 templates/profile.html:4
+#: templates/base.html:55 templates/profile.html:7
 msgid "Profile"
 msgstr ""
 
@@ -108,134 +126,159 @@ msgstr ""
 msgid "Review submitted successfully!"
 msgstr ""
 
-#: templates/index.html:7
+#: templates/index.html:4
 msgid "Welcome to Book Tracker"
 msgstr ""
 
-#: templates/index.html:11
+#: templates/index.html:12
 msgid "Reading Goal Progress"
 msgstr ""
 
-#: templates/index.html:23
+#: templates/index.html:29
 msgid "My Latest Books"
 msgstr ""
 
-#: templates/book/detail.html:7 templates/index.html:29
+#: templates/book/detail.html:7 templates/index.html:39
 #: templates/list/detail.html:73
 #, python-format
 msgid "%(title)s cover"
 msgstr ""
 
-#: templates/index.html:37
+#: templates/index.html:53
 msgid "No books added yet."
 msgstr ""
 
-#: templates/index.html:43
-msgid "My Authors"
+#: templates/index.html:59
+msgid "My Top Authors"
 msgstr ""
 
-#: templates/index.html:49 templates/index.html:133
+#: templates/index.html:73 templates/index.html:264
 #, python-format
 msgid "%(name)s"
 msgstr ""
 
-#: templates/index.html:56
+#: templates/author/detail.html:17 templates/index.html:82
+#: templates/list/detail.html:26
+msgid "All Books:"
+msgstr ""
+
+#: templates/author/list.html:55 templates/author/list.html:62
+#: templates/index.html:92 templates/index.html:109
+msgid "complete"
+msgstr ""
+
+#: templates/author/detail.html:27 templates/index.html:98
+#: templates/list/detail.html:36
+msgid "Main Works:"
+msgstr ""
+
+#: templates/index.html:119
+msgid "View All Authors"
+msgstr ""
+
+#: templates/index.html:123
 msgid "No authors added yet."
 msgstr ""
 
-#: templates/index.html:62
+#: templates/index.html:129
 msgid "Search Books"
 msgstr ""
 
-#: templates/index.html:64
+#: templates/index.html:138
 msgid "Search books..."
 msgstr ""
 
-#: templates/index.html:65 templates/index.html:115
-#: templates/list/detail.html:63
+#: templates/author/list.html:25 templates/index.html:146
+#: templates/index.html:240 templates/list/detail.html:63
+#: templates/list/list.html:12
 msgid "Search"
 msgstr ""
 
-#: templates/index.html:74 templates/list/detail.html:52
+#: templates/index.html:158 templates/list/detail.html:52
+#: templates/profile.html:171
 msgid "Title"
 msgstr ""
 
-#: templates/index.html:75 templates/list/detail.html:53
+#: templates/index.html:163 templates/list/detail.html:53
+#: templates/profile.html:172
 msgid "Author"
 msgstr ""
 
-#: templates/index.html:76 templates/index.html:126
+#: templates/index.html:168 templates/index.html:255
 msgid "Actions"
 msgstr ""
 
-#: templates/index.html:85 templates/index.html:138
+#: templates/index.html:185 templates/index.html:276
 msgid "View Details"
 msgstr ""
 
-#: templates/book/detail.html:87 templates/index.html:95
-#: templates/index.html:147
+#: templates/author/list.html:72 templates/book/detail.html:87
+#: templates/index.html:199 templates/index.html:289
+#: templates/list/list.html:43
 msgid "Previous"
 msgstr ""
 
-#: templates/index.html:98 templates/index.html:150
+#: templates/author/list.html:76 templates/index.html:203
+#: templates/index.html:293
 #, python-format
 msgid "Page %(current)s of %(total)s"
 msgstr ""
 
-#: templates/book/detail.html:89 templates/index.html:101
-#: templates/index.html:153
+#: templates/author/list.html:81 templates/book/detail.html:89
+#: templates/index.html:210 templates/index.html:300
+#: templates/list/list.html:49
 msgid "Next"
 msgstr ""
 
-#: templates/index.html:105
+#: templates/index.html:216
 msgid "No books found matching your search."
 msgstr ""
 
-#: templates/index.html:112
+#: templates/index.html:223
 msgid "Search Authors"
 msgstr ""
 
-#: templates/index.html:114
+#: templates/author/list.html:12 templates/index.html:232
 msgid "Search authors..."
 msgstr ""
 
-#: templates/index.html:123
+#: templates/index.html:250
 msgid "Image"
 msgstr ""
 
-#: templates/index.html:124
+#: templates/author/list.html:18 templates/index.html:251
 msgid "Name"
 msgstr ""
 
-#: templates/index.html:125
+#: templates/index.html:253
 msgid "Books Count"
 msgstr ""
 
-#: templates/index.html:157
+#: templates/index.html:306
 msgid "No authors found matching your search."
 msgstr ""
 
-#: templates/index.html:181
+#: templates/index.html:331
 msgid "Books"
 msgstr ""
 
-#: templates/index.html:181
+#: templates/index.html:332
 msgid "Pages"
 msgstr ""
 
-#: templates/index.html:184
+#: templates/index.html:335
 msgid "Goal:"
 msgstr ""
 
-#: templates/index.html:185
+#: templates/index.html:336
 msgid "Progress:"
 msgstr ""
 
-#: templates/index.html:186
+#: templates/index.html:337
 msgid "Expected Progress:"
 msgstr ""
 
-#: templates/index.html:192
+#: templates/index.html:345
 msgid "Error fetching goal progress:"
 msgstr ""
 
@@ -251,48 +294,74 @@ msgstr ""
 msgid "Don't have an account? Register"
 msgstr ""
 
-#: templates/profile.html:23
+#: templates/profile.html:3
+#, python-format
+msgid "%(username)s's Profile"
+msgstr ""
+
+#: templates/profile.html:26
 msgid "About"
 msgstr ""
 
-#: templates/profile.html:48
+#: templates/profile.html:51
 msgid "Joined:"
 msgstr ""
 
-#: templates/profile.html:55
+#: templates/profile.html:58
 msgid "Reading Stats"
 msgstr ""
 
-#: templates/profile.html:65
+#: templates/profile.html:68
 msgid "Books Read"
 msgstr ""
 
-#: templates/profile.html:71
+#: templates/profile.html:75
+msgid "Import Books from CSV"
+msgstr ""
+
+#: templates/profile.html:82
+msgid "CSV File"
+msgstr ""
+
+#: templates/profile.html:92
+msgid "Importieren"
+msgstr ""
+
+#: templates/profile.html:101
 msgid "Recent Activity"
 msgstr ""
 
-#: templates/profile.html:78
+#: templates/profile.html:108
 msgid "Read"
 msgstr ""
 
-#: templates/book/detail.html:12 templates/profile.html:84
+#: templates/book/detail.html:12 templates/profile.html:110
+#: templates/profile.html:126
 msgid "by"
 msgstr ""
 
-#: templates/profile.html:88
+#: templates/profile.html:114
 msgid "Created a new list:"
 msgstr ""
 
-#: templates/profile.html:98
+#: templates/profile.html:120
 msgid "Posted:"
 msgstr ""
 
-#: templates/profile.html:107
+#: templates/profile.html:124
+msgid "Imported"
+msgstr ""
+
+#: templates/profile.html:134
 msgid "No recent activity to display."
 msgstr ""
 
-#: templates/profile.html:117
+#: templates/profile.html:141
 msgid "Edit Profile"
+msgstr ""
+
+#: templates/profile.html:173
+msgid "Read Date"
 msgstr ""
 
 #: templates/register.html:14
@@ -307,16 +376,45 @@ msgstr ""
 msgid "Reading Progress"
 msgstr ""
 
-#: templates/author/detail.html:17 templates/list/detail.html:26
-msgid "All Books:"
+#: templates/author/detail.html:22 templates/author/detail.html:32
+#: templates/list/detail.html:31 templates/list/detail.html:41
+msgid "out of"
 msgstr ""
 
-#: templates/author/detail.html:27 templates/list/detail.html:36
-msgid "Main Works:"
+#: templates/author/detail.html:22 templates/list/detail.html:31
+msgid "books read"
+msgstr ""
+
+#: templates/author/detail.html:32 templates/list/detail.html:41
+msgid "main works read"
 msgstr ""
 
 #: templates/author/detail.html:38
 msgid "Books by"
+msgstr ""
+
+#: templates/author/list.html:16
+msgid "Sort by"
+msgstr ""
+
+#: templates/author/list.html:19 templates/goal/set_goal.html:12
+msgid "Number of Books"
+msgstr ""
+
+#: templates/author/list.html:20
+msgid "Read Percentage"
+msgstr ""
+
+#: templates/author/list.html:47
+msgid "Books:"
+msgstr ""
+
+#: templates/author/list.html:51
+msgid "All Books Progress:"
+msgstr ""
+
+#: templates/author/list.html:58
+msgid "Main Works Progress:"
 msgstr ""
 
 #: templates/book/detail.html:2
@@ -345,8 +443,7 @@ msgid "You haven't rated this book yet."
 msgstr ""
 
 #: templates/book/detail.html:51
-#, python-format
-msgid "Your rating: %(rating)s / 5"
+msgid "Your rating"
 msgstr ""
 
 #: templates/book/detail.html:57
@@ -401,10 +498,6 @@ msgstr ""
 msgid "Goal Type"
 msgstr ""
 
-#: templates/goal/set_goal.html:12
-msgid "Number of Books"
-msgstr ""
-
 #: templates/goal/set_goal.html:13
 msgid "Number of Pages"
 msgstr ""
@@ -425,24 +518,8 @@ msgstr ""
 msgid "Set Goal"
 msgstr ""
 
-#: templates/list/detail.html:11
-msgid "books"
-msgstr ""
-
 #: templates/list/detail.html:17
 msgid "Toggle Visibility"
-msgstr ""
-
-#: templates/list/detail.html:31 templates/list/detail.html:41
-msgid "out of"
-msgstr ""
-
-#: templates/list/detail.html:31
-msgid "books read"
-msgstr ""
-
-#: templates/list/detail.html:41
-msgid "main works read"
 msgstr ""
 
 #: templates/list/detail.html:51
@@ -464,4 +541,33 @@ msgstr ""
 #: templates/list/detail.html:94
 msgid "Remove"
 msgstr ""
+
+#: templates/list/list.html:3 templates/list/list.html:7
+msgid "My Lists"
+msgstr ""
+
+#: templates/list/list.html:11
+msgid "Search lists..."
+msgstr ""
+
+#: templates/list/list.html:46
+msgid "Page"
+msgstr ""
+
+#: templates/list/list.html:46
+msgid "of"
+msgstr ""
+
+#: templates/list/list.html:53
+msgid "No lists found."
+msgstr ""
+
+#~ msgid "My Authors"
+#~ msgstr ""
+
+#~ msgid "Your rating: %(rating)s / 5"
+#~ msgstr ""
+
+#~ msgid "Database error occurred during import"
+#~ msgstr ""
 

@@ -5,11 +5,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post, Translation
 from sqlalchemy import or_, func, and_, case
 from datetime import datetime, timedelta
-from io import BytesIO
+from io import BytesIO, StringIO
 from flask_babel import _, get_locale
 import csv
 import io
 import logging
+from utils import process_csv  # Stelle sicher, dass process_csv importiert ist
+import json
+from sqlalchemy import or_
 
 bp = Blueprint('home', __name__)
 
@@ -149,15 +152,6 @@ def user_profile(username):
             'timestamp': post.timestamp
         })
     
-    # Add recent CSV imports
-    recent_imports = UserBook.query.filter_by(user_id=user.id).order_by(UserBook.id.desc()).limit(10).all()
-    for user_book in recent_imports:
-        recent_activities.append({
-            'type': 'book_imported',
-            'book': user_book.book,
-            'timestamp': datetime.now()  # Use current time as we don't have an import timestamp
-        })
-    
     recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
     
     for activity in recent_activities:
@@ -205,66 +199,84 @@ def set_language():
 @bp.route('/import_csv', methods=['POST'])
 @login_required
 def import_csv():
-    if 'csv_file' not in request.files:
-        flash(_('No file uploaded'), 'error')
-        current_app.logger.warning(f"CSV import attempt by user {current_user.username}: No file uploaded")
-        return redirect(url_for('home.user_profile', username=current_user.username))
-    
-    file = request.files['csv_file']
-    if file.filename == '':
-        flash(_('No file selected'), 'error')
-        current_app.logger.warning(f"CSV import attempt by user {current_user.username}: No file selected")
-        return redirect(url_for('home.user_profile', username=current_user.username))
-    
-    if file and file.filename.endswith('.csv'):
-        try:
-            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-            csv_reader = csv.DictReader(stream)
-            
-            imported_count = 0
-            for row in csv_reader:
-                title = row.get('title')
-                author_name = row.get('author')
-                isbn = row.get('isbn')
-                read_date_str = row.get('read_date')
-                
-                if not title or not author_name:
-                    continue
-                
-                author = Author.query.filter(Author.name.text == author_name).first()
-                if not author:
-                    author = Author(name=Translation(text_en=author_name, text_de=author_name))
-                    db.session.add(author)
-                
-                book = Book.query.filter((Book.title.text == title) & (Book.author == author)).first()
-                if not book:
-                    book = Book(title=Translation(text_en=title, text_de=title), author=author, isbn=isbn)
-                    db.session.add(book)
-                
-                user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
-                if not user_book:
-                    user_book = UserBook(user_id=current_user.id, book_id=book.id)
-                    db.session.add(user_book)
-                
-                if read_date_str:
-                    try:
-                        read_date = datetime.strptime(read_date_str, '%Y-%m-%d').date()
-                        user_book.read_date = read_date
-                    except ValueError:
-                        current_app.logger.warning(f"Invalid date format for book '{title}': {read_date_str}")
-                
-                imported_count += 1
-            
-            db.session.commit()
-            flash(_('CSV file imported successfully. {0} books imported.').format(imported_count), 'success')
-            current_app.logger.info(f"CSV import successful for user {current_user.username}. {imported_count} books imported.")
-        except Exception as e:
-            db.session.rollback()
-            error_message = str(e)
-            flash(_('Error importing CSV file: {}').format(error_message), 'error')
-            current_app.logger.error(f"CSV import error for user {current_user.username}: {error_message}")
-    else:
-        flash(_('Invalid file format. Please upload a CSV file.'), 'error')
-        current_app.logger.warning(f"CSV import attempt by user {current_user.username}: Invalid file format")
-    
-    return redirect(url_for('home.user_profile', username=current_user.username))
+    print("Received form data:", request.form)
+    print("Received files:", request.files)
+
+    csv_file = request.files.get('csv_file')
+    if not csv_file:
+        return jsonify({"error": "No CSV file provided"}), 400
+
+    mappings_json = request.form.get('mappings')
+    if not mappings_json:
+        return jsonify({"error": "No mapping data provided"}), 400
+
+    try:
+        mappings = json.loads(mappings_json)
+        print("Received mappings:", mappings)
+    except json.JSONDecodeError:
+        print("Error decoding JSON mappings")
+        return jsonify({"error": "Invalid mapping data"}), 400
+
+    # CSV-Datei verarbeiten
+    csv_content = csv_file.read().decode('utf-8')
+    csv_file = StringIO(csv_content)
+    csv_reader = csv.DictReader(csv_file, delimiter=';')
+
+    imported_books = 0
+    for row in csv_reader:
+        title = row[mappings['title']]
+        author_name = row[mappings['author']]
+        read_date_str = row[mappings['read_date']]
+
+        if not title or not author_name:
+            continue
+
+        # Suche nach dem Autor in allen Übersetzungen
+        author = Author.query.filter(or_(
+            Translation.text_en == author_name,
+            Translation.text_de == author_name,
+            Translation.text_en.ilike(f"%{author_name}%"),
+            Translation.text_de.ilike(f"%{author_name}%")
+        )).join(Author.name).first()
+
+        if not author:
+            print(f"Author not found: {author_name}")
+            continue
+
+        # Suche nach dem Buch in allen Übersetzungen
+        book = Book.query.filter(
+            Book.author_id == author.id
+        ).filter(or_(
+            Translation.text_en == title,
+            Translation.text_de == title,
+            Translation.text_en.ilike(f"%{title}%"),
+            Translation.text_de.ilike(f"%{title}%")
+        )).join(Book.title).first()
+
+        if not book:
+            print(f"Book not found: {title} by {author_name}")
+            continue
+
+        user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
+        if not user_book:
+            user_book = UserBook(user_id=current_user.id, book_id=book.id)
+            db.session.add(user_book)
+
+            # Lesedatum setzen, wenn vorhanden
+            if read_date_str:
+                try:
+                    read_date = datetime.strptime(read_date_str, '%Y-%m-%d' if get_locale() == 'en' else '%d.%m.%Y')
+                    user_book.read_date = read_date
+                except ValueError:
+                    print(f"Invalid date format for book: {title}")
+
+            imported_books += 1
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(_("Database error occurred during import."))
+
+    flash(_("CSV import processed successfully.") + " " + str(imported_books) + " " + _('books') + " " + _('imported'))
+    return redirect(url_for('home.user_profile', username=current_user.username))       
