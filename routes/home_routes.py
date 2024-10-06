@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post
-from sqlalchemy import or_, func, and_
+from sqlalchemy import or_, func, and_, case
 from datetime import datetime
 from io import BytesIO
 from flask_babel import _, get_locale
@@ -24,14 +24,14 @@ def index():
         user_authors = db.session.query(
             Author,
             func.count(Book.id).label('total_books'),
-            func.count(UserBook.read_date).label('read_books'),
-            func.count(Book.id).filter(Book.is_main_work == True).label('total_main_works'),
-            func.count(and_(UserBook.read_date.isnot(None), Book.is_main_work == True)).label('read_main_works')
+            func.sum(case((UserBook.read_date.isnot(None), 1), else_=0)).label('read_books'),
+            func.count(case((Book.is_main_work == True, 1))).label('total_main_works'),
+            func.sum(case((and_(UserBook.read_date.isnot(None), Book.is_main_work == True), 1), else_=0)).label('read_main_works')
         ).join(Book, Author.id == Book.author_id)\
          .outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id))\
-         .filter(UserBook.user_id == current_user.id)\
+         .filter(Book.author_id == Author.id)\
          .group_by(Author.id)\
-         .order_by(func.count(UserBook.read_date).desc())\
+         .order_by(func.count(UserBook.read_date.isnot(None)).desc())\
          .limit(5)\
          .all()
 
