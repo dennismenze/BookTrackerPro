@@ -29,11 +29,16 @@ def index():
             func.sum(case((and_(UserBook.read_date.isnot(None), Book.is_main_work == True), 1), else_=0)).label('read_main_works')
         ).join(Book, Author.id == Book.author_id)\
          .outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id))\
-         .filter(Book.author_id == Author.id)\
          .group_by(Author.id)\
-         .order_by(func.count(UserBook.read_date.isnot(None)).desc())\
-         .limit(5)\
+         .order_by(func.sum(case((UserBook.read_date.isnot(None), 1), else_=0)).desc())\
+         .limit(8)\
          .all()
+
+        user_authors = [
+            (author, total_books, read_books, total_main_works, read_main_works)
+            for author, total_books, read_books, total_main_works, read_main_works in user_authors
+            if total_books > 0 and read_books > 0
+        ]
 
         # Calculate percentage for each author
         for author, total_books, read_books, total_main_works, read_main_works in user_authors:
