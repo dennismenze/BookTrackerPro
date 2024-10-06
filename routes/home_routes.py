@@ -10,7 +10,7 @@ from flask_babel import _, get_locale
 import csv
 import io
 import logging
-from utils import process_csv  # Stelle sicher, dass process_csv importiert ist
+from utils import process_csv
 import json
 from sqlalchemy import or_
 
@@ -217,7 +217,6 @@ def import_csv():
         print("Error decoding JSON mappings")
         return jsonify({"error": "Invalid mapping data"}), 400
 
-    # CSV-Datei verarbeiten
     csv_content = csv_file.read().decode('utf-8')
     csv_file = StringIO(csv_content)
     csv_reader = csv.DictReader(csv_file, delimiter=';')
@@ -231,7 +230,6 @@ def import_csv():
         if not title or not author_name:
             continue
 
-        # Suche nach dem Autor in allen Übersetzungen
         author = Author.query.filter(or_(
             Translation.text_en == author_name,
             Translation.text_de == author_name,
@@ -243,7 +241,6 @@ def import_csv():
             print(f"Author not found: {author_name}")
             continue
 
-        # Suche nach dem Buch in allen Übersetzungen
         book = Book.query.filter(
             Book.author_id == author.id
         ).filter(or_(
@@ -262,7 +259,6 @@ def import_csv():
             user_book = UserBook(user_id=current_user.id, book_id=book.id)
             db.session.add(user_book)
 
-            # Lesedatum setzen, wenn vorhanden
             if read_date_str:
                 try:
                     read_date = datetime.strptime(read_date_str, '%Y-%m-%d' if get_locale() == 'en' else '%d.%m.%Y')
@@ -279,4 +275,29 @@ def import_csv():
         flash(_("Database error occurred during import."))
 
     flash(_("CSV import processed successfully.") + " " + str(imported_books) + " " + _('books') + " " + _('imported'))
-    return redirect(url_for('home.user_profile', username=current_user.username))       
+    return redirect(url_for('home.user_profile', username=current_user.username))
+
+@bp.route('/export_csv')
+@login_required
+def export_csv():
+    user_books = UserBook.query.filter_by(user_id=current_user.id).filter(UserBook.read_date.isnot(None)).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(['Title', 'Author', 'Read Date'])
+    
+    for user_book in user_books:
+        writer.writerow([
+            user_book.book.title.text_en,
+            user_book.book.author.name.text_en,
+            user_book.read_date.strftime('%Y-%m-%d') if user_book.read_date else ''
+        ])
+    
+    output.seek(0)
+    return send_file(
+        BytesIO(output.getvalue().encode()),
+        mimetype='text/csv',
+        as_attachment=True,
+        attachment_filename=f'read_books_{current_user.username}.csv'
+    )
