@@ -1,4 +1,3 @@
-import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file, current_app
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -153,11 +152,18 @@ def user_profile(username):
         })
     
     recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+    recent_activities = recent_activities[:15]  # Limit to 15 most recent activities
     
     for activity in recent_activities:
         activity['timestamp'] = activity['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
     
-    return render_template('profile.html', user=user, recent_activities=recent_activities[:15])
+    date_joined = user.date_joined.strftime('%B %d, %Y') if user.date_joined else 'Unknown'
+    
+    return render_template('profile.html', 
+                           user=user, 
+                           recent_activities=recent_activities, 
+                           list_count=user.list_count,
+                           date_joined=date_joined)
 
 @bp.route('/profile_image/<int:user_id>')
 def profile_image(user_id):
