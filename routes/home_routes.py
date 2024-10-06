@@ -1,4 +1,3 @@
-import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file, current_app, Response
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,9 +9,8 @@ from flask_babel import _, get_locale
 import csv
 import io
 import logging
-from utils import process_csv  # Stelle sicher, dass process_csv importiert ist
+from utils import process_csv
 import json
-from sqlalchemy import or_
 
 bp = Blueprint('home', __name__)
 
@@ -55,16 +53,25 @@ def index():
 
     books = None
     if book_search_query:
-        books = Book.query.join(Author).filter(
-            or_(
-                Book.title.cast(db.String).ilike(f'%{book_search_query}%'),
-                Author.name.cast(db.String).ilike(f'%{book_search_query}%')
-            )
-        ).paginate(page=book_page, per_page=per_page, error_out=False)
+        books = Book.query.join(Translation, Book.title_id == Translation.id)\
+            .join(Author)\
+            .join(Translation, Author.name_id == Translation.id)\
+            .filter(
+                or_(
+                    Translation.text_en.ilike(f'%{book_search_query}%'),
+                    Translation.text_de.ilike(f'%{book_search_query}%')
+                )
+            ).paginate(page=book_page, per_page=per_page, error_out=False)
 
     authors = None
     if author_search_query:
-        authors = Author.query.filter(Author.name.cast(db.String).ilike(f'%{author_search_query}%')).paginate(page=author_page, per_page=per_page, error_out=False)
+        authors = Author.query.join(Translation, Author.name_id == Translation.id)\
+            .filter(
+                or_(
+                    Translation.text_en.ilike(f'%{author_search_query}%'),
+                    Translation.text_de.ilike(f'%{author_search_query}%')
+                )
+            ).paginate(page=author_page, per_page=per_page, error_out=False)
 
     return render_template('index.html',
                            latest_books=latest_books,
@@ -217,7 +224,6 @@ def import_csv():
         print("Error decoding JSON mappings")
         return jsonify({"error": "Invalid mapping data"}), 400
 
-    # CSV-Datei verarbeiten
     csv_content = csv_file.read().decode('utf-8')
     csv_file = StringIO(csv_content)
     csv_reader = csv.DictReader(csv_file, delimiter=';')
@@ -231,7 +237,6 @@ def import_csv():
         if not title or not author_name:
             continue
 
-        # Suche nach dem Autor in allen Übersetzungen
         author = Author.query.filter(or_(
             Translation.text_en == author_name,
             Translation.text_de == author_name,
@@ -243,7 +248,6 @@ def import_csv():
             print(f"Author not found: {author_name}")
             continue
 
-        # Suche nach dem Buch in allen Übersetzungen
         book = Book.query.filter(
             Book.author_id == author.id
         ).filter(or_(
@@ -262,7 +266,6 @@ def import_csv():
             user_book = UserBook(user_id=current_user.id, book_id=book.id)
             db.session.add(user_book)
 
-            # Lesedatum setzen, wenn vorhanden
             if read_date_str:
                 try:
                     read_date = datetime.strptime(read_date_str, '%Y-%m-%d' if get_locale() == 'en' else '%d.%m.%Y')
