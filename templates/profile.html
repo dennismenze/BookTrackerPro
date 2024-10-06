@@ -1,7 +1,7 @@
-{% extends "base.html" %} {% block title %}{{ user.username }}'s Profile{%
+{% extends "base.html" %} {% block title %}{{ user.username }}'s {{ _('Profile') }}{%
 endblock %} {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">{{ user.username }}'s Profile</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ user.username }}'s {{ _('Profile') }}</h1>
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
         <div class="flex items-center mb-4">
@@ -20,7 +20,7 @@ endblock %} {% block content %}
 
         {% if user.bio %}
         <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">About</h3>
+            <h3 class="text-lg font-semibold mb-2">{{ _('About') }}</h3>
             <p>{{ user.bio }}</p>
         </div>
         {% endif %} {% if user.location or user.website %}
@@ -45,48 +45,47 @@ endblock %} {% block content %}
 
         <div class="mb-4">
             <p>
-                <strong>Joined:</strong> {{ user.date_joined.strftime('%B %Y')
+                <strong>{{ _('Joined:') }}</strong> {{ user.date_joined.strftime('%B %Y')
                 if user.date_joined else 'N/A' }}
             </p>
         </div>
     </div>
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h3 class="text-xl font-semibold mb-4">Reading Stats</h3>
+        <h3 class="text-xl font-semibold mb-4">{{ _('Reading Stats') }}</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="text-center">
                 <p class="text-2xl font-bold">{{ user.list_count }}</p>
-                <p class="text-gray-600">Lists</p>
+                <p class="text-gray-600">{{ _('Lists') }}</p>
             </div>
             <div class="text-center">
                 <p class="text-2xl font-bold">
                     {{ user.user_books|selectattr('is_read')|list|length }}
                 </p>
-                <p class="text-gray-600">Books Read</p>
+                <p class="text-gray-600">{{ _('Books Read') }}</p>
             </div>
         </div>
     </div>
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h3 class="text-xl font-semibold mb-4">Recent Activity</h3>
+        <h3 class="text-xl font-semibold mb-4">{{ _('Recent Activity') }}</h3>
         {% if recent_activities %}
         <ul class="space-y-4">
             {% for activity in recent_activities %}
             <li class="border-b pb-2">
                 {% if activity.type == 'book_read' %}
                 <p>
-                    <i class="fas fa-book mr-2 text-blue-500"></i> Read
+                    <i class="fas fa-book mr-2 text-blue-500"></i> {{ _('Read') }}
                     <a
                         href="{{ url_for('book.book_detail', id=activity.book.id) }}"
                         class="text-blue-500 hover:underline"
                         >{{ activity.book.title }}</a
                     >
-                    by {{ activity.book.author.name }}
+                    {{ _('by') }} {{ activity.book.author.name }}
                 </p>
                 {% elif activity.type == 'list_created' %}
                 <p>
-                    <i class="fas fa-list mr-2 text-green-500"></i> Created a
-                    new list:
+                    <i class="fas fa-list mr-2 text-green-500"></i> {{ _('Created a new list:') }}
                     <a
                         href="{{ url_for('list.list_detail', id=activity.list.id) }}"
                         class="text-blue-500 hover:underline"
@@ -96,7 +95,7 @@ endblock %} {% block content %}
                 {% elif activity.type == 'post_created' %}
                 <p>
                     <i class="fas fa-pencil-alt mr-2 text-yellow-500"></i>
-                    Posted: {{ activity.post.body[:50] }}{% if
+                    {{ _('Posted:') }} {{ activity.post.body[:50] }}{% if
                     activity.post.body|length > 50 %}...{% endif %}
                 </p>
                 {% endif %}
@@ -105,7 +104,7 @@ endblock %} {% block content %}
             {% endfor %}
         </ul>
         {% else %}
-        <p class="text-gray-600">No recent activity to display.</p>
+        <p class="text-gray-600">{{ _('No recent activity to display.') }}</p>
         {% endif %}
     </div>
 
@@ -115,7 +114,7 @@ endblock %} {% block content %}
             href="{{ url_for('home.edit_profile') }}"
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-            Edit Profile
+            {{ _('Edit Profile') }} 
         </a>
     </div>
     {% endif %}

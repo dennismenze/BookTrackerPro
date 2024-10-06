@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((data) => {
                     if (data.success) {
                         this.dataset.isRead = (!isRead).toString();
-                        this.textContent = isRead ? "Mark as Read" : "Mark as Unread";
+                        this.textContent = isRead ? window.translations["Mark as Unread"] : window.translations["Mark as Read"];
                         
                         const readDateElement = document.getElementById("read-date");
                         if (data.read_date) {
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .then((response) => response.json())
             .then((data) => {
                 if (data.success) {
-                    alert("Review submitted successfully!");
+                    alert(window.translations["Review submitted successfully!"]);
                     location.reload();
                 }
             })
@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <td class="py-2 px-4">
                             <a href="/list/${list.id}" class="text-blue-500 hover:underline">${list.name}</a>
                         </td>
-                        <td class="py-2 px-4">${list.is_public ? 'Public' : 'Private'}</td>
+                        <td class="py-2 px-4">${list.is_public ? window.translations["Public"] : window.translations["Private"]}</td>
                     `;
                 });
                 currentPage = data.current_page;

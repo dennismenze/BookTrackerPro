@@ -98,10 +98,10 @@ document.addEventListener('DOMContentLoaded', function() {
             bookElement.className = 'flex items-center justify-between p-2 border-b';
             bookElement.innerHTML = `
                 <div>
-                    <img src="${book.cover_image_url || '/static/images/no-cover.png'}" alt="${book.title} cover" class="w-12 h-16 object-cover mr-2 inline-block">
-                    <span>${book.title} by ${book.author}</span>
+                    <img src="${book.cover_image_url || '/static/images/no-cover.png'}" alt="{{ _('%(title)s cover', title=book.title) }}" class="w-12 h-16 object-cover mr-2 inline-block">
+                    <span>${book.title} {{ _('by') }} ${book.author}</span>
                 </div>
-                <button class="add-book-button bg-green-500 text-white p-1 rounded" data-book-id="${book.id}">Add</button>
+                <button class="add-book-button bg-green-500 text-white p-1 rounded" data-book-id="${book.id}">{{ _('Add') }}</button>
             `;
             searchResults.appendChild(bookElement);
         });
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 toggleVisibilityButton.dataset.isPublic = newStatus.toString();
                 const visibilityText = toggleVisibilityButton.previousElementSibling;
-                visibilityText.textContent = newStatus ? 'Public' : 'Private';
+                visibilityText.textContent = newStatus ? window.translations["Public"] : window.translations["Private"];
             } else {
                 console.error(data.error || 'Failed to update list visibility');
             }

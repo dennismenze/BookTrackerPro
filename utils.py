@@ -1,6 +1,7 @@
 from models import db, Author, Book, UserBook, BookList
 from flask import current_app
 import requests
+from typing import Dict, Any, Optional
 
 
 def calculate_read_percentage(books, user_id):
@@ -137,30 +138,125 @@ def map_book_data(book, user_id):
     return book_data
 
 
-def fetch_google_books_info(title, author):
+def fetch_google_books_info(title: str, author: str) -> Optional[Dict[str, Any]]:
+    base_url = "https://www.googleapis.com/books/v1/volumes"
+    params = {
+        "q": f"intitle:{title}+inauthor:{author}",
+        "langRestrict": "en",
+        "maxResults": 1
+    }
+
     try:
-        query = f"intitle:{title}+inauthor:{author}"
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-        response = requests.get(url)
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
         data = response.json()
 
-        if 'items' in data and len(data['items']) > 0:
-            volume_info = data['items'][0]['volumeInfo']
-            return {
-                'isbn':
-                volume_info.get('industryIdentifiers',
-                                [{}])[0].get('identifier'),
-                'description':
-                volume_info.get('description'),
-                'cover_image_url':
-                volume_info.get('imageLinks', {}).get('thumbnail'),
-                'page_count':
-                volume_info.get('pageCount'),
-                'published_date':
-                volume_info.get('publishedDate')
+        if data.get("totalItems", 0) > 0:
+            volume_info = data["items"][0]["volumeInfo"]
+            book_info = {
+                'isbn': volume_info.get('industryIdentifiers', [{}])[0].get('identifier'),
+                'description_en': volume_info.get('description', ''),
+                'cover_image_url': volume_info.get('imageLinks', {}).get('thumbnail'),
+                'page_count': volume_info.get('pageCount'),
+                'published_date': volume_info.get('publishedDate')
             }
+
+            # Fetch German version
+            params["langRestrict"] = "de"
+            response_de = requests.get(base_url, params=params)
+            response_de.raise_for_status()
+            data_de = response_de.json()
+
+            if data_de.get("totalItems", 0) > 0:
+                volume_info_de = data_de["items"][0]["volumeInfo"]
+                book_info['description_de'] = volume_info_de.get('description', '')
+                book_info['title_de'] = volume_info_de.get('title', '')
+                book_info['cover_image_url_de'] = volume_info_de.get('imageLinks', {}).get('thumbnail', '')
+
+            return book_info
         else:
-            return {}
-    except Exception as e:
-        current_app.logger.error(f"Error fetching Google Books info: {str(e)}")
-        return {}
+            return None
+
+    except requests.RequestException as e:
+        print(f"Error fetching book info: {e}")
+        return None
+
+
+def fetch_google_authors_info(author_name: str) -> Optional[Dict[str, Any]]:
+    base_url = "https://www.googleapis.com/books/v1/volumes"
+    params = {
+        "q": f"inauthor:{author_name}",
+        "langRestrict": "en",
+        "maxResults": 1
+    }
+
+    try:
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get("totalItems", 0) > 0:
+            volume_info = data["items"][0]["volumeInfo"]
+            author_info = {
+                "name": author_name,
+                "biography_en": volume_info.get("description", ""),
+                "image_url": volume_info.get("imageLinks", {}).get("thumbnail", "")
+            }
+
+            # Fetch German version
+            params["langRestrict"] = "de"
+            response_de = requests.get(base_url, params=params)
+            response_de.raise_for_status()
+            data_de = response_de.json()
+
+            if data_de.get("totalItems", 0) > 0:
+                volume_info_de = data_de["items"][0]["volumeInfo"]
+                author_info['name_de'] = volume_info_de.get("title", "")
+                author_info['biography_de'] = volume_info_de.get("description", "")
+
+            return author_info
+        else:
+            return None
+
+    except requests.RequestException as e:
+        print(f"Error fetching author info: {e}")
+        return None
+
+def fetch_openlibrary_books_info(title: str, author: str) -> Optional[Dict[str, Any]]:
+    search_url = "https://openlibrary.org/search.json"
+    search_params = {
+        "title": title,
+        "author": author,
+        "limit": 1
+    }
+
+    try:
+        search_response = requests.get(search_url, params=search_params)
+        search_response.raise_for_status()
+        search_data = search_response.json()
+
+        if search_data.get("numFound", 0) > 0:
+            work_key = search_data["docs"][0].get("key")
+            if not work_key:
+                return None
+
+            book_info = {}
+
+            # Suche nach der deutschen Edition
+            editions_url = f"https://openlibrary.org/works/{work_key}/editions.json"
+            editions_response = requests.get(editions_url)
+            editions_response.raise_for_status()
+            editions_data = editions_response.json()
+
+            for edition in editions_data.get('entries', []):
+                if edition.get('languages') and any(lang.get('key') == '/languages/ger' for lang in edition['languages']):
+                    book_info['title_de'] = edition.get('title', '')
+                    break
+
+            return book_info
+        else:
+            return None
+
+    except requests.RequestException as e:
+        print(f"Error fetching book info from OpenLibrary: {e}")
+        return None

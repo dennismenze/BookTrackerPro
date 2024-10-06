@@ -8,37 +8,37 @@
     
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <p class="text-gray-600">{{ books|length }} books</p>
+            <p class="text-gray-600">{{ books|length }} {{ _('books') }}</p>
         </div>
         <div class="flex items-center">
-            <span class="mr-2">{{ "Public" if list.is_public else "Private" }}</span>
+            <span class="mr-2">{{ _('Public') if list.is_public else _('Private') }}</span>
         {% if list.user_id == current_user.id %}
             <button id="toggle-visibility" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" data-list-id="{{ list.id }}" data-is-public="{{ 'true' if list.is_public else 'false' }}">
-                Toggle Visibility
+                {{ _('Toggle Visibility') }}
             </button>
         {% endif %}
         </div>
     </div>
 
     <div class="mb-6">
-        <h2 class="text-2xl font-semibold mb-2">Reading Progress</h2>
+        <h2 class="text-2xl font-semibold mb-2">{{ _('Reading Progress') }}</h2>
         <div class="mb-2">
-            <p class="text-sm text-gray-600">All Books:</p>
+            <p class="text-sm text-gray-600">{{ _('All Books:') }}</p>
             <div class="bg-gray-200 rounded-full h-4 w-full">
                 <div id="read-progress-bar" class="bg-blue-500 rounded-full h-4" style="width: {{ read_percentage }}%;"></div>
             </div>
             <p class="mt-1 text-sm">
-                <span id="read-books-count">{{ (books|selectattr('is_read', 'eq', true)|list|length) }}</span> out of {{ books|length }} books read
+                <span id="read-books-count">{{ (books|selectattr('is_read', 'eq', true)|list|length) }}</span> {{ _('out of') }} {{ books|length }} {{ _('books read') }}
                 (<span id="read-percentage">{{ read_percentage|int }}</span>%)
             </p>
         </div>
         <div>
-            <p class="text-sm text-gray-600">Main Works:</p>
+            <p class="text-sm text-gray-600">{{ _('Main Works:') }}</p>
             <div class="bg-gray-200 rounded-full h-4 w-full">
                 <div id="main-works-progress-bar" class="bg-green-500 rounded-full h-4" style="width: {{ main_works_read_percentage }}%;"></div>
             </div>
             <p class="mt-1 text-sm">
-                <span id="main-works-read-count">{{ main_works_read }}</span> out of {{ total_main_works }} main works read
+                <span id="main-works-read-count">{{ main_works_read }}</span> {{ _('out of') }} {{ total_main_works }} {{ _('main works read') }}
                 (<span id="main-works-read-percentage">{{ main_works_read_percentage|int }}</span>%)
             </p>
         </div>
@@ -46,21 +46,21 @@
 
     <!-- Sorting dropdown -->
     <div class="mb-4">
-        <label for="sort-select" class="block text-sm font-medium text-gray-700">Sort by:</label>
+        <label for="sort-select" class="block text-sm font-medium text-gray-700">{{ _('Sort by:') }}</label>
         <select id="sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-            <option value="rank" {% if sort_by == 'rank' %}selected{% endif %}>Rank</option>
-            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>
-            <option value="author" {% if sort_by == 'author' %}selected{% endif %}>Author</option>
-            <option value="read_status" {% if sort_by == 'read_status' %}selected{% endif %}>Read Status</option>
+            <option value="rank" {% if sort_by == 'rank' %}selected{% endif %}>{{ _('Rank') }}</option>
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ _('Title') }}</option>
+            <option value="author" {% if sort_by == 'author' %}selected{% endif %}>{{ _('Author') }}</option>
+            <option value="read_status" {% if sort_by == 'read_status' %}selected{% endif %}>{{ _('Read Status') }}</option>
         </select>
     </div>
 
     <!-- Add book search form -->
     <div class="mb-6">
-        <h2 class="text-2xl font-semibold mb-2">Add Books to List</h2>
+        <h2 class="text-2xl font-semibold mb-2">{{ _('Add Books to List') }}</h2>
         <form id="add-book-form" class="flex items-center">
-            <input type="text" id="book-search" placeholder="Search for books..." class="flex-grow p-2 border rounded-l">
-            <button type="submit" class="bg-blue-500 text-white p-2 rounded-r">Search</button>
+            <input type="text" id="book-search" placeholder="{{ _('Search for books...') }}" class="flex-grow p-2 border rounded-l">
+            <button type="submit" class="bg-blue-500 text-white p-2 rounded-r">{{ _('Search') }}</button>
         </form>
         <div id="search-results" class="mt-2"></div>
     </div>
@@ -70,7 +70,7 @@
             <li class="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}" data-rank="{{ book.rank }}">
                 <div class="relative">
                     <a href="{{ url_for('book.book_detail', id=book.id) }}">
-                        <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ book.title }} cover" class="w-full h-48 object-cover mb-2">
+                        <img src="{{ book.cover_image_url or url_for('static', filename='images/no-cover.png') }}" alt="{{ _('%(title)s cover', title=book.title) }}" class="w-full h-48 object-cover mb-2">
                     </a>
                     <button class="toggle-read-status absolute top-2 right-2 w-8 h-8 rounded-full bg-white bg-opacity-75 flex items-center justify-center">
                         <i class="fas {% if book.is_read %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
@@ -91,7 +91,7 @@
                     <span class="text-sm text-gray-500">{{ book.rank }}</span>
                 {% if list.user_id == current_user.id %}
                     <button class="remove-book bg-red-500 text-white p-1 rounded text-sm">
-                        Remove
+                        {{ _('Remove') }}
                     </button>
                 {% endif %}
                 </div>

@@ -48,7 +48,7 @@
                     {% if user_rating == 0 %}
                         {{ _("You haven't rated this book yet.") }}
                     {% else %}
-                        {{ _('Your rating: %(rating)s / 5', rating=user_rating) }}
+                        {{ _('Your rating') }}: {{ user_rating }} / 5
                     {% endif %}
                 </p>
             </div>

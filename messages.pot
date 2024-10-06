@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-04 15:13+0000\n"
+"POT-Creation-Date: 2024-10-06 09:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,32 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: routes/book_routes.py:82 routes/book_routes.py:104 routes/book_routes.py:134
+#: routes/book_routes.py:85 routes/book_routes.py:107 routes/book_routes.py:137
 msgid "Invalid data"
+msgstr ""
+
+#: routes/home_routes.py:57
+msgid "Username already exists"
+msgstr ""
+
+#: routes/home_routes.py:62
+msgid "Email already exists"
+msgstr ""
+
+#: routes/home_routes.py:70
+msgid "Registration successful. Please log in."
+msgstr ""
+
+#: routes/home_routes.py:85
+msgid "Invalid username or password"
+msgstr ""
+
+#: routes/home_routes.py:92
+msgid "You have been logged out."
+msgstr ""
+
+#: routes/home_routes.py:155
+msgid "Your profile has been updated."
 msgstr ""
 
 #: templates/base.html:6 templates/base.html:26
@@ -33,7 +57,7 @@ msgstr ""
 msgid "Authors"
 msgstr ""
 
-#: templates/base.html:45
+#: templates/base.html:45 templates/profile.html:59
 msgid "Lists"
 msgstr ""
 
@@ -41,7 +65,7 @@ msgstr ""
 msgid "Set Reading Goal"
 msgstr ""
 
-#: templates/base.html:55
+#: templates/base.html:55 templates/profile.html:1 templates/profile.html:4
 msgid "Profile"
 msgstr ""
 
@@ -59,8 +83,28 @@ msgstr ""
 msgid "Register"
 msgstr ""
 
-#: templates/base.html:96
+#: templates/base.html:105
 msgid "© 2024 Book Tracker. All rights reserved."
+msgstr ""
+
+#: templates/base.html:111 templates/list/detail.html:14
+msgid "Public"
+msgstr ""
+
+#: templates/base.html:112 templates/list/detail.html:14
+msgid "Private"
+msgstr ""
+
+#: templates/base.html:113 templates/book/detail.html:31
+msgid "Mark as Read"
+msgstr ""
+
+#: templates/base.html:114 templates/book/detail.html:31
+msgid "Mark as Unread"
+msgstr ""
+
+#: templates/base.html:115
+msgid "Review submitted successfully!"
 msgstr ""
 
 #: templates/index.html:7
@@ -76,6 +120,7 @@ msgid "My Latest Books"
 msgstr ""
 
 #: templates/book/detail.html:7 templates/index.html:29
+#: templates/list/detail.html:73
 #, python-format
 msgid "%(title)s cover"
 msgstr ""
@@ -106,14 +151,15 @@ msgid "Search books..."
 msgstr ""
 
 #: templates/index.html:65 templates/index.html:115
+#: templates/list/detail.html:63
 msgid "Search"
 msgstr ""
 
-#: templates/index.html:74
+#: templates/index.html:74 templates/list/detail.html:52
 msgid "Title"
 msgstr ""
 
-#: templates/index.html:75
+#: templates/index.html:75 templates/list/detail.html:53
 msgid "Author"
 msgstr ""
 
@@ -204,6 +250,50 @@ msgstr ""
 msgid "Don't have an account? Register"
 msgstr ""
 
+#: templates/profile.html:23
+msgid "About"
+msgstr ""
+
+#: templates/profile.html:48
+msgid "Joined:"
+msgstr ""
+
+#: templates/profile.html:55
+msgid "Reading Stats"
+msgstr ""
+
+#: templates/profile.html:65
+msgid "Books Read"
+msgstr ""
+
+#: templates/profile.html:71
+msgid "Recent Activity"
+msgstr ""
+
+#: templates/profile.html:78
+msgid "Read"
+msgstr ""
+
+#: templates/book/detail.html:12 templates/profile.html:84
+msgid "by"
+msgstr ""
+
+#: templates/profile.html:88
+msgid "Created a new list:"
+msgstr ""
+
+#: templates/profile.html:98
+msgid "Posted:"
+msgstr ""
+
+#: templates/profile.html:107
+msgid "No recent activity to display."
+msgstr ""
+
+#: templates/profile.html:117
+msgid "Edit Profile"
+msgstr ""
+
 #: templates/register.html:14
 msgid "Email"
 msgstr ""
@@ -212,13 +302,25 @@ msgstr ""
 msgid "Already have an account? Login"
 msgstr ""
 
+#: templates/author/detail.html:14 templates/list/detail.html:24
+msgid "Reading Progress"
+msgstr ""
+
+#: templates/author/detail.html:17 templates/list/detail.html:26
+msgid "All Books:"
+msgstr ""
+
+#: templates/author/detail.html:27 templates/list/detail.html:36
+msgid "Main Works:"
+msgstr ""
+
+#: templates/author/detail.html:38
+msgid "Books by"
+msgstr ""
+
 #: templates/book/detail.html:2
 #, python-format
 msgid "%(title)s - Book Detail"
-msgstr ""
-
-#: templates/book/detail.html:12
-msgid "by"
 msgstr ""
 
 #: templates/book/detail.html:17
@@ -227,14 +329,6 @@ msgstr ""
 
 #: templates/book/detail.html:22
 msgid "No ratings yet"
-msgstr ""
-
-#: templates/book/detail.html:31
-msgid "Mark as Unread"
-msgstr ""
-
-#: templates/book/detail.html:31
-msgid "Mark as Read"
 msgstr ""
 
 #: templates/book/detail.html:34
@@ -266,7 +360,7 @@ msgstr ""
 msgid "Lists containing this book:"
 msgstr ""
 
-#: templates/book/detail.html:67
+#: templates/book/detail.html:67 templates/list/detail.html:49
 msgid "Sort by:"
 msgstr ""
 
@@ -300,5 +394,73 @@ msgstr ""
 
 #: templates/book/detail.html:110
 msgid "No reviews yet. Be the first to review this book!"
+msgstr ""
+
+#: templates/goal/set_goal.html:10
+msgid "Goal Type"
+msgstr ""
+
+#: templates/goal/set_goal.html:12
+msgid "Number of Books"
+msgstr ""
+
+#: templates/goal/set_goal.html:13
+msgid "Number of Pages"
+msgstr ""
+
+#: templates/goal/set_goal.html:17
+msgid "Target"
+msgstr ""
+
+#: templates/goal/set_goal.html:21
+msgid "Start Date"
+msgstr ""
+
+#: templates/goal/set_goal.html:25
+msgid "End Date"
+msgstr ""
+
+#: templates/goal/set_goal.html:30
+msgid "Set Goal"
+msgstr ""
+
+#: templates/list/detail.html:11
+msgid "books"
+msgstr ""
+
+#: templates/list/detail.html:17
+msgid "Toggle Visibility"
+msgstr ""
+
+#: templates/list/detail.html:31 templates/list/detail.html:41
+msgid "out of"
+msgstr ""
+
+#: templates/list/detail.html:31
+msgid "books read"
+msgstr ""
+
+#: templates/list/detail.html:41
+msgid "main works read"
+msgstr ""
+
+#: templates/list/detail.html:51
+msgid "Rank"
+msgstr ""
+
+#: templates/list/detail.html:54
+msgid "Read Status"
+msgstr ""
+
+#: templates/list/detail.html:60
+msgid "Add Books to List"
+msgstr ""
+
+#: templates/list/detail.html:62
+msgid "Search for books..."
+msgstr ""
+
+#: templates/list/detail.html:94
+msgid "Remove"
 msgstr ""
 

@@ -105,6 +105,16 @@
             <p>{{ _('© 2024 Book Tracker. All rights reserved.') }}</p>
         </footer>
 
-        {% block scripts %}{% endblock %}
+        {% block scripts %}
+        <script>
+            window.translations = {
+                "Public": "{{ _('Public') }}",
+                "Private": "{{ _('Private') }}",
+                "Mark as Read": "{{ _('Mark as Read') }}",
+                "Mark as Unread": "{{ _('Mark as Unread') }}",
+                "Review submitted successfully!": "{{ _('Review submitted successfully!') }}"
+            };
+        </script>
+        {% endblock %}
     </body>
 </html>
