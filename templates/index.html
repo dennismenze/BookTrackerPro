@@ -38,9 +38,9 @@
         {% endif %}
     </div>
 
-    <!-- My Authors Section -->
+    <!-- My Top Authors Section -->
     <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">{{ _('My Authors') }}</h2>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('My Top Authors') }}</h2>
         {% if user_authors %}
             <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {% for author, total_books, read_books, total_main_works, read_main_works in user_authors %}
@@ -66,6 +66,9 @@
                     </li>
                 {% endfor %}
             </ul>
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('author.authors') }}" class="text-blue-500 hover:text-blue-700">{{ _('View All Authors') }}</a>
+            </div>
         {% else %}
             <p class="text-gray-600">{{ _('No authors added yet.') }}</p>
         {% endif %}
@@ -144,9 +147,9 @@
                         {% for author in authors.items %}
                         <tr class="border-b border-gray-200 hover:bg-gray-100">
                             <td class="py-3 px-6 text-left">
-                                <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ _('%(name)s', name=author.get_name()) }}" class="w-12 h-12 object-cover rounded-full">
+                                <img src="{{ author.image_url or '/static/images/default-author.png' }}" alt="{{ _('%(name)s', name=author.name) }}" class="w-12 h-12 object-cover rounded-full">
                             </td>
-                            <td class="py-3 px-6 text-left">{{ author.get_name() }}</td>
+                            <td class="py-3 px-6 text-left">{{ author.name }}</td>
                             <td class="py-3 px-6 text-center">{{ author.books|length }}</td>
                             <td class="py-3 px-6 text-center">
                                 <a href="{{ url_for('author.author_detail', id=author.id) }}" class="text-blue-500 hover:text-blue-700">{{ _('View Details') }}</a>
