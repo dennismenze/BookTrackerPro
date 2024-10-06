@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file, current_app, Response
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post, Translation
@@ -279,4 +279,28 @@ def import_csv():
         flash(_("Database error occurred during import."))
 
     flash(_("CSV import processed successfully.") + " " + str(imported_books) + " " + _('books') + " " + _('imported'))
-    return redirect(url_for('home.user_profile', username=current_user.username))       
+    return redirect(url_for('home.user_profile', username=current_user.username))
+
+@bp.route('/export_csv')
+@login_required
+def export_csv():
+    user_books = UserBook.query.filter_by(user_id=current_user.id).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(['Title', 'Author', 'Read Date'])
+    
+    for user_book in user_books:
+        writer.writerow([
+            user_book.book.title.text_en,
+            user_book.book.author.name.text_en,
+            user_book.read_date.strftime('%Y-%m-%d') if user_book.read_date else ''
+        ])
+    
+    output.seek(0)
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=books_export.csv"}
+    )
