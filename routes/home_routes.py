@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post, Translation
-from sqlalchemy import or_, func, and_, case, alias
+from sqlalchemy import or_, func, and_, case
+from sqlalchemy.orm import aliased
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from flask_babel import _, get_locale
@@ -53,14 +54,18 @@ def index():
 
     books = None
     if book_search_query:
-        books = Book.query.join(Translation, Book.title_id == Translation.id)\
+        title_translation = aliased(Translation)
+        author_name_translation = aliased(Translation)
+
+        books = Book.query.join(title_translation, Book.title_id == title_translation.id)\
             .join(Author, Book.author_id == Author.id)\
-            .join(Translation.alias(), Book.author_id == Author.id)\
-            .join(Translation.alias(), Author.name_id == Translation.id)\
+            .join(author_name_translation, Author.name_id == author_name_translation.id)\
             .filter(
                 or_(
-                    Translation.text_en.ilike(f'%{book_search_query}%'),
-                    Translation.text_de.ilike(f'%{book_search_query}%')
+                    title_translation.text_en.ilike(f'%{book_search_query}%'),
+                    title_translation.text_de.ilike(f'%{book_search_query}%'),
+                    author_name_translation.text_en.ilike(f'%{book_search_query}%'),
+                    author_name_translation.text_de.ilike(f'%{book_search_query}%')
                 )
             ).paginate(page=book_page, per_page=per_page, error_out=False)
 
