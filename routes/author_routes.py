@@ -3,6 +3,7 @@ from models import db, Author, Book, Translation, UserBook
 from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
 from flask_babel import _, get_locale
+from sqlalchemy import func, case
 from datetime import date
 
 bp = Blueprint('author', __name__)
@@ -20,6 +21,21 @@ def authors():
         query = query.filter(Translation.text_en.ilike(f'%{search_query}%') | Translation.text_de.ilike(f'%{search_query}%'))
 
     authors = query.order_by(Translation.text_en).paginate(page=page, per_page=per_page, error_out=False)
+
+    # Calculate read progress for each author
+    for author in authors.items:
+        total_books = Book.query.filter_by(author_id=author.id).count()
+        read_books = UserBook.query.join(Book).filter(Book.author_id == author.id, 
+                                                      UserBook.user_id == current_user.id, 
+                                                      UserBook.read_date.isnot(None)).count()
+        author.read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+
+        total_main_works = Book.query.filter_by(author_id=author.id, is_main_work=True).count()
+        read_main_works = UserBook.query.join(Book).filter(Book.author_id == author.id, 
+                                                           Book.is_main_work == True,
+                                                           UserBook.user_id == current_user.id, 
+                                                           UserBook.read_date.isnot(None)).count()
+        author.main_works_read_percentage = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
 
     return render_template('author/list.html',
                            authors=authors,
