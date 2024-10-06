@@ -7,25 +7,18 @@
     <h1 class="text-3xl font-bold mb-6">{{ user.username }}'s {{ _('Profile') }}</h1>
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center">
-                <img
-                    src="{{ url_for('home.profile_image', user_id=user.id) }}"
-                    alt="{{ user.username }}"
-                    class="w-24 h-24 rounded-full mr-4 object-cover"
-                />
-                <div>
-                    <h2 class="text-2xl font-semibold">
-                        {{ user.full_name or user.username }}
-                    </h2>
-                    <p class="text-gray-600">@{{ user.username }}</p>
-                </div>
+        <div class="flex items-center mb-4">
+            <img
+                src="{{ url_for('home.profile_image', user_id=user.id) }}"
+                alt="{{ user.username }}"
+                class="w-24 h-24 rounded-full mr-4 object-cover"
+            />
+            <div>
+                <h2 class="text-2xl font-semibold">
+                    {{ user.full_name or user.username }}
+                </h2>
+                <p class="text-gray-600">@{{ user.username }}</p>
             </div>
-            {% if current_user.id == user.id %}
-            <a href="{{ url_for('home.edit_profile') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                {{ _('Edit Profile') }}
-            </a>
-            {% endif %}
         </div>
 
         {% if user.bio %}
@@ -33,74 +26,214 @@
             <h3 class="text-lg font-semibold mb-2">{{ _('About') }}</h3>
             <p>{{ user.bio }}</p>
         </div>
+        {% endif %} {% if user.location or user.website %}
+        <div class="mb-4">
+            {% if user.location %}
+            <p class="mb-1">
+                <i class="fas fa-map-marker-alt mr-2"></i>{{ user.location }}
+            </p>
+            {% endif %} {% if user.website %}
+            <p>
+                <i class="fas fa-link mr-2"></i
+                ><a
+                    href="{{ user.website }}"
+                    target="_blank"
+                    class="text-blue-500 hover:underline"
+                    >{{ user.website }}</a
+                >
+            </p>
+            {% endif %}
+        </div>
         {% endif %}
 
         <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">{{ _('User Information') }}</h3>
-            <p><strong>{{ _('Location:') }}</strong> {{ user.location or _('Not specified') }}</p>
-            <p><strong>{{ _('Website:') }}</strong> {% if user.website %}<a href="{{ user.website }}" target="_blank" class="text-blue-500 hover:underline">{{ user.website }}</a>{% else %}{{ _('Not specified') }}{% endif %}</p>
-            <p><strong>{{ _('Member since:') }}</strong> {{ date_joined }}</p>
-        </div>
-
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">{{ _('User Statistics') }}</h3>
-            <p><strong>{{ _('Books Read:') }}</strong> {{ user.user_books|selectattr('read_date', 'defined')|list|length }}</p>
-            <p><strong>{{ _('Lists Created:') }}</strong> {{ list_count }}</p>
+            <p>
+                <strong>{{ _('Joined:') }}</strong> {{ user.date_joined.strftime('%B %Y')
+                if user.date_joined else 'N/A' }}
+            </p>
         </div>
     </div>
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 class="text-2xl font-semibold mb-4">{{ _('Recent Activities') }}</h2>
-        {% if recent_activities %}
-            <ul class="space-y-4">
-                {% for activity in recent_activities %}
-                    <li class="border-b pb-2">
-                        {% if activity.type == 'book_read' %}
-                            <p>{{ _('Read') }} <a href="{{ url_for('book.book_detail', id=activity.book.id) }}" class="text-blue-500 hover:underline">{{ activity.book.title }}</a></p>
-                        {% elif activity.type == 'list_created' %}
-                            <p>{{ _('Created list') }} <a href="{{ url_for('list.list_detail', id=activity.list.id) }}" class="text-blue-500 hover:underline">{{ activity.list.name }}</a></p>
-                        {% elif activity.type == 'post_created' %}
-                            <p>{{ _('Created a post:') }} {{ activity.post.get_body()[:100] }}...</p>
-                        {% endif %}
-                        <p class="text-sm text-gray-500">{{ activity.timestamp }}</p>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>{{ _('No recent activities.') }}</p>
-        {% endif %}
+        <h3 class="text-xl font-semibold mb-4">{{ _('Reading Stats') }}</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="text-center">
+                <p class="text-2xl font-bold">{{ user.list_count }}</p>
+                <p class="text-gray-600">{{ _('Lists') }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-bold">
+                    {{ user.user_books|selectattr('is_read')|list|length }}
+                </p>
+                <p class="text-gray-600">{{ _('Books Read') }}</p>
+            </div>
+        </div>
     </div>
 
     {% if current_user.id == user.id %}
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 class="text-2xl font-semibold mb-4">{{ _('Import Books from CSV') }}</h2>
-        <form action="{{ url_for('home.import_csv') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-            <div>
-                <label for="csv_file" class="block text-sm font-medium text-gray-700">{{ _('CSV File') }}</label>
-                <input type="file" name="csv_file" id="csv_file" accept=".csv" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+        <h3 class="text-xl font-semibold mb-4">{{ _('Import Books from CSV') }}</h3>
+
+        <!-- Modal Dialog -->
+        <div id="importCsvModal" class="modal">
+            <div class="modal-content">
+                <form id="csv-mapping-form" action="{{ url_for('home.import_csv') }}" method="POST" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="csv_file" class="block text-sm font-medium text-gray-700">{{ _('CSV File') }}</label>
+                        <input type="file" id="csv_file" name="csv_file" accept=".csv" required
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                    <!-- Dynamische Felder zur Zuordnung der CSV-Spalten zu den erforderlichen Feldern -->
+                    <div id="mapping-fields">
+                        <!-- Diese Felder werden mittels JavaScript basierend auf den CSV-Spalten hinzugefügt -->
+                    </div>
+                    <button type="submit"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        {{ _('Importieren') }}
+                    </button>
+                </form>
             </div>
-            <div>
-                <label for="title_column" class="block text-sm font-medium text-gray-700">{{ _('Title Column Name') }}</label>
-                <input type="text" name="title_column" id="title_column" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-            </div>
-            <div>
-                <label for="author_column" class="block text-sm font-medium text-gray-700">{{ _('Author Column Name') }}</label>
-                <input type="text" name="author_column" id="author_column" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-            </div>
-            <div>
-                <label for="read_date_column" class="block text-sm font-medium text-gray-700">{{ _('Read Date Column Name') }}</label>
-                <input type="text" name="read_date_column" id="read_date_column" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-            </div>
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                {{ _('Import CSV') }}
-            </button>
-        </form>
+        </div>
     </div>
+    {% endif %}
+
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-semibold mb-4">{{ _('Recent Activity') }}</h3>
+        {% if recent_activities %}
+        <ul class="space-y-4">
+            {% for activity in recent_activities %}
+            <li class="border-b pb-2">
+                {% if activity.type == 'book_read' %}
+                <p>
+                    <i class="fas fa-book mr-2 text-blue-500"></i> {{ _('Read') }}
+                    <a href="{{ url_for('book.book_detail', id=activity.book.id) }}" class="text-blue-500 hover:underline">{{ activity.book.title }}</a>
+                    {{ _('by') }} {{ activity.book.author.name }}
+                </p>
+                {% elif activity.type == 'list_created' %}
+                <p>
+                    <i class="fas fa-list mr-2 text-green-500"></i> {{ _('Created a new list:') }}
+                    <a href="{{ url_for('list.list_detail', id=activity.list.id) }}" class="text-blue-500 hover:underline">{{ activity.list.name }}</a>
+                </p>
+                {% elif activity.type == 'post_created' %}
+                <p>
+                    <i class="fas fa-pencil-alt mr-2 text-yellow-500"></i>
+                    {{ _('Posted:') }} {{ activity.post.body[:50] }}{% if activity.post.body|length > 50 %}...{% endif %}
+                </p>
+                {% elif activity.type == 'book_imported' %}
+                <p>
+                    <i class="fas fa-file-import mr-2 text-purple-500"></i> {{ _('Imported') }}
+                    <a href="{{ url_for('book.book_detail', id=activity.book.id) }}" class="text-blue-500 hover:underline">{{ activity.book.title }}</a>
+                    {{ _('by') }} {{ activity.book.author.name }}
+                </p>
+                {% endif %}
+                <p class="text-sm text-gray-500">{{ activity.timestamp }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-600">{{ _('No recent activity to display.') }}</p>
+        {% endif %}
+    </div>
+
+    {% if current_user.id == user.id %}
     <div class="text-center">
-        <a href="{{ url_for('home.export_csv') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded inline-block">
-            {{ _('Export CSV') }}
+        <a href="{{ url_for('home.edit_profile') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            {{ _('Edit Profile') }}
         </a>
     </div>
     {% endif %}
+
+    <script>
+        const modal = document.getElementById("importCsvModal");
+        const mappingForm = document.getElementById("csv-mapping-form");
+        const mappingFields = document.getElementById("mapping-fields");
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.getElementById("csv_file").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const firstLineEnd = text.indexOf('\n');    
+                    const headerLine = firstLineEnd !== -1 ? text.substring(0, firstLineEnd) : text;
+                    const headers = headerLine.split(';');
+
+                    mappingFields.innerHTML = '';
+
+                    const requiredFields = ['title', 'author', 'read_date'];
+                    const defaultMappings = {
+                        'title': "{{ _('Title') }}",
+                        'author': "{{ _('Author') }}",
+                        'read_date': "{{ _('Read Date') }}"
+                    };
+
+                    requiredFields.forEach((field, index) => {
+                        const fieldDiv = document.createElement("div");
+                        fieldDiv.classList.add("mb-4");
+
+                        const label = document.createElement("label");
+                        label.setAttribute("for", `mapping_${field}`);
+                        label.classList.add("block", "text-sm", "font-medium", "text-gray-700");
+                        label.innerText = `${field.charAt(0).toUpperCase() + field.slice(1)}: `;
+
+                        const select = document.createElement("select");
+                        select.name = `mapping_${field}`;
+                        select.id = `mapping_${field}`;
+                        select.required = true;
+                        select.classList.add("mt-1", "block", "w-full", "shadow-sm", "sm:text-sm", "border-gray-300", "rounded-md");
+
+                        const defaultOption = document.createElement("option");
+                        defaultOption.value = "";
+                        defaultOption.text = "----";
+                        select.appendChild(defaultOption);
+
+                        headers.forEach((header) => {
+                            const option = document.createElement("option");
+                            option.value = header.trim();
+                            option.text = header.trim();
+                            if (header.trim().toLowerCase() === defaultMappings[field].toLowerCase()) {
+                                option.selected = true;
+                            }
+                            select.appendChild(option);
+                        });
+
+                        fieldDiv.appendChild(label);
+                        fieldDiv.appendChild(select);
+                        mappingFields.appendChild(fieldDiv);
+                    });
+
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        mappingForm.onsubmit = function(e) {
+            e.preventDefault();
+
+            const mappings = {};
+            const requiredFields = ['title', 'author', 'read_date'];
+            requiredFields.forEach(field => {
+                const select = document.getElementById(`mapping_${field}`);
+                mappings[field] = select.value;
+            });
+
+            let hiddenInput = document.getElementById('hidden_mappings');
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = 'hidden_mappings';
+                hiddenInput.name = 'mappings';
+                mappingForm.appendChild(hiddenInput);
+            }
+            hiddenInput.value = JSON.stringify(mappings);
+            mappingForm.submit();
+        }
+    </script>
 </div>
 {% endblock %}
