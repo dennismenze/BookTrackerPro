@@ -16,7 +16,10 @@ def authors():
     search_query = request.args.get('search', '')
     sort_by = request.args.get('sort', 'name')  # Default sort by name
 
-    query = Author.query.join(Translation, Author.name_id == Translation.id)
+    query = db.session.query(Author, Translation, func.count(Book.id).label('book_count'))\
+        .join(Translation, Author.name_id == Translation.id)\
+        .outerjoin(Book, Author.id == Book.author_id)\
+        .group_by(Author.id, Translation.id)
 
     if search_query:
         query = query.filter(Translation.text_en.ilike(f'%{search_query}%') | Translation.text_de.ilike(f'%{search_query}%'))
@@ -25,7 +28,7 @@ def authors():
     if sort_by == 'name':
         query = query.order_by(Translation.text_en)
     elif sort_by == 'books_count':
-        query = query.outerjoin(Book).group_by(Author.id).order_by(desc(func.count(Book.id)))
+        query = query.order_by(desc('book_count'))
     elif sort_by == 'read_percentage':
         subquery = db.session.query(
             Book.author_id,
@@ -36,25 +39,36 @@ def authors():
         query = query.outerjoin(subquery, Author.id == subquery.c.author_id)\
                      .order_by(desc(subquery.c.read_percentage))
 
-    authors = query.paginate(page=page, per_page=per_page, error_out=False)
+    paginated_authors = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    authors = []
+    for author, translation, book_count in paginated_authors.items:
+        author_data = {
+            'id': author.id,
+            'name': translation.text_en,
+            'book_count': book_count,
+            'image_url': author.image_url
+        }
+        authors.append(author_data)
 
     # Calculate read progress for each author
-    for author in authors.items:
-        total_books = Book.query.filter_by(author_id=author.id).count()
-        read_books = UserBook.query.join(Book).filter(Book.author_id == author.id, 
+    for author_data in authors:
+        total_books = Book.query.filter_by(author_id=author_data['id']).count()
+        read_books = UserBook.query.join(Book).filter(Book.author_id == author_data['id'], 
                                                       UserBook.user_id == current_user.id, 
                                                       UserBook.read_date.isnot(None)).count()
-        author.read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
+        author_data['read_percentage'] = (read_books / total_books * 100) if total_books > 0 else 0
 
-        total_main_works = Book.query.filter_by(author_id=author.id, is_main_work=True).count()
-        read_main_works = UserBook.query.join(Book).filter(Book.author_id == author.id, 
+        total_main_works = Book.query.filter_by(author_id=author_data['id'], is_main_work=True).count()
+        read_main_works = UserBook.query.join(Book).filter(Book.author_id == author_data['id'], 
                                                            Book.is_main_work == True,
                                                            UserBook.user_id == current_user.id, 
                                                            UserBook.read_date.isnot(None)).count()
-        author.main_works_read_percentage = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
+        author_data['main_works_read_percentage'] = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
 
     return render_template('author/list.html',
                            authors=authors,
+                           pagination=paginated_authors,
                            search_query=search_query,
                            sort_by=sort_by)
 
