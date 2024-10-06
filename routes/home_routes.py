@@ -54,8 +54,8 @@ def index():
     books = None
     if book_search_query:
         books = Book.query.join(Translation, Book.title_id == Translation.id)\
-            .join(Author)\
-            .join(Translation, Author.name_id == Translation.id)\
+            .join(Author, Book.author_id == Author.id)\
+            .join(Translation, Author.name_id == Translation.id, aliased=True)\
             .filter(
                 or_(
                     Translation.text_en.ilike(f'%{book_search_query}%'),
