@@ -55,6 +55,7 @@ def index():
     if book_search_query:
         books = Book.query.join(Translation, Book.title_id == Translation.id)\
             .join(Author, Book.author_id == Author.id)\
+            .join(Translation.alias(), Book.author_id == Author.id)\
             .join(Translation.alias(), Author.name_id == Translation.id)\
             .filter(
                 or_(
