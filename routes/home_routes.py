@@ -6,6 +6,8 @@ from sqlalchemy import or_, func, and_, case
 from datetime import datetime
 from io import BytesIO
 from flask_babel import _, get_locale
+import csv
+import io
 
 bp = Blueprint('home', __name__)
 
@@ -20,7 +22,6 @@ def index():
     if current_user.is_authenticated:
         latest_books = Book.query.join(UserBook).filter(UserBook.user_id == current_user.id).order_by(UserBook.read_date.desc()).limit(5).all()
         
-        # Calculate the percentage of books read for each author, including main works
         user_authors = db.session.query(
             Author,
             func.count(Book.id).label('total_books'),
@@ -40,7 +41,6 @@ def index():
             if total_books > 0 and read_books > 0
         ]
 
-        # Calculate percentage for each author
         for author, total_books, read_books, total_main_works, read_main_works in user_authors:
             author.read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
             author.main_works_read_percentage = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
@@ -190,3 +190,61 @@ def set_language():
             current_user.preferred_language = language
             db.session.commit()
     return redirect(request.referrer or url_for('home.index'))
+
+@bp.route('/import_csv', methods=['POST'])
+@login_required
+def import_csv():
+    if 'csv_file' not in request.files:
+        flash(_('No file uploaded'), 'error')
+        return redirect(url_for('home.user_profile', username=current_user.username))
+    
+    file = request.files['csv_file']
+    if file.filename == '':
+        flash(_('No file selected'), 'error')
+        return redirect(url_for('home.user_profile', username=current_user.username))
+    
+    if file and file.filename.endswith('.csv'):
+        try:
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_reader = csv.DictReader(stream)
+            
+            for row in csv_reader:
+                title = row.get('title')
+                author_name = row.get('author')
+                isbn = row.get('isbn')
+                read_date_str = row.get('read_date')
+                
+                if not title or not author_name:
+                    continue
+                
+                author = Author.query.filter(Author.name.text == author_name).first()
+                if not author:
+                    author = Author(name=author_name)
+                    db.session.add(author)
+                
+                book = Book.query.filter((Book.title.text == title) & (Book.author == author)).first()
+                if not book:
+                    book = Book(title=title, author=author, isbn=isbn)
+                    db.session.add(book)
+                
+                user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
+                if not user_book:
+                    user_book = UserBook(user_id=current_user.id, book_id=book.id)
+                    db.session.add(user_book)
+                
+                if read_date_str:
+                    try:
+                        read_date = datetime.strptime(read_date_str, '%Y-%m-%d').date()
+                        user_book.read_date = read_date
+                    except ValueError:
+                        pass
+            
+            db.session.commit()
+            flash(_('CSV file imported successfully'), 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Error importing CSV file: {}').format(str(e)), 'error')
+    else:
+        flash(_('Invalid file format. Please upload a CSV file.'), 'error')
+    
+    return redirect(url_for('home.user_profile', username=current_user.username))
