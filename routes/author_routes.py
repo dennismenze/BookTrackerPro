@@ -3,7 +3,7 @@ from models import db, Author, Book, Translation, UserBook
 from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
 from flask_babel import _, get_locale
-from sqlalchemy import func, case
+from sqlalchemy import func, case, desc
 from datetime import date
 
 bp = Blueprint('author', __name__)
@@ -14,13 +14,29 @@ def authors():
     page = request.args.get('page', 1, type=int)
     per_page = 12  # Number of authors per page
     search_query = request.args.get('search', '')
+    sort_by = request.args.get('sort', 'name')  # Default sort by name
 
     query = Author.query.join(Translation, Author.name_id == Translation.id)
 
     if search_query:
         query = query.filter(Translation.text_en.ilike(f'%{search_query}%') | Translation.text_de.ilike(f'%{search_query}%'))
 
-    authors = query.order_by(Translation.text_en).paginate(page=page, per_page=per_page, error_out=False)
+    # Apply sorting
+    if sort_by == 'name':
+        query = query.order_by(Translation.text_en)
+    elif sort_by == 'books_count':
+        query = query.outerjoin(Book).group_by(Author.id).order_by(desc(func.count(Book.id)))
+    elif sort_by == 'read_percentage':
+        subquery = db.session.query(
+            Book.author_id,
+            (func.sum(case((UserBook.read_date.isnot(None), 1), else_=0)) * 100 / func.count(Book.id)).label('read_percentage')
+        ).join(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id), isouter=True)\
+         .group_by(Book.author_id).subquery()
+        
+        query = query.outerjoin(subquery, Author.id == subquery.c.author_id)\
+                     .order_by(desc(subquery.c.read_percentage))
+
+    authors = query.paginate(page=page, per_page=per_page, error_out=False)
 
     # Calculate read progress for each author
     for author in authors.items:
@@ -39,7 +55,8 @@ def authors():
 
     return render_template('author/list.html',
                            authors=authors,
-                           search_query=search_query)
+                           search_query=search_query,
+                           sort_by=sort_by)
 
 @bp.route('/<int:id>')
 @login_required

@@ -7,11 +7,21 @@
     <h1 class="text-3xl font-bold mb-6">{{ _('Authors') }}</h1>
 
     <form action="{{ url_for('author.authors') }}" method="GET" class="mb-6">
-        <div class="flex">
-            <input type="text" name="search" placeholder="{{ _('Search authors...') }}" value="{{ search_query }}"
-                class="flex-grow px-4 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
+            <div class="flex-grow">
+                <input type="text" name="search" placeholder="{{ _('Search authors...') }}" value="{{ search_query }}"
+                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="sort" class="block text-sm font-medium text-gray-700 mb-1">{{ _('Sort by') }}</label>
+                <select name="sort" id="sort" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>{{ _('Name') }}</option>
+                    <option value="books_count" {% if sort_by == 'books_count' %}selected{% endif %}>{{ _('Number of Books') }}</option>
+                    <option value="read_percentage" {% if sort_by == 'read_percentage' %}selected{% endif %}>{{ _('Read Percentage') }}</option>
+                </select>
+            </div>
             <button type="submit"
-                class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {{ _('Search') }}
             </button>
         </div>
@@ -56,7 +66,7 @@
 
     <div class="mt-6 flex justify-center">
         {% if authors.has_prev %}
-        <a href="{{ url_for('author.authors', page=authors.prev_num, search=search_query) }}"
+        <a href="{{ url_for('author.authors', page=authors.prev_num, search=search_query, sort=sort_by) }}"
             class="bg-blue-500 text-white px-4 py-2 rounded-l-md hover:bg-blue-600">
             {{ _('Previous') }}
         </a>
@@ -65,7 +75,7 @@
             {{ _('Page %(current)s of %(total)s', current=authors.page, total=authors.pages) }}
         </span>
         {% if authors.has_next %}
-        <a href="{{ url_for('author.authors', page=authors.next_num, search=search_query) }}"
+        <a href="{{ url_for('author.authors', page=authors.next_num, search=search_query, sort=sort_by) }}"
             class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600">
             {{ _('Next') }}
         </a>
