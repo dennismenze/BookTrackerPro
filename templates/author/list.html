@@ -28,22 +28,23 @@
     </form>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for author in authors.items %}
+        {% for author, translation, book_count in authors.items %}
         <div class="bg-white shadow-md rounded-lg p-6">
             <div class="flex items-center mb-4">
                 {% if author.image_url %}
-                <img src="{{ author.image_url }}" alt="{{ author.name }}" class="w-16 h-16 rounded-full object-cover mr-4">
+                <img src="{{ author.image_url }}" alt="{{ translation.text_en }}" class="w-16 h-16 rounded-full object-cover mr-4">
                 {% else %}
                 <div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center mr-4">
-                    <span class="text-gray-600 text-xl font-bold">{{ author.name.text_en[:2].upper() }}</span>
+                    <span class="text-gray-600 text-xl font-bold">{{ translation.text_en[:2].upper() }}</span>
                 </div>
                 {% endif %}
                 <div>
                     <h2 class="text-xl font-semibold">
                         <a href="{{ url_for('author.author_detail', id=author.id) }}" class="text-blue-600 hover:text-blue-800">
-                            {{ author.name }}
+                            {{ translation.text_en }}
                         </a>
                     </h2>
+                    <p class="text-sm text-gray-600">{{ _('Books:') }} {{ book_count }}</p>
                 </div>
             </div>
             <div class="mb-4">

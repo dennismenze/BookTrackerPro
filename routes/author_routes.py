@@ -41,34 +41,23 @@ def authors():
 
     paginated_authors = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    authors = []
-    for author, translation, book_count in paginated_authors.items:
-        author_data = {
-            'id': author.id,
-            'name': translation.text_en,
-            'book_count': book_count,
-            'image_url': author.image_url
-        }
-        authors.append(author_data)
-
     # Calculate read progress for each author
-    for author_data in authors:
-        total_books = Book.query.filter_by(author_id=author_data['id']).count()
-        read_books = UserBook.query.join(Book).filter(Book.author_id == author_data['id'], 
+    for author, translation, book_count in paginated_authors.items:
+        total_books = book_count
+        read_books = UserBook.query.join(Book).filter(Book.author_id == author.id, 
                                                       UserBook.user_id == current_user.id, 
                                                       UserBook.read_date.isnot(None)).count()
-        author_data['read_percentage'] = (read_books / total_books * 100) if total_books > 0 else 0
+        author.read_percentage = (read_books / total_books * 100) if total_books > 0 else 0
 
-        total_main_works = Book.query.filter_by(author_id=author_data['id'], is_main_work=True).count()
-        read_main_works = UserBook.query.join(Book).filter(Book.author_id == author_data['id'], 
+        total_main_works = Book.query.filter_by(author_id=author.id, is_main_work=True).count()
+        read_main_works = UserBook.query.join(Book).filter(Book.author_id == author.id, 
                                                            Book.is_main_work == True,
                                                            UserBook.user_id == current_user.id, 
                                                            UserBook.read_date.isnot(None)).count()
-        author_data['main_works_read_percentage'] = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
+        author.main_works_read_percentage = (read_main_works / total_main_works * 100) if total_main_works > 0 else 0
 
     return render_template('author/list.html',
-                           authors=authors,
-                           pagination=paginated_authors,
+                           authors=paginated_authors,
                            search_query=search_query,
                            sort_by=sort_by)
 
