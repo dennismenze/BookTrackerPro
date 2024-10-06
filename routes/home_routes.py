@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post, Translation
-from sqlalchemy import or_, func, and_, case
+from sqlalchemy import or_, func, and_, case, alias
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from flask_babel import _, get_locale
@@ -55,7 +55,7 @@ def index():
     if book_search_query:
         books = Book.query.join(Translation, Book.title_id == Translation.id)\
             .join(Author, Book.author_id == Author.id)\
-            .join(Translation, Author.name_id == Translation.id, aliased=True)\
+            .join(Translation.alias(), Author.name_id == Translation.id)\
             .filter(
                 or_(
                     Translation.text_en.ilike(f'%{book_search_query}%'),
