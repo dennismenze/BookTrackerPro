@@ -1,5 +1,6 @@
-{% extends "base.html" %} {% block title %}{{ _('Home') }}{% endblock %} {%
-block content %}
+{% extends "base.html" %}
+{% block title %}{{ _('Home') }}{% endblock %}
+{% block content %}
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">{{ _('Welcome to Book Tracker') }}</h1>
 
@@ -131,6 +132,7 @@ block content %}
             action="{{ url_for('home.index') }}"
             method="GET"
             class="flex mb-4"
+            id="book-search-form"
         >
             <input
                 type="text"
@@ -147,75 +149,79 @@ block content %}
             </button>
         </form>
 
-        {% if book_search_query %} {% if books and books.items %}
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <table class="min-w-full">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            {{ _('Title') }}
-                        </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            {{ _('Author') }}
-                        </th>
-                        <th
-                            class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            {{ _('Actions') }}
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {% for book in books.items %}
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {{ book.title }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {{ book.author.name }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <a
-                                href="{{ url_for('book.book_detail', id=book.id) }}"
-                                class="text-blue-600 hover:text-blue-900"
-                                >{{ _('View Details') }}</a
+        {% if book_search_query %}
+        <div id="search-results">
+            {% if books and books.items %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <table class="min-w-full">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                             >
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                                {{ _('Title') }}
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                {{ _('Author') }}
+                            </th>
+                            <th
+                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                {{ _('Actions') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for book in books.items %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{ book.title }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{ book.author.name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <a
+                                    href="{{ url_for('book.book_detail', id=book.id) }}"
+                                    class="text-blue-600 hover:text-blue-900"
+                                    >{{ _('View Details') }}</a
+                                >
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-        <div class="mt-4 flex justify-center">
-            {% if books.has_prev %}
-            <a
-                href="{{ url_for('home.index', book_page=books.prev_num, book_search=book_search_query) }}"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l"
-                >{{ _('Previous') }}</a
-            >
-            {% endif %}
-            <span class="bg-gray-200 text-gray-700 font-bold py-2 px-4">
-                {{ _('Page %(current)s of %(total)s', current=books.page,
-                total=books.pages) }}
-            </span>
-            {% if books.has_next %}
-            <a
-                href="{{ url_for('home.index', book_page=books.next_num, book_search=book_search_query) }}"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r"
-                >{{ _('Next') }}</a
-            >
+            <div class="mt-4 flex justify-center">
+                {% if books.has_prev %}
+                <a
+                    href="{{ url_for('home.index', book_page=books.prev_num, book_search=book_search_query) }}"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l"
+                    >{{ _('Previous') }}</a
+                >
+                {% endif %}
+                <span class="bg-gray-200 text-gray-700 font-bold py-2 px-4">
+                    {{ _('Page %(current)s of %(total)s', current=books.page,
+                    total=books.pages) }}
+                </span>
+                {% if books.has_next %}
+                <a
+                    href="{{ url_for('home.index', book_page=books.next_num, book_search=book_search_query) }}"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r"
+                    >{{ _('Next') }}</a
+                >
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="text-gray-600 text-center mt-4">
+                {{ _('No books found matching your search.') }}
+            </p>
             {% endif %}
         </div>
-        {% else %}
-        <p class="text-gray-600 text-center mt-4">
-            {{ _('No books found matching your search.') }}
-        </p>
-        {% endif %} {% endif %}
+        {% endif %}
     </div>
 
     <!-- Search Authors Section -->
@@ -241,7 +247,8 @@ block content %}
             </button>
         </form>
 
-        {% if author_search_query %} {% if authors and authors.items %}
+        {% if author_search_query %}
+        {% if authors and authors.items %}
         <table class="w-full bg-white shadow-md rounded mb-4">
             <thead>
                 <tr
@@ -305,15 +312,46 @@ block content %}
         <p class="text-gray-600 text-center mt-4">
             {{ _('No authors found matching your search.') }}
         </p>
-        {% endif %} {% endif %}
+        {% endif %}
+        {% endif %}
     </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         if (document.getElementById("reading-goal-progress")) {
             updateGoalProgress();
             setInterval(updateGoalProgress, 60000); // Update every minute
+        }
+
+        function scrollToSearchResults() {
+            const searchResults = document.getElementById('search-results');
+            if (searchResults) {
+                searchResults.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Call scrollToSearchResults if there are search results
+        if (document.getElementById('search-results')) {
+            scrollToSearchResults();
+        }
+
+        // Add event listener to the book search form
+        const bookSearchForm = document.getElementById('book-search-form');
+        if (bookSearchForm) {
+            bookSearchForm.addEventListener('submit', function() {
+                // We'll scroll to the results after the page reloads
+                sessionStorage.setItem('scrollToResults', 'true');
+            });
+        }
+
+        // Check if we need to scroll to results after page load
+        if (sessionStorage.getItem('scrollToResults') === 'true') {
+            scrollToSearchResults();
+            sessionStorage.removeItem('scrollToResults');
         }
     });
 
