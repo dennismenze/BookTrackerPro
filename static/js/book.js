@@ -54,9 +54,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    userRatingButtons.forEach((button) => {
+    userRatingButtons.forEach((button, index) => {
         button.addEventListener("click", function () {
-            const rating = parseInt(this.dataset.rating);
+            const rating = index + 1;
             const bookId = toggleReadStatusButton.dataset.bookId;
 
             fetch("/book/rate", {
@@ -81,8 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Add hover effect
         button.addEventListener("mouseover", function() {
-            const rating = parseInt(this.dataset.rating);
-            updateStarDisplay(rating);
+            updateStarDisplay(index + 1);
         });
 
         button.addEventListener("mouseout", function() {
