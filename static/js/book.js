@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     const toggleReadStatusButton = document.getElementById("toggle-read-status");
-    const userRatingButtons = document.querySelectorAll("#user-rating button");
+    const userRatingContainer = document.getElementById("user-rating");
     const userReviewTextarea = document.getElementById("user-review");
     const submitReviewButton = document.getElementById("submit-review");
     const listsTable = document.getElementById("lists-table").getElementsByTagName('tbody')[0];
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((data) => {
                     if (data.success) {
                         this.dataset.isRead = (!isRead).toString();
-                        this.textContent = isRead ? window.translations["Mark as Unread"] : window.translations["Mark as Read"];
+                        this.textContent = isRead ? window.translations["Mark as Read"] : window.translations["Mark as Unread"];
                         
                         const readDateElement = document.getElementById("read-date");
                         if (data.read_date) {
@@ -54,40 +54,68 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    userRatingButtons.forEach((button, index) => {
-        button.addEventListener("click", function () {
-            const rating = index + 1;
-            const bookId = toggleReadStatusButton.dataset.bookId;
+    function createStarRating() {
+        userRatingContainer.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+            const starContainer = document.createElement('div');
+            starContainer.className = 'inline-block relative w-6 h-12 cursor-pointer';
+            
+            const fullStar = document.createElement('span');
+            fullStar.className = 'absolute top-0 left-0 text-3xl text-gray-300 hover:text-yellow-500';
+            fullStar.innerHTML = '★';
+            fullStar.dataset.rating = (i + 1).toString();
+            
+            const halfStar = document.createElement('span');
+            halfStar.className = 'absolute top-0 left-0 text-3xl text-gray-300 hover:text-yellow-500';
+            halfStar.innerHTML = '★';
+            halfStar.style.width = '50%';
+            halfStar.style.overflow = 'hidden';
+            halfStar.dataset.rating = (i + 0.5).toString();
+            
+            starContainer.appendChild(fullStar);
+            starContainer.appendChild(halfStar);
+            userRatingContainer.appendChild(starContainer);
+            
+            [halfStar, fullStar].forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseFloat(this.dataset.rating);
+                    submitRating(rating);
+                });
+                
+                star.addEventListener('mouseover', function() {
+                    const rating = parseFloat(this.dataset.rating);
+                    updateStarDisplay(rating);
+                });
+                
+                star.addEventListener('mouseout', function() {
+                    updateStarDisplay(currentUserRating);
+                });
+            });
+        }
+    }
 
-            fetch("/book/rate", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ book_id: bookId, rating: rating }),
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        currentUserRating = rating;
-                        updateRatingDisplay(data.rating, data.average_rating);
-                        if (toggleReadStatusButton.dataset.isRead.toLowerCase() === "false") {
-                            toggleReadStatusButton.click();
-                        }
+    function submitRating(rating) {
+        const bookId = toggleReadStatusButton.dataset.bookId;
+
+        fetch("/book/rate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ book_id: bookId, rating: rating }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success) {
+                    currentUserRating = rating;
+                    updateRatingDisplay(data.rating, data.average_rating);
+                    if (toggleReadStatusButton.dataset.isRead.toLowerCase() === "false") {
+                        toggleReadStatusButton.click();
                     }
-                })
-                .catch((error) => console.error("Error:", error));
-        });
-
-        // Add hover effect
-        button.addEventListener("mouseover", function() {
-            updateStarDisplay(index + 1);
-        });
-
-        button.addEventListener("mouseout", function() {
-            updateStarDisplay(currentUserRating);
-        });
-    });
+                }
+            })
+            .catch((error) => console.error("Error:", error));
+    }
 
     if (deleteRatingButton) {
         deleteRatingButton.addEventListener("click", function () {
@@ -116,18 +144,20 @@ document.addEventListener("DOMContentLoaded", function () {
         currentUserRating = userRating;
         updateStarDisplay(userRating);
         document.getElementById("average-rating").textContent = averageRating.toFixed(1) + " / 5";
-        document.querySelector("#user-rating + p").textContent = userRating > 0 ? `Your rating: ${userRating} / 5` : "You haven't rated this book yet.";
+        document.querySelector("#user-rating + p").textContent = userRating > 0 ? `Your rating: ${userRating.toFixed(1)} / 5` : "You haven't rated this book yet.";
         deleteRatingButton.style.display = userRating > 0 ? "inline-block" : "none";
     }
 
     function updateStarDisplay(rating) {
-        userRatingButtons.forEach((btn, index) => {
-            if (index < rating) {
-                btn.classList.remove("text-gray-300");
-                btn.classList.add("text-yellow-500");
+        const stars = userRatingContainer.querySelectorAll('span');
+        stars.forEach((star, index) => {
+            const starValue = parseFloat(star.dataset.rating);
+            if (starValue <= rating) {
+                star.classList.remove("text-gray-300");
+                star.classList.add("text-yellow-500");
             } else {
-                btn.classList.remove("text-yellow-500");
-                btn.classList.add("text-gray-300");
+                star.classList.remove("text-yellow-500");
+                star.classList.add("text-gray-300");
             }
         });
     }
@@ -202,8 +232,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Initialize the star rating system
+    createStarRating();
+
     // Initialize the star display
-    updateRatingDisplay(parseInt(document.querySelector("#user-rating + p").textContent.split(':')[1]?.trim()[0]) || 0, parseFloat(document.getElementById("average-rating").textContent));
+    const initialRating = parseFloat(document.querySelector("#user-rating + p").textContent.split(':')[1]?.trim().split('/')[0]) || 0;
+    updateRatingDisplay(initialRating, parseFloat(document.getElementById("average-rating").textContent));
 
     fetchLists();
 });

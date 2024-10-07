@@ -21,7 +21,7 @@ class UserBook(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), primary_key=True)
     read_date = db.Column(db.Date, nullable=True)
-    rating = db.Column(db.Integer, nullable=True)
+    rating = db.Column(db.Float, nullable=True)
     review = db.Column(db.Text, nullable=True)
     user = db.relationship("User", back_populates="user_books")
     book = db.relationship("Book", back_populates="user_books")
@@ -69,7 +69,7 @@ class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
     title_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)  # Korrigiert von 'author.id' zu 'authors.id'
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
     description_id = db.Column(db.Integer, db.ForeignKey('translation.id'), nullable=False)
     cover_image_url = db.Column(db.String(255))
     isbn = db.Column(db.String(13), unique=True)
@@ -81,7 +81,6 @@ class Book(db.Model):
     user_books = db.relationship("UserBook", back_populates="book")
     lists = db.relationship('List', secondary='book_list', back_populates='books')
 
-    cover_image_url = db.Column(db.String(255))
     page_count = db.Column(db.Integer)
     published_date = db.Column(db.String(20))
 
@@ -107,8 +106,7 @@ class Author(db.Model):
     image_url = db.Column(db.String(255))
 
     def __str__(self):
-        return self.name
-
+        return str(self.name)
 
 class List(db.Model):
     __tablename__ = 'lists'
