@@ -48,7 +48,7 @@ def list_detail(id):
 
     sort_by = request.args.get('sort', 'rank')
     page = request.args.get('page', 1, type=int)
-    per_page = 100  # Update to 100 books per page
+    per_page = 100  # Fetch 100 books per page
 
     books_query = db.session.query(Book, BookList.rank, UserBook.read_date)\
         .join(BookList, Book.id == BookList.book_id)\
