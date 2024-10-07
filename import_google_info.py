@@ -1,6 +1,6 @@
 import time
 from models import db, Author, Book, Translation
-from utils import fetch_google_books_info, fetch_google_authors_info, get_author_image_from_wikimedia
+from utils import fetch_google_books_info, fetch_google_authors_info, get_author_image_from_wikimedia, search_german_title_bookbrainz
 from flask import Flask
 from config import Config  # Stellen Sie sicher, dass Sie eine config.py Datei haben
 
@@ -69,7 +69,7 @@ def import_google_info(update_missing_only=True):
                     book.page_count = book_info.get('page_count') or book.page_count
                     book.published_date = book_info.get('published_date') or book.published_date
                     
-                    title_translation.text_de = book_info.get('title_de') or title_translation.text_de
+                    title_translation.text_de = search_german_title_bookbrainz(title_translation.text_en) or title_translation.text_de
                     
                     if description_translation:
                         description_translation.text_en = book_info.get('description_en') or description_translation.text_en

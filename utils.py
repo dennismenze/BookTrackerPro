@@ -329,3 +329,48 @@ def process_csv(csv_file, mappings, user):
         db.session.rollback()
         current_app.logger.error(f"Fehler beim Verarbeiten der CSV-Datei: {e}")
         raise e
+    
+    import requests
+
+def search_german_title_bookbrainz(author, title):
+    # URL der BookBrainz API
+    base_url = "https://api.bookbrainz.org/v1/search/work"
+    params = {
+        "q": f"{author} {title}",  # Suchanfrage mit Titel
+        "fmt": "json"  # Antwortformat als JSON
+    }
+
+    try:
+        # Schritt 1: Suche nach dem Buch, um die Work-ID zu erhalten
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()  # Überprüfe auf Fehler
+        data = response.json()
+
+        # Überprüfen, ob Ergebnisse vorhanden sind
+        if not data.get("results"):
+            print(f"Keine Ergebnisse für den Titel '{title}' gefunden.")
+            return
+
+        # Iteration durch die Suchergebnisse, um die Details des Werks zu holen
+        work_results = data.get("results", [])
+        for result in work_results:
+            work = result.get("item", {})
+            work_id = work.get("bbid")
+
+            # Hole die Details des Werks
+            if work_id:
+                work_url = f"https://api.bookbrainz.org/v1/work/{work_id}"
+                work_response = requests.get(work_url)
+                work_response.raise_for_status()
+                work_data = work_response.json()
+
+                # Prüfen, ob es eine Ausgabe auf Deutsch gibt
+                title = work_data.get("title", "Unbekannter Titel")
+                languages = work_data.get("language_codes", [])
+                
+                if 'deu' in languages:  # 'deu' ist der Sprachcode für Deutsch
+                    print(f"Deutscher Titel für '{title}':")
+                    print(f"- {title}")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Fehler bei der Anfrage: {e}")
