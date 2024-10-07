@@ -134,6 +134,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         currentUserRating = 0;
                         updateRatingDisplay(0, data.average_rating);
                         alert(data.message);
+                    } else {
+                        alert(data.error || "Failed to delete rating");
                     }
                 })
                 .catch((error) => console.error("Error:", error));

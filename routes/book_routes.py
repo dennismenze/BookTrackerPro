@@ -65,4 +65,27 @@ def rate_book():
         'average_rating': book.average_rating
     })
 
+@bp.route('/delete_rating', methods=['POST'])
+@login_required
+def delete_rating():
+    data = request.json
+    book_id = data.get('book_id')
+
+    if book_id is None:
+        return jsonify({'success': False, 'error': _('Invalid data')}), 400
+
+    user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
+
+    if user_book:
+        user_book.rating = None
+        db.session.commit()
+        book = Book.query.get(book_id)
+        return jsonify({
+            'success': True,
+            'message': _('Rating deleted successfully'),
+            'average_rating': book.average_rating
+        })
+    else:
+        return jsonify({'success': False, 'error': _('No rating found for this book')}), 404
+
 # ... [other routes remain unchanged]
