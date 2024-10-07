@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleVisibilityButton = document.getElementById('toggle-visibility');
     const sortSelect = document.getElementById('sort-select');
     const bookSearchInput = document.getElementById('book-search');
+    const bookDirectSearchInput = document.getElementById('book-direct-search');
     const paginationContainer = document.getElementById('pagination');
 
     if (bookList) {
@@ -156,6 +157,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    if (bookDirectSearchInput) {
+        bookDirectSearchInput.addEventListener('input', debounce(function() {
+            const searchTerm = this.value.trim();
+            if (searchTerm.length > 2) {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('direct_search', searchTerm);
+                
+                fetch(currentUrl.toString())
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.book_found) {
+                            const bookElement = document.querySelector(`[data-book-id="${data.book_id}"]`);
+                            if (bookElement) {
+                                bookElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                bookElement.classList.add('highlight');
+                                setTimeout(() => bookElement.classList.remove('highlight'), 2000);
+                            }
+                        }
+                    });
+            }
+        }, 300));
+    }
+
     function fetchBooks(url) {
         fetch(url)
             .then(response => response.text())
@@ -209,4 +233,16 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('popstate', function() {
         fetchBooks(new URL(window.location.href));
     });
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 });

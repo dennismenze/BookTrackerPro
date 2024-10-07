@@ -50,6 +50,7 @@ def list_detail(id):
     page = request.args.get('page', 1, type=int)
     per_page = 100
     search_query = request.args.get('search', '')
+    direct_search = request.args.get('direct_search', '')
 
     books_query = db.session.query(Book, BookList.rank, UserBook.read_date)\
         .join(BookList, Book.id == BookList.book_id)\
@@ -64,6 +65,18 @@ def list_detail(id):
                 Book.author.has(Translation.text_en.ilike(f'%{search_query}%')),
                 Book.author.has(Translation.text_de.ilike(f'%{search_query}%'))
             ))
+
+    if direct_search:
+        books_query = books_query.join(Translation, Book.title_id == Translation.id)\
+            .filter(or_(
+                Translation.text_en.ilike(f'%{direct_search}%'),
+                Translation.text_de.ilike(f'%{direct_search}%')
+            ))
+        book = books_query.first()
+        if book:
+            page = (books_query.all().index(book) // per_page) + 1
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'book_found': True, 'book_id': book[0].id})
 
     if sort_by == 'rank':
         books_query = books_query.order_by(BookList.rank)
