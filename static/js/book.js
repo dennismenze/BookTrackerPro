@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let totalPages = 1;
     let currentSort = 'name';
     let currentOrder = 'asc';
+    let currentUserRating = 0;
 
     if (toggleReadStatusButton) {
         toggleReadStatusButton.addEventListener("click", function () {
@@ -55,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     userRatingButtons.forEach((button) => {
         button.addEventListener("click", function () {
-            const rating = this.dataset.rating;
+            const rating = parseInt(this.dataset.rating);
             const bookId = toggleReadStatusButton.dataset.bookId;
 
             fetch("/book/rate", {
@@ -68,6 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.success) {
+                        currentUserRating = rating;
                         updateRatingDisplay(data.rating, data.average_rating);
                         if (toggleReadStatusButton.dataset.isRead.toLowerCase() === "false") {
                             toggleReadStatusButton.click();
@@ -75,6 +77,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 })
                 .catch((error) => console.error("Error:", error));
+        });
+
+        // Add hover effect
+        button.addEventListener("mouseover", function() {
+            const rating = parseInt(this.dataset.rating);
+            updateStarDisplay(rating);
+        });
+
+        button.addEventListener("mouseout", function() {
+            updateStarDisplay(currentUserRating);
         });
     });
 
@@ -92,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.success) {
+                        currentUserRating = 0;
                         updateRatingDisplay(0, data.average_rating);
                         alert(data.message);
                     }
@@ -101,17 +114,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateRatingDisplay(userRating, averageRating) {
-        userRatingButtons.forEach((btn) => {
-            btn.classList.remove("text-yellow-500");
-            btn.classList.add("text-gray-300");
-            if (btn.dataset.rating <= userRating) {
-                btn.classList.remove("text-gray-300");
-                btn.classList.add("text-yellow-500");
-            }
-        });
+        currentUserRating = userRating;
+        updateStarDisplay(userRating);
         document.getElementById("average-rating").textContent = averageRating.toFixed(1) + " / 5";
         document.querySelector("#user-rating + p").textContent = userRating > 0 ? `Your rating: ${userRating} / 5` : "You haven't rated this book yet.";
         deleteRatingButton.style.display = userRating > 0 ? "inline-block" : "none";
+    }
+
+    function updateStarDisplay(rating) {
+        userRatingButtons.forEach((btn, index) => {
+            if (index < rating) {
+                btn.classList.remove("text-gray-300");
+                btn.classList.add("text-yellow-500");
+            } else {
+                btn.classList.remove("text-yellow-500");
+                btn.classList.add("text-gray-300");
+            }
+        });
     }
 
     submitReviewButton.addEventListener("click", function () {
@@ -183,6 +202,9 @@ document.addEventListener("DOMContentLoaded", function () {
             fetchLists(1, currentSort, currentOrder);
         });
     }
+
+    // Initialize the star display
+    updateRatingDisplay(parseInt(document.querySelector("#user-rating + p").textContent.split(':')[1]?.trim()[0]) || 0, parseFloat(document.getElementById("average-rating").textContent));
 
     fetchLists();
 });
