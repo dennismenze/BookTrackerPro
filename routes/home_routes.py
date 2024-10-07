@@ -9,8 +9,6 @@ from io import BytesIO, StringIO
 from flask_babel import _, get_locale
 import csv
 import io
-import logging
-from utils import process_csv
 import json
 
 bp = Blueprint('home', __name__)
