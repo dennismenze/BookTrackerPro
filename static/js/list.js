@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookList = document.getElementById('book-list');
     const toggleVisibilityButton = document.getElementById('toggle-visibility');
     const sortSelect = document.getElementById('sort-select');
+    const bookSearchInput = document.getElementById('book-search');
 
     if (bookList) {
         bookList.addEventListener('click', function(e) {
@@ -139,6 +140,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+        });
+    }
+
+    // Book search functionality
+    if (bookSearchInput) {
+        bookSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const bookItems = bookList.querySelectorAll('.book-item');
+
+            bookItems.forEach(item => {
+                const title = item.querySelector('h3').textContent.toLowerCase();
+                const author = item.querySelector('p').textContent.toLowerCase();
+
+                if (title.includes(searchTerm) || author.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
         });
     }
 });
