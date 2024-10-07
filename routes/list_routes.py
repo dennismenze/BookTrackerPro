@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import Author, db, List, Book, UserBook, BookList, Translation
 from sqlalchemy.orm import joinedload
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, and_
 from datetime import date
 from flask_babel import _, get_locale
 
@@ -48,26 +48,36 @@ def list_detail(id):
 
     sort_by = request.args.get('sort', 'rank')
     page = request.args.get('page', 1, type=int)
-    per_page = 100  # Fetch 100 books per page
+    per_page = 100
+    search_query = request.args.get('search', '')
 
     books_query = db.session.query(Book, BookList.rank, UserBook.read_date)\
         .join(BookList, Book.id == BookList.book_id)\
-        .outerjoin(UserBook, (UserBook.book_id == Book.id) & (UserBook.user_id == current_user.id))\
+        .outerjoin(UserBook, and_(UserBook.book_id == Book.id, UserBook.user_id == current_user.id))\
         .filter(BookList.list_id == id)
+
+    if search_query:
+        books_query = books_query.join(Translation, Book.title_id == Translation.id)\
+            .filter(or_(
+                Translation.text_en.ilike(f'%{search_query}%'),
+                Translation.text_de.ilike(f'%{search_query}%'),
+                Book.author.has(Translation.text_en.ilike(f'%{search_query}%')),
+                Book.author.has(Translation.text_de.ilike(f'%{search_query}%'))
+            ))
 
     if sort_by == 'rank':
         books_query = books_query.order_by(BookList.rank)
     elif sort_by == 'title':
-        books_query = books_query.order_by(Book.title)
+        books_query = books_query.join(Translation, Book.title_id == Translation.id).order_by(Translation.text_en)
     elif sort_by == 'author':
-        books_query = books_query.join(Book.author).order_by(Author.name)
+        books_query = books_query.join(Book.author).join(Translation, Author.name_id == Translation.id).order_by(Translation.text_en)
     elif sort_by == 'read_status':
         books_query = books_query.order_by(UserBook.read_date.desc().nullslast())
 
+    total_books = books_query.count()
     paginated_books = books_query.paginate(page=page, per_page=per_page, error_out=False)
 
     books = []
-    total_books = paginated_books.total
     read_books = 0
     total_main_works = 0
     main_works_read = 0
@@ -81,8 +91,8 @@ def list_detail(id):
                 main_works_read += 1
         books.append({
             'id': book.id,
-            'title': book.title,
-            'author': book.author.name,
+            'title': book.title.text_en,
+            'author': book.author.name.text_en,
             'author_id': book.author_id,
             'cover_image_url': book.cover_image_url,
             'is_read': is_read,
@@ -101,7 +111,9 @@ def list_detail(id):
                            sort_by=sort_by,
                            total_main_works=total_main_works,
                            main_works_read=main_works_read,
-                           main_works_read_percentage=main_works_read_percentage)
+                           main_works_read_percentage=main_works_read_percentage,
+                           search_query=search_query,
+                           total_books=total_books)
 
 @bp.route('/toggle_read_status', methods=['POST'])
 @login_required

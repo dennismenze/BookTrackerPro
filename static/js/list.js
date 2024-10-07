@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleVisibilityButton = document.getElementById('toggle-visibility');
     const sortSelect = document.getElementById('sort-select');
     const bookSearchInput = document.getElementById('book-search');
+    const paginationContainer = document.getElementById('pagination');
 
     if (bookList) {
         bookList.addEventListener('click', function(e) {
@@ -28,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         icon.classList.toggle('fa-eye');
                         icon.classList.toggle('fa-eye-slash');
 
-                        // Update progress bars and counts
                         document.getElementById('read-progress-bar').style.width = `${data.read_percentage}%`;
                         document.getElementById('read-books-count').textContent = data.read_books;
                         document.getElementById('read-percentage').textContent = Math.round(data.read_percentage);
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sortSelect.addEventListener('change', function() {
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('sort', this.value);
-            currentUrl.searchParams.set('page', '1');  // Reset to first page when sorting
+            currentUrl.searchParams.set('page', '1');
             window.location.href = currentUrl.toString();
         });
     }
@@ -136,29 +136,77 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        location.reload();  // Refresh the page to show the updated list
+                        location.reload();
                     }
                 });
             }
         });
     }
 
-    // Book search functionality
     if (bookSearchInput) {
         bookSearchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const bookItems = bookList.querySelectorAll('.book-item');
-
-            bookItems.forEach(item => {
-                const title = item.querySelector('h3').textContent.toLowerCase();
-                const author = item.querySelector('p').textContent.toLowerCase();
-
-                if (title.includes(searchTerm) || author.includes(searchTerm)) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+            const searchTerm = this.value.trim();
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('search', searchTerm);
+            currentUrl.searchParams.set('page', '1');
+            
+            history.pushState(null, '', currentUrl.toString());
+            
+            fetchBooks(currentUrl);
         });
     }
+
+    function fetchBooks(url) {
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newBookList = doc.getElementById('book-list');
+                if (newBookList) {
+                    bookList.innerHTML = newBookList.innerHTML;
+                }
+                
+                const newPagination = doc.getElementById('pagination');
+                if (newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+                
+                updatePageContent(doc);
+            })
+            .catch(error => console.error('Error fetching books:', error));
+    }
+
+    function updatePageContent(newDoc) {
+        const readPercentage = newDoc.getElementById('read-percentage');
+        if (readPercentage) {
+            document.getElementById('read-percentage').textContent = readPercentage.textContent;
+        }
+
+        const mainWorksReadPercentage = newDoc.getElementById('main-works-read-percentage');
+        if (mainWorksReadPercentage) {
+            document.getElementById('main-works-read-percentage').textContent = mainWorksReadPercentage.textContent;
+        }
+
+        const totalBooks = newDoc.getElementById('total-books');
+        if (totalBooks) {
+            document.getElementById('total-books').textContent = totalBooks.textContent;
+        }
+    }
+
+    if (paginationContainer) {
+        paginationContainer.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                const url = new URL(e.target.href);
+                fetchBooks(url);
+                history.pushState(null, '', url.toString());
+            }
+        });
+    }
+
+    window.addEventListener('popstate', function() {
+        fetchBooks(new URL(window.location.href));
+    });
 });

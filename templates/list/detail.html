@@ -8,7 +8,7 @@
     
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <p class="text-gray-600">{{ pagination.total }} {{ _('books') }}</p>
+            <p class="text-gray-600"><span id="total-books">{{ total_books }}</span> {{ _('books') }}</p>
         </div>
         <div class="flex items-center">
             <span class="mr-2">{{ _('Public') if list.is_public else _('Private') }}</span>
@@ -28,7 +28,7 @@
                 <div id="read-progress-bar" class="bg-blue-500 rounded-full h-4" style="width: {{ read_percentage }}%;"></div>
             </div>
             <p class="mt-1 text-sm">
-                <span id="read-books-count">{{ (books|selectattr('is_read', 'eq', true)|list|length) }}</span> {{ _('out of') }} {{ pagination.total }} {{ _('books read') }}
+                <span id="read-books-count">{{ (books|selectattr('is_read', 'eq', true)|list|length) }}</span> {{ _('out of') }} <span id="total-books">{{ total_books }}</span> {{ _('books read') }}
                 (<span id="read-percentage">{{ read_percentage|int }}</span>%)
             </p>
         </div>
@@ -47,7 +47,7 @@
     <!-- Book search input -->
     <div class="mb-4">
         <label for="book-search" class="block text-sm font-medium text-gray-700">{{ _('Search for a book:') }}</label>
-        <input type="text" id="book-search" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="{{ _('Enter book title...') }}">
+        <input type="text" id="book-search" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="{{ _('Enter book title...') }}" value="{{ search_query }}">
     </div>
 
     <!-- Sorting dropdown -->
@@ -71,6 +71,7 @@
         <div id="search-results" class="mt-2"></div>
     </div>
 
+    <!-- Book list -->
     <ul id="book-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" data-list-id="{{ list.id }}">
         {% for book in books %}
             <li class="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}" data-rank="{{ book.rank }}">
@@ -106,9 +107,9 @@
     </ul>
 
     <!-- Pagination -->
-    <div class="mt-6 flex justify-center">
+    <div id="pagination" class="mt-6 flex justify-center">
         {% if pagination.has_prev %}
-            <a href="{{ url_for('list.list_detail', id=list.id, page=pagination.prev_num, sort=sort_by) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">
+            <a href="{{ url_for('list.list_detail', id=list.id, page=pagination.prev_num, sort=sort_by, search=search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">
                 {{ _('Previous') }}
             </a>
         {% endif %}
@@ -116,7 +117,7 @@
             {{ _('Page %(current)s of %(total)s', current=pagination.page, total=pagination.pages) }}
         </span>
         {% if pagination.has_next %}
-            <a href="{{ url_for('list.list_detail', id=list.id, page=pagination.next_num, sort=sort_by) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">
+            <a href="{{ url_for('list.list_detail', id=list.id, page=pagination.next_num, sort=sort_by, search=search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">
                 {{ _('Next') }}
             </a>
         {% endif %}
