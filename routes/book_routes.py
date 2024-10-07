@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Book, UserBook, Author, List, Translation
+from models import db, Book, UserBook, Author, List, BookList, Translation
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc
 from datetime import date
