@@ -51,6 +51,9 @@
                         {{ _('Your rating') }}: {{ user_rating }} / 5
                     {% endif %}
                 </p>
+                <button id="delete-rating" class="mt-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm {% if user_rating == 0 %}hidden{% endif %}">
+                    {{ _('Delete Rating') }}
+                </button>
             </div>
 
             <div class="mb-4">

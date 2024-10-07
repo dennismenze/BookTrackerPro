@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const nextPageButton = document.getElementById("next-page");
     const pageInfo = document.getElementById("page-info");
     const sortSelect = document.getElementById("sort-select");
+    const deleteRatingButton = document.getElementById("delete-rating");
 
     let currentPage = 1;
     let totalPages = 1;
@@ -67,17 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.success) {
-                        userRatingButtons.forEach((btn) => {
-                            btn.classList.remove("text-yellow-500");
-                            btn.classList.add("text-gray-300");
-                            if (btn.dataset.rating <= rating) {
-                                btn.classList.remove("text-gray-300");
-                                btn.classList.add("text-yellow-500");
-                            }
-                        });
-                        document.getElementById("average-rating").textContent = data.average_rating.toFixed(1) + " / 5";
-                        document.querySelector("#user-rating + p").textContent = `Your rating: ${rating} / 5`;
-
+                        updateRatingDisplay(data.rating, data.average_rating);
                         if (toggleReadStatusButton.dataset.isRead.toLowerCase() === "false") {
                             toggleReadStatusButton.click();
                         }
@@ -86,6 +77,42 @@ document.addEventListener("DOMContentLoaded", function () {
                 .catch((error) => console.error("Error:", error));
         });
     });
+
+    if (deleteRatingButton) {
+        deleteRatingButton.addEventListener("click", function () {
+            const bookId = toggleReadStatusButton.dataset.bookId;
+
+            fetch("/book/delete_rating", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ book_id: bookId }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        updateRatingDisplay(0, data.average_rating);
+                        alert(data.message);
+                    }
+                })
+                .catch((error) => console.error("Error:", error));
+        });
+    }
+
+    function updateRatingDisplay(userRating, averageRating) {
+        userRatingButtons.forEach((btn) => {
+            btn.classList.remove("text-yellow-500");
+            btn.classList.add("text-gray-300");
+            if (btn.dataset.rating <= userRating) {
+                btn.classList.remove("text-gray-300");
+                btn.classList.add("text-yellow-500");
+            }
+        });
+        document.getElementById("average-rating").textContent = averageRating.toFixed(1) + " / 5";
+        document.querySelector("#user-rating + p").textContent = userRating > 0 ? `Your rating: ${userRating} / 5` : "You haven't rated this book yet.";
+        deleteRatingButton.style.display = userRating > 0 ? "inline-block" : "none";
+    }
 
     submitReviewButton.addEventListener("click", function () {
         const bookId = toggleReadStatusButton.dataset.bookId;
