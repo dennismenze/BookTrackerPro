@@ -145,8 +145,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateRatingDisplay(userRating, averageRating) {
         currentUserRating = userRating;
         updateStarDisplay(userRating);
-        document.getElementById("average-rating").textContent = averageRating.toFixed(1) + " / 5";
-        document.querySelector("#user-rating + p").textContent = userRating > 0 ? `Your rating: ${userRating.toFixed(1)} / 5` : "You haven't rated this book yet.";
+        document.getElementById("average-rating").textContent = averageRating ? averageRating.toFixed(1) + " / 5" : "No ratings yet";
+        const userRatingText = document.querySelector("#user-rating + p");
+        userRatingText.textContent = userRating > 0 ? `Your rating: ${userRating.toFixed(1)} / 5` : "Your rating: Not rated";
         deleteRatingButton.style.display = userRating > 0 ? "inline-block" : "none";
     }
 
@@ -238,8 +239,10 @@ document.addEventListener("DOMContentLoaded", function () {
     createStarRating();
 
     // Initialize the star display
-    const initialRating = parseFloat(document.querySelector("#user-rating + p").textContent.split(':')[1]?.trim().split('/')[0]) || 0;
-    updateRatingDisplay(initialRating, parseFloat(document.getElementById("average-rating").textContent));
+    const initialRatingText = document.querySelector("#user-rating + p").textContent;
+    const initialRating = initialRatingText.includes("Not rated") ? 0 : parseFloat(initialRatingText.split(':')[1]);
+    const averageRating = document.getElementById("average-rating").textContent;
+    updateRatingDisplay(initialRating, parseFloat(averageRating));
 
     fetchLists();
 });
