@@ -47,6 +47,8 @@ def list_detail(id):
         return redirect(url_for('list.lists'))
 
     sort_by = request.args.get('sort', 'rank')
+    page = request.args.get('page', 1, type=int)
+    per_page = 100  # Update to 100 books per page
 
     books_query = db.session.query(Book, BookList.rank, UserBook.read_date)\
         .join(BookList, Book.id == BookList.book_id)\
@@ -62,14 +64,14 @@ def list_detail(id):
     elif sort_by == 'read_status':
         books_query = books_query.order_by(UserBook.read_date.desc().nullslast())
 
-    books_data = books_query.all()
+    paginated_books = books_query.paginate(page=page, per_page=per_page, error_out=False)
 
     books = []
-    total_books = len(books_data)
+    total_books = paginated_books.total
     read_books = 0
     total_main_works = 0
     main_works_read = 0
-    for book, rank, read_date in books_data:
+    for book, rank, read_date in paginated_books.items:
         is_read = read_date is not None
         if is_read:
             read_books += 1
@@ -94,6 +96,7 @@ def list_detail(id):
     return render_template('list/detail.html',
                            list=book_list,
                            books=books,
+                           pagination=paginated_books,
                            read_percentage=read_percentage,
                            sort_by=sort_by,
                            total_main_works=total_main_works,
