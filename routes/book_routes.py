@@ -124,20 +124,22 @@ def book_lists(book_id):
     sort = request.args.get('sort', 'name')
     order = request.args.get('order', 'asc')
 
-    query = List.query.join(BookList).filter(BookList.book_id == book_id)
+    query = db.session.query(List, Translation).join(BookList).filter(BookList.book_id == book_id).join(Translation, List.name_id == Translation.id)
 
     if sort == 'name':
-        query = query.order_by(List.name.asc() if order == 'asc' else List.name.desc())
+        query = query.order_by(Translation.text_en.asc() if order == 'asc' else Translation.text_en.desc())
     elif sort == 'visibility':
         query = query.order_by(List.is_public.asc() if order == 'asc' else List.is_public.desc())
 
-    lists = query.paginate(page=page, per_page=per_page, error_out=False)
+    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    lists = [{'id': l.id, 'name': t.text_en, 'is_public': l.is_public} for l, t in paginated.items]
 
     return jsonify({
-        'lists': [{'id': l.id, 'name': l.name, 'is_public': l.is_public} for l in lists.items],
-        'current_page': lists.page,
-        'pages': lists.pages,
-        'total': lists.total
+        'lists': lists,
+        'current_page': paginated.page,
+        'pages': paginated.pages,
+        'total': paginated.total
     })
 
 @bp.route('/toggle_read_status', methods=['POST'])
