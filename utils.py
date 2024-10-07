@@ -1,3 +1,4 @@
+import time
 from models import db, Author, Book, UserBook, BookList, Translation
 from flask import current_app
 import requests
@@ -264,113 +265,183 @@ def fetch_openlibrary_books_info(title: str, author: str) -> Optional[Dict[str, 
         print(f"Error fetching book info from OpenLibrary: {e}")
         return None
 
-def process_csv(csv_file, mappings, user):
-    """
-    Verarbeitet die hochgeladene CSV-Datei basierend auf den Zuordnungen und importiert die Bücher für den Benutzer.
-
-    :param csv_file: Die hochgeladene CSV-Datei
-    :param mappings: Ein Dictionary, das die Zuordnung der erforderlichen Felder zu den CSV-Spalten enthält
-    :param user: Das aktuelle Benutzerobjekt
-    :return: Die Anzahl der erfolgreich importierten Bücher
-    """
-    try:
-        stream = io.StringIO(csv_file.stream.read().decode("UTF8"), newline=None)
-        csv_reader = csv.DictReader(stream, delimiter=';')  # Passe das Trennzeichen ggf. an
-
-        imported_count = 0
-        for row in csv_reader:
-            # Verwende die Zuordnungen, um die entsprechenden Felder auszulesen
-            title = row.get(mappings.get('title'), '').strip()
-            author_name = row.get(mappings.get('author'), '').strip()
-            isbn = row.get(mappings.get('isbn'), '').strip()
-            read_date_str = row.get(mappings.get('read_date'), '').strip()
-
-            if not title or not author_name:
-                continue
-
-            # Suche oder erstelle den Autor
-            author = Author.query.filter(Author.name == author_name).first()
-            if not author:
-                author_translation = Translation(text_en=author_name, text_de=author_name)
-                author = Author(name=author_translation)
-                db.session.add(author)
-
-            # Suche oder erstelle das Buch
-            book = Book.query.filter(
-                (Book.title.has(text_en=title)) & 
-                (Book.title.has(text_de=title)) & 
-                (Book.author == author)
-            ).first()
-            if not book:
-                book_translation = Translation(text_en=title, text_de=title)
-                book = Book(title=book_translation, author=author, isbn=isbn)
-                db.session.add(book)
-
-            # Verknüpfe das Buch mit dem Benutzer
-            user_book = UserBook.query.filter_by(user_id=user.id, book_id=book.id).first()
-            if not user_book:
-                user_book = UserBook(user_id=user.id, book_id=book.id)
-                db.session.add(user_book)
-
-            # Verarbeite das Lese-Datum, falls vorhanden
-            if read_date_str:
-                try:
-                    read_date = datetime.strptime(read_date_str, '%Y-%m-%d').date()
-                    user_book.read_date = read_date
-                except ValueError:
-                    current_app.logger.warning(f"Ungültiges Datumsformat für Buch '{title}': {read_date_str}")
-
-            imported_count += 1
-
-        db.session.commit()
-        return imported_count
-
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Fehler beim Verarbeiten der CSV-Datei: {e}")
-        raise e
-    
-    import requests
-
-def search_german_title_bookbrainz(author, title):
-    # URL der BookBrainz API
-    base_url = "https://api.bookbrainz.org/v1/search/work"
-    params = {
-        "q": f"{author} {title}",  # Suchanfrage mit Titel
-        "fmt": "json"  # Antwortformat als JSON
+def search_german_title_wikidata1(author, title):
+    # Step 1: Find the work by author and title using Wikidata API
+    url = "https://www.wikidata.org/w/api.php"
+    work_params = {
+        'action': 'query',
+        'list': 'search',
+        'srsearch': f"{author} {title}",
+        'format': 'json',
     }
 
     try:
-        # Schritt 1: Suche nach dem Buch, um die Work-ID zu erhalten
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()  # Überprüfe auf Fehler
+        # Send request to Wikidata to get the work by author and title
+        response = requests.get(url, params=work_params)
+        response.raise_for_status()  # Check for errors
+        data = response.json()
+        # Process the work query results
+        work_results = data.get("query", {}).get("search", [])
+        if not work_results:
+            return f"No matching title found for '{title}' by author '{author}'."
+
+        # Assuming the first result is the correct work
+        work_id = work_results[0].get("title")
+        if not work_id:
+            return f"No work ID found for '{title}' by author '{author}'."
+
+        work_id = work_id.replace("Q", "")
+
+        # Step 2: Find the German label for the work
+        labels_params = {
+            'action': 'wbgetentities',
+            'ids': f'Q{work_id}',
+            'props': 'labels',
+            'languages': 'de',
+            'format': 'json'
+        }
+
+        # Send request to Wikidata to get the German label
+        response = requests.get(url, params=labels_params)
+        response.raise_for_status()  # Check for errors
         data = response.json()
 
-        # Überprüfen, ob Ergebnisse vorhanden sind
-        if not data.get("results"):
-            print(f"Keine Ergebnisse für den Titel '{title}' gefunden.")
-            return
-
-        # Iteration durch die Suchergebnisse, um die Details des Werks zu holen
-        work_results = data.get("results", [])
-        for result in work_results:
-            work = result.get("item", {})
-            work_id = work.get("bbid")
-
-            # Hole die Details des Werks
-            if work_id:
-                work_url = f"https://api.bookbrainz.org/v1/work/{work_id}"
-                work_response = requests.get(work_url)
-                work_response.raise_for_status()
-                work_data = work_response.json()
-
-                # Prüfen, ob es eine Ausgabe auf Deutsch gibt
-                title = work_data.get("title", "Unbekannter Titel")
-                languages = work_data.get("language_codes", [])
-                
-                if 'deu' in languages:  # 'deu' ist der Sprachcode für Deutsch
-                    print(f"Deutscher Titel für '{title}':")
-                    print(f"- {title}")
+        german_title = data.get("entities", {}).get(f"Q{work_id}", {}).get("labels", {}).get("de", {}).get("value", "Unknown Title")
+        return german_title
 
     except requests.exceptions.RequestException as e:
-        print(f"Fehler bei der Anfrage: {e}")
+        return f"Request error: {e}"
+
+
+import requests
+from fuzzywuzzy import process
+
+def search_german_title_wikidata(author, title):
+    url = "https://www.wikidata.org/w/api.php"
+    author_params = {
+        'action': 'query',
+        'list': 'search',
+        'srsearch': author,
+        'format': 'json',
+    }
+
+    try:
+        response = requests.get(url, params=author_params)
+        response.raise_for_status()
+        data = response.json()
+
+        author_results = data.get("query", {}).get("search", [])
+        if not author_results:
+            return title
+
+        author_id = author_results[0].get("title")
+        if not author_id:
+            return title
+
+        author_id = author_id.replace("Q", "")
+
+        sparql_url = "https://query.wikidata.org/sparql"
+        works_query = f"""
+        SELECT ?work ?workLabel WHERE {{
+          ?work wdt:P31 wd:Q7725634;
+                wdt:P50 wd:Q{author_id};
+                rdfs:label ?workLabel.
+          FILTER(LANG(?workLabel) = "en")
+        }}
+        """
+
+        params = {
+            'query': works_query,
+            'format': 'json'
+        }
+
+        response = requests.get(sparql_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        works_results = data.get("results", {}).get("bindings", [])
+        if not works_results:
+            return title
+
+        titles = {result.get("work", {}).get("value"): result.get("workLabel", {}).get("value", "") for result in works_results}
+        best_match = process.extractOne(title, titles.values())
+
+        if not best_match:
+            return title
+
+        best_match_title = best_match[0]
+        best_match_work_id = [key for key, value in titles.items() if value == best_match_title][0]
+
+        labels_params = {
+            'action': 'wbgetentities',
+            'ids': best_match_work_id.split('/')[-1],
+            'props': 'labels',
+            'languages': 'de',
+            'format': 'json'
+        }
+
+        response = requests.get(url, params=labels_params)
+        response.raise_for_status()
+        data = response.json()
+
+        german_title = data.get("entities", {}).get(best_match_work_id.split('/')[-1], {}).get("labels", {}).get("de", {}).get("value", title)
+        return german_title
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return title
+
+import requests
+from fuzzywuzzy import process
+
+def search_german_author_name_wikidata(author):
+    url = "https://www.wikidata.org/w/api.php"
+    author_params = {
+        'action': 'query',
+        'list': 'search',
+        'srsearch': author,
+        'format': 'json',
+    }
+
+    try:
+        response = requests.get(url, params=author_params)
+        response.raise_for_status()
+        data = response.json()
+
+        author_results = data.get("query", {}).get("search", [])
+        if not author_results:
+            return f"No author found for '{author}'."
+
+        author_id = author_results[0].get("title")
+        if not author_id:
+            return f"No author ID found for '{author}'."
+
+        author_id = author_id.replace("Q", "")
+
+        sparql_url = "https://query.wikidata.org/sparql"
+        labels_query = f"""
+        SELECT ?germanLabel WHERE {{
+          wd:Q{author_id} rdfs:label ?germanLabel.
+          FILTER(LANG(?germanLabel) = "de")
+        }}
+        """
+
+        params = {
+            'query': labels_query,
+            'format': 'json'
+        }
+
+        response = requests.get(sparql_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        results = data.get("results", {}).get("bindings", [])
+        if not results:
+            return author   
+
+        german_name = results[0].get("germanLabel", {}).get("value", author)
+        return german_name
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return author
