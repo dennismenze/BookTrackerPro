@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookDirectSearchInput = document.getElementById('book-direct-search');
     const paginationContainer = document.getElementById('pagination');
 
+    let isToggling = false;
+
     function scrollToBook(bookId) {
         const bookElement = document.querySelector(`[data-book-id="${bookId}"]`);
         if (bookElement) {
@@ -27,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const bookId = listItem.dataset.bookId;
                 const listId = bookList.dataset.listId;
                 const isRead = !listItem.classList.contains('read');
+
+                if (isToggling) return;
+                isToggling = true;
+
+                button.disabled = true;
 
                 fetch('/list/toggle_read_status', {
                     method: 'POST',
@@ -51,6 +58,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('main-works-read-count').textContent = data.main_works_read;
                         document.getElementById('main-works-read-percentage').textContent = Math.round(data.main_works_read_percentage);
                     }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    isToggling = false;
+                    button.disabled = false;
                 });
             }
 
