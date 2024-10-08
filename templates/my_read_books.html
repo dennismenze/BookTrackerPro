@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ _('My Read Books') }}{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">{{ _('My Read Books') }}</h1>
+
+    {% if books.items %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {% for user_book in books.items %}
+        <div class="bg-white shadow-md rounded-lg p-4">
+            <a href="{{ url_for('book.book_detail', id=user_book.book.id) }}">
+                <img src="{{ user_book.book.cover_image_url or url_for('static', filename='images/no-cover.png') }}"
+                     alt="{{ _('%(title)s cover', title=user_book.book.title) }}"
+                     class="w-full h-48 object-cover mb-2 rounded">
+                <h3 class="font-semibold truncate">{{ user_book.book.title }}</h3>
+            </a>
+            <a href="{{ url_for('author.author_detail', id=user_book.book.author.id) }}"
+               class="text-sm text-gray-600 hover:text-blue-500">{{ user_book.book.author.name }}</a>
+            <p class="text-xs text-gray-500 mt-1">{{ _('Read on:') }} {{ user_book.read_date.strftime('%B %d, %Y') }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-6 flex justify-center">
+        {% if books.has_prev %}
+        <a href="{{ url_for('home.my_read_books', page=books.prev_num) }}"
+           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">
+            {{ _('Previous') }}
+        </a>
+        {% endif %}
+        <span class="bg-gray-200 text-gray-700 font-bold py-2 px-4">
+            {{ _('Page %(current)s of %(total)s', current=books.page, total=books.pages) }}
+        </span>
+        {% if books.has_next %}
+        <a href="{{ url_for('home.my_read_books', page=books.next_num) }}"
+           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">
+            {{ _('Next') }}
+        </a>
+        {% endif %}
+    </div>
+    {% else %}
+    <p class="text-gray-600">{{ _('You have not marked any books as read yet.') }}</p>
+    {% endif %}
+</div>
+{% endblock %}
