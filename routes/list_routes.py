@@ -51,6 +51,7 @@ def list_detail(id):
     per_page = 100
     search_query = request.args.get('search', '')
     direct_search = request.args.get('direct_search', '')
+    book_id = request.args.get('book_id')
 
     books_query = db.session.query(Book, BookList.rank, UserBook.read_date)\
         .join(BookList, Book.id == BookList.book_id)\
@@ -77,6 +78,11 @@ def list_detail(id):
             page = (books_query.all().index(book) // per_page) + 1
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'book_found': True, 'book_id': book[0].id})
+
+    if book_id:
+        book = books_query.filter(Book.id == book_id).first()
+        if book:
+            page = (books_query.all().index(book) // per_page) + 1
 
     if sort_by == 'rank':
         books_query = books_query.order_by(BookList.rank)
@@ -126,7 +132,8 @@ def list_detail(id):
                            main_works_read=main_works_read,
                            main_works_read_percentage=main_works_read_percentage,
                            search_query=search_query,
-                           total_books=total_books)
+                           total_books=total_books,
+                           book_id=book_id)
 
 @bp.route('/toggle_read_status', methods=['POST'])
 @login_required

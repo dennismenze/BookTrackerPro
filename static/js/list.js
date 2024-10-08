@@ -6,6 +6,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookDirectSearchInput = document.getElementById('book-direct-search');
     const paginationContainer = document.getElementById('pagination');
 
+    function scrollToBook(bookId) {
+        const bookElement = document.querySelector(`[data-book-id="${bookId}"]`);
+        if (bookElement) {
+            bookElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            bookElement.classList.add('highlight');
+            setTimeout(() => bookElement.classList.remove('highlight'), 2000);
+        }
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookIdFromUrl = urlParams.get('book_id');
+    if (bookIdFromUrl) {
+        scrollToBook(bookIdFromUrl);
+    }
+
     if (bookList) {
         bookList.addEventListener('click', function(e) {
             if (e.target.classList.contains('toggle-read-status') || e.target.closest('.toggle-read-status')) {
@@ -59,6 +74,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         listItem.remove();
                     }
                 });
+            }
+
+            const bookLink = e.target.closest('a[href^="/book/"]');
+            if (bookLink) {
+                e.preventDefault();
+                const bookId = bookLink.closest('li').dataset.bookId;
+                const listId = bookList.dataset.listId;
+                const currentUrl = new URL(bookLink.href);
+                currentUrl.searchParams.append('ref_list_id', listId);
+                currentUrl.searchParams.append('ref_book_id', bookId);
+                window.location.href = currentUrl.toString();
             }
         });
     }

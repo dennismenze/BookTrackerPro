@@ -44,19 +44,16 @@
         </div>
     </div>
 
-    <!-- Book search input -->
     <div class="mb-4">
         <label for="book-search" class="block text-sm font-medium text-gray-700">{{ _('Search for a book:') }}</label>
         <input type="text" id="book-search" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="{{ _('Enter book title...') }}" value="{{ search_query }}">
     </div>
 
-    <!-- Direct navigation input -->
     <div class="mb-4">
         <label for="book-direct-search" class="block text-sm font-medium text-gray-700">{{ _('Go to specific book:') }}</label>
         <input type="text" id="book-direct-search" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="{{ _('Enter book title for direct navigation...') }}">
     </div>
 
-    <!-- Sorting dropdown -->
     <div class="mb-4">
         <label for="sort-select" class="block text-sm font-medium text-gray-700">{{ _('Sort by:') }}</label>
         <select id="sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
@@ -67,7 +64,6 @@
         </select>
     </div>
 
-    <!-- Add book search form -->
     <div class="mb-6">
         <h2 class="text-2xl font-semibold mb-2">{{ _('Add Books to List') }}</h2>
         <form id="add-book-form" class="flex items-center">
@@ -77,7 +73,6 @@
         <div id="search-results" class="mt-2"></div>
     </div>
 
-    <!-- Book list -->
     <ul id="book-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" data-list-id="{{ list.id }}">
         {% for book in books %}
             <li class="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between book-item {% if book.is_read %}read{% endif %}" data-book-id="{{ book.id }}" data-rank="{{ book.rank }}">
@@ -112,7 +107,6 @@
         {% endfor %}
     </ul>
 
-    <!-- Pagination -->
     <div id="pagination" class="mt-6 flex justify-center">
         {% if pagination.has_prev %}
             <a href="{{ url_for('list.list_detail', id=list.id, page=pagination.prev_num, sort=sort_by, search=search_query) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">
