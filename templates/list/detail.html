@@ -128,8 +128,5 @@
 {% block scripts %}
 {{ super() }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
-<script src="{{ url_for('static', filename='js/list.js') }}"></script>
-{% if list.user_id == current_user.id %}
-<script src="{{ url_for('static', filename='js/list_sort.js') }}"></script>
-{% endif %}
+<script id="listscripttag" src="{{ url_for('static', filename='js/list.js') }}" data-sortable="{{ list.user_id == current_user.id }}"></script>
 {% endblock %}

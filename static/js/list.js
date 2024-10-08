@@ -5,6 +5,60 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookSearchInput = document.getElementById('book-search');
     const bookDirectSearchInput = document.getElementById('book-direct-search');
     const paginationContainer = document.getElementById('pagination');
+    const listId = bookList.dataset.listId;
+
+    const isSortable = document.getElementById("listscripttag").dataset.sortable === 'True';
+
+    if (isSortable) {
+        // Initialize Sortable
+        const sortable = new Sortable(bookList, {
+            animation: 150,
+            onEnd: function (evt) {
+                const bookIds = Array.from(bookList.children).map(li => li.dataset.bookId);
+                updateRanks(bookIds);
+            }
+        });
+
+        // Handle sorting dropdown changes
+        sortSelect.addEventListener('change', function () {
+            const sortBy = this.value;
+            fetch(`/list/${listId}?sort=${sortBy}`)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newBookList = doc.getElementById('book-list');
+                    bookList.innerHTML = newBookList.innerHTML;
+                });
+        });
+
+        // Function to update ranks
+        function updateRanks(bookIds) {
+            fetch('/list/update_ranks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    list_id: listId,
+                    book_ids: bookIds
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Ranks updated successfully');
+                        // Update displayed ranks
+                        bookList.querySelectorAll('li').forEach((li, index) => {
+                            li.querySelector('span').textContent = `Rank: ${index + 1}`;
+                            li.dataset.rank = index + 1;
+                        });
+                    } else {
+                        console.error('Failed to update ranks:', data.error);
+                    }
+                });
+        }
+    }
 
     function scrollToBook(bookId) {
         const bookElement = document.querySelector(`[data-book-id="${bookId}"]`);
