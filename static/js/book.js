@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const row = listsTable.insertRow();
                     row.innerHTML = `
                         <td class="py-2 px-4">
-                            <a href="/list/${list.id}" class="text-blue-500 hover:underline">${list.name}</a>
+                            <a href="/list/${list.id}?book_id=${bookId}" class="text-blue-500 hover:underline">${list.name}</a>
                         </td>
                         <td class="py-2 px-4">${list.is_public ? window.translations["Public"] : window.translations["Private"]}</td>
                     `;
