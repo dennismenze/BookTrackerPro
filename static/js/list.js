@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const paginationContainer = document.getElementById('pagination');
 
     let isToggling = false;
+    let debounceTimer;
 
     function scrollToBook(bookId) {
         const bookElement = document.querySelector(`[data-book-id="${bookId}"]`);
@@ -30,42 +31,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 const listId = bookList.dataset.listId;
                 const isRead = !listItem.classList.contains('read');
 
-                if (isToggling) return;
-                isToggling = true;
+                console.log('Toggle button clicked:', { bookId, listId, isRead });
 
-                button.disabled = true;
+                if (isToggling) {
+                    console.log('Toggling in progress, ignoring click');
+                    return;
+                }
 
-                fetch('/list/toggle_read_status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ book_id: bookId, list_id: listId, is_read: isRead }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        listItem.classList.toggle('read');
-                        const icon = button.querySelector('i');
-                        icon.classList.toggle('fa-eye');
-                        icon.classList.toggle('fa-eye-slash');
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    isToggling = true;
+                    button.disabled = true;
 
-                        document.getElementById('read-progress-bar').style.width = `${data.read_percentage}%`;
-                        document.getElementById('read-books-count').textContent = data.read_books;
-                        document.getElementById('read-percentage').textContent = Math.round(data.read_percentage);
+                    console.log('Sending toggle request');
+                    fetch('/list/toggle_read_status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ book_id: bookId, list_id: listId, is_read: isRead }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Toggle response:', data);
+                        if (data.success) {
+                            listItem.classList.toggle('read');
+                            const icon = button.querySelector('i');
+                            icon.classList.toggle('fa-eye');
+                            icon.classList.toggle('fa-eye-slash');
 
-                        document.getElementById('main-works-progress-bar').style.width = `${data.main_works_read_percentage}%`;
-                        document.getElementById('main-works-read-count').textContent = data.main_works_read;
-                        document.getElementById('main-works-read-percentage').textContent = Math.round(data.main_works_read_percentage);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                })
-                .finally(() => {
-                    isToggling = false;
-                    button.disabled = false;
-                });
+                            document.getElementById('read-progress-bar').style.width = `${data.read_percentage}%`;
+                            document.getElementById('read-books-count').textContent = data.read_books;
+                            document.getElementById('read-percentage').textContent = Math.round(data.read_percentage);
+
+                            document.getElementById('main-works-progress-bar').style.width = `${data.main_works_read_percentage}%`;
+                            document.getElementById('main-works-read-count').textContent = data.main_works_read;
+                            document.getElementById('main-works-read-percentage').textContent = Math.round(data.main_works_read_percentage);
+                        } else {
+                            console.error('Toggle failed:', data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    })
+                    .finally(() => {
+                        isToggling = false;
+                        button.disabled = false;
+                        console.log('Toggle process completed');
+                    });
+                }, 300);
             }
 
             if (e.target.classList.contains('remove-book')) {
