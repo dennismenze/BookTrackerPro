@@ -10,6 +10,7 @@ from flask_babel import _, get_locale
 import csv
 import io
 import json
+from fuzzywuzzy import fuzz
 
 bp = Blueprint('home', __name__)
 
@@ -211,9 +212,6 @@ def set_language():
 @bp.route('/import_csv', methods=['POST'])
 @login_required
 def import_csv():
-    print("Received form data:", request.form)
-    print("Received files:", request.files)
-
     csv_file = request.files.get('csv_file')
     if not csv_file:
         return jsonify({"error": "No CSV file provided"}), 400
@@ -224,7 +222,6 @@ def import_csv():
 
     try:
         mappings = json.loads(mappings_json)
-        print("Received mappings:", mappings)
     except json.JSONDecodeError:
         print("Error decoding JSON mappings")
         return jsonify({"error": "Invalid mapping data"}), 400
@@ -233,6 +230,8 @@ def import_csv():
     csv_file = StringIO(csv_content)
     csv_reader = csv.DictReader(csv_file, delimiter=';')
 
+    authors = Author.query.join(Translation, Author.name_id == Translation.id).all()
+    books = Book.query.join(Translation, Book.title_id == Translation.id)
     imported_books = 0
     for row in csv_reader:
         title = row[mappings['title']]
@@ -242,6 +241,8 @@ def import_csv():
         if not title or not author_name:
             continue
 
+        author_name = author_name.split(',;')[0].strip()
+
         author = Author.query.filter(or_(
             Translation.text_en == author_name,
             Translation.text_de == author_name,
@@ -250,8 +251,20 @@ def import_csv():
         )).join(Author.name).first()
 
         if not author:
-            print(f"Author not found: {author_name}")
-            continue
+            highest_ratio = 0
+            for a in authors:
+                ratio_en = fuzz.partial_ratio(a.name.text_en, author_name)
+                ratio_de = fuzz.partial_ratio(a.name.text_de, author_name)
+                
+                if max(ratio_en, ratio_de) > highest_ratio:
+                    highest_ratio = max(ratio_en, ratio_de)
+                    author = a
+
+            if not author or highest_ratio < 80:
+                print(f"Author not found: {author_name}")
+                continue
+            else:
+                print(f"Author found with fuzzy matching: {author_name} -> {author.name.text_en}")
 
         book = Book.query.filter(
             Book.author_id == author.id
@@ -263,8 +276,20 @@ def import_csv():
         )).join(Book.title).first()
 
         if not book:
-            print(f"Book not found: {title} by {author_name}")
-            continue
+            highest_ratio = 0
+            for b in books.filter(Book.author_id == author.id):
+                ratio_en = fuzz.partial_ratio(b.title.text_en, author_name)
+                ratio_de = fuzz.partial_ratio(b.title.text_de, author_name)
+                
+                if max(ratio_en, ratio_de) > highest_ratio:
+                    highest_ratio = max(ratio_en, ratio_de)
+                    book = b
+
+            if not book or highest_ratio < 80:
+                print(f"Book not found: {title} by {author_name}")
+                continue
+            else:
+                print(f"Book found with fuzzy matching: {title} by {author_name} -> {book.title.text_en}")
 
         user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book.id).first()
         if not user_book:

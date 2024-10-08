@@ -71,17 +71,6 @@
     </div>
 
     {% if current_user.id == user.id %}
-    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h3 class="text-xl font-semibold mb-4">{{ _('Import/Export Books') }}</h3>
-        <div class="flex justify-between items-center">
-            <button id="import-csv-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                {{ _('Import CSV') }}
-            </button>
-            <a href="{{ url_for('home.export_csv') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                {{ _('Export CSV') }}
-            </a>
-        </div>
-
         <!-- Modal Dialog -->
         <div id="importCsvModal" class="modal">
             <div class="modal-content">
@@ -97,8 +86,11 @@
                     </div>
                     <button type="submit"
                         class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        {{ _('Importieren') }}
+                        {{ _('Import CSV') }}
                     </button>
+                    <a href="{{ url_for('home.export_csv') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        {{ _('Export CSV') }}
+                    </a>
                 </form>
             </div>
         </div>

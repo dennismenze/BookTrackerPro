@@ -154,15 +154,19 @@ def toggle_read_status():
 
     user_book = UserBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
 
-    if user_book:
-        user_book.read_date = date.today() if is_read else None
-    else:
-        user_book = UserBook(user_id=current_user.id, book_id=book_id, read_date=date.today() if is_read else None)
+    if is_read:
+        if user_book:
+            user_book.read_date = date.today()
+        else:
+            user_book = UserBook(user_id=current_user.id, book_id=book_id, read_date=date.today())
         db.session.add(user_book)
+    else:
+        if user_book:
+            db.session.delete(user_book)
 
     db.session.commit()
 
     return jsonify({
         'success': True,
-        'read_date': user_book.read_date.isoformat() if user_book.read_date else None
+        'read_date': user_book.read_date.isoformat() if is_read and user_book.read_date else None
     })
