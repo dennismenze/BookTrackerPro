@@ -87,9 +87,9 @@ def list_detail(id):
     if sort_by == 'rank':
         books_query = books_query.order_by(BookList.rank)
     elif sort_by == 'title':
-        books_query = books_query.join(Translation, Book.title_id == Translation.id).order_by(Translation.text_en)
+        books_query = books_query.join(Translation, Book.title_id == Translation.id).order_by(Translation.text_en if get_locale() == 'en' else Translation.text_de)
     elif sort_by == 'author':
-        books_query = books_query.join(Book.author).join(Translation, Author.name_id == Translation.id).order_by(Translation.text_en)
+        books_query = books_query.join(Book.author).join(Translation, Author.name_id == Translation.id).order_by(Translation.text_en if get_locale() == 'en' else Translation.text_de)
     elif sort_by == 'read_status':
         books_query = books_query.order_by(UserBook.read_date.desc().nullslast())
 
@@ -110,8 +110,8 @@ def list_detail(id):
                 main_works_read += 1
         books.append({
             'id': book.id,
-            'title': book.title.text_en,
-            'author': book.author.name.text_en,
+            'title': book.title,
+            'author': book.author.name,
             'author_id': book.author_id,
             'cover_image_url': book.cover_image_url,
             'is_read': is_read,
