@@ -9,9 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function scrollToBook(bookId) {
         const bookElement = document.querySelector(`[data-book-id="${bookId}"]`);
         if (bookElement) {
-            bookElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            bookElement.classList.add('highlight');
-            setTimeout(() => bookElement.classList.remove('highlight'), 2000);
+            bookElement.scrollIntoView({ behavior: 'auto', block: 'center' });
         }
     }
 

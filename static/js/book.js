@@ -234,10 +234,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Initialize the star rating system
     createStarRating();
 
-    // Initialize the star display
     const initialRatingText = document.querySelector("#user-rating + p").textContent;
     const initialRating = initialRatingText.includes("Not rated") ? 0 : parseFloat(initialRatingText.split(':')[1]);
     const averageRating = document.getElementById("average-rating").textContent;
