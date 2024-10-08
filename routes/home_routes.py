@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Book, Author, List, UserBook, Post, Translation
-from sqlalchemy import or_, func, and_, case
+from sqlalchemy import or_, func, and_, case, desc
 from sqlalchemy.orm import aliased
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
@@ -342,12 +342,42 @@ def export_csv():
 @login_required
 def my_read_books():
     page = request.args.get('page', 1, type=int)
-    per_page = 20  # You can adjust this number as needed
+    per_page = 20
+    sort_by = request.args.get('sort', 'read_date')
+    sort_order = request.args.get('order', 'desc')
+    filter_author = request.args.get('author', '')
+    filter_title = request.args.get('title', '')
     
-    read_books = UserBook.query.filter_by(user_id=current_user.id).filter(UserBook.read_date.isnot(None)).order_by(UserBook.read_date.desc())
+    query = UserBook.query.filter_by(user_id=current_user.id).filter(UserBook.read_date.isnot(None))
     
-    paginated_books = read_books.paginate(page=page, per_page=per_page, error_out=False)
+    if filter_author:
+        query = query.join(Book).join(Author).join(Translation, Author.name_id == Translation.id).filter(
+            or_(Translation.text_en.ilike(f'%{filter_author}%'),
+                Translation.text_de.ilike(f'%{filter_author}%'))
+        )
     
-    return render_template('my_read_books.html', books=paginated_books)
-
-# Rest of the file remains unchanged
+    if filter_title:
+        query = query.join(Book).join(Translation, Book.title_id == Translation.id).filter(
+            or_(Translation.text_en.ilike(f'%{filter_title}%'),
+                Translation.text_de.ilike(f'%{filter_title}%'))
+        )
+    
+    if sort_by == 'title':
+        query = query.join(Book).join(Translation, Book.title_id == Translation.id).order_by(
+            desc(Translation.text_en) if sort_order == 'desc' else Translation.text_en
+        )
+    elif sort_by == 'author':
+        query = query.join(Book).join(Author).join(Translation, Author.name_id == Translation.id).order_by(
+            desc(Translation.text_en) if sort_order == 'desc' else Translation.text_en
+        )
+    else:  # Default: sort by read_date
+        query = query.order_by(desc(UserBook.read_date) if sort_order == 'desc' else UserBook.read_date)
+    
+    paginated_books = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    return render_template('my_read_books.html', 
+                           books=paginated_books, 
+                           sort_by=sort_by, 
+                           sort_order=sort_order, 
+                           filter_author=filter_author, 
+                           filter_title=filter_title)

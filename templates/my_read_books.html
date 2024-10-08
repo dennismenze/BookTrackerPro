@@ -4,6 +4,39 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">{{ _('My Read Books') }}</h1>
 
+    <div class="mb-6">
+        <form id="filter-form" class="flex flex-wrap items-end space-x-4">
+            <div class="flex-grow">
+                <label for="filter_title" class="block text-sm font-medium text-gray-700">{{ _('Filter by Title') }}</label>
+                <input type="text" id="filter_title" name="title" value="{{ filter_title }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+            </div>
+            <div class="flex-grow">
+                <label for="filter_author" class="block text-sm font-medium text-gray-700">{{ _('Filter by Author') }}</label>
+                <input type="text" id="filter_author" name="author" value="{{ filter_author }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+            </div>
+            <div>
+                <label for="sort_by" class="block text-sm font-medium text-gray-700">{{ _('Sort by') }}</label>
+                <select id="sort_by" name="sort" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="read_date" {% if sort_by == 'read_date' %}selected{% endif %}>{{ _('Read Date') }}</option>
+                    <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ _('Title') }}</option>
+                    <option value="author" {% if sort_by == 'author' %}selected{% endif %}>{{ _('Author') }}</option>
+                </select>
+            </div>
+            <div>
+                <label for="sort_order" class="block text-sm font-medium text-gray-700">{{ _('Order') }}</label>
+                <select id="sort_order" name="order" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>{{ _('Descending') }}</option>
+                    <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>{{ _('Ascending') }}</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    {{ _('Apply Filters') }}
+                </button>
+            </div>
+        </form>
+    </div>
+
     {% if books.items %}
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {% for user_book in books.items %}
@@ -23,7 +56,7 @@
 
     <div class="mt-6 flex justify-center">
         {% if books.has_prev %}
-        <a href="{{ url_for('home.my_read_books', page=books.prev_num) }}"
+        <a href="{{ url_for('home.my_read_books', page=books.prev_num, sort=sort_by, order=sort_order, title=filter_title, author=filter_author) }}"
            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">
             {{ _('Previous') }}
         </a>
@@ -32,7 +65,7 @@
             {{ _('Page %(current)s of %(total)s', current=books.page, total=books.pages) }}
         </span>
         {% if books.has_next %}
-        <a href="{{ url_for('home.my_read_books', page=books.next_num) }}"
+        <a href="{{ url_for('home.my_read_books', page=books.next_num, sort=sort_by, order=sort_order, title=filter_title, author=filter_author) }}"
            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">
             {{ _('Next') }}
         </a>
@@ -42,4 +75,9 @@
     <p class="text-gray-600">{{ _('You have not marked any books as read yet.') }}</p>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/my_read_books.js') }}"></script>
 {% endblock %}
