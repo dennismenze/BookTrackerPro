@@ -241,7 +241,8 @@ def import_csv():
         if not title or not author_name:
             continue
 
-        author_name = author_name.split(',;')[0].strip()
+        author_name = author_name.split(',;[(')[0].strip()
+        title = title.split(';[(')[0].strip()
 
         author = Author.query.filter(or_(
             Translation.text_en == author_name,
@@ -278,8 +279,8 @@ def import_csv():
         if not book:
             highest_ratio = 0
             for b in books.filter(Book.author_id == author.id):
-                ratio_en = fuzz.partial_ratio(b.title.text_en, author_name)
-                ratio_de = fuzz.partial_ratio(b.title.text_de, author_name)
+                ratio_en = fuzz.partial_ratio(b.title.text_en, title)
+                ratio_de = fuzz.partial_ratio(b.title.text_de, title)
 
                 if max(ratio_en, ratio_de) > highest_ratio:
                     highest_ratio = max(ratio_en, ratio_de)
