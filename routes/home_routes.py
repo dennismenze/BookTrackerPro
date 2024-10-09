@@ -237,6 +237,8 @@ def import_csv():
         title = row[mappings['title']]
         author_name = row[mappings['author']]
         read_date_str = row[mappings['read_date']]
+        rating = row.get(mappings.get('rating', ''), None)
+        review = row.get(mappings.get('review', ''), None)
 
         if not title or not author_name:
             continue
@@ -297,14 +299,23 @@ def import_csv():
             user_book = UserBook(user_id=current_user.id, book_id=book.id)
             db.session.add(user_book)
 
-            if read_date_str:
-                try:
-                    read_date = datetime.strptime(read_date_str, '%Y-%m-%d' if get_locale() == 'en' else '%d.%m.%Y')
-                    user_book.read_date = read_date
-                except ValueError:
-                    print(f"Invalid date format for book: {title}")
+        if read_date_str:
+            try:
+                read_date = datetime.strptime(read_date_str, '%Y-%m-%d' if get_locale() == 'en' else '%d.%m.%Y')
+                user_book.read_date = read_date
+            except ValueError:
+                print(f"Invalid date format for book: {title}")
 
-            imported_books += 1
+        if rating:
+            try:
+                user_book.rating = float(rating)
+            except ValueError:
+                print(f"Invalid rating value for book: {title}")
+
+        if review:
+            user_book.review = review
+
+        imported_books += 1
 
     try:
         db.session.commit()
@@ -323,13 +334,15 @@ def export_csv():
     output = io.StringIO()
     writer = csv.writer(output)
 
-    writer.writerow(['Title', 'Author', 'Read Date'])
+    writer.writerow(['Title', 'Author', 'Read Date', 'Rating', 'Review'])
 
     for user_book in user_books:
         writer.writerow([
             user_book.book.title.text_en,
             user_book.book.author.name.text_en,
-            user_book.read_date.strftime('%Y-%m-%d') if user_book.read_date else ''
+            user_book.read_date.strftime('%Y-%m-%d') if user_book.read_date else '',
+            user_book.rating if user_book.rating is not None else '',
+            user_book.review if user_book.review else ''
         ])
 
     output.seek(0)

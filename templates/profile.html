@@ -94,7 +94,6 @@
                 </form>
             </div>
         </div>
-    </div>
     {% endif %}
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
@@ -142,98 +141,103 @@
         </a>
     </div>
     {% endif %}
+</div>
+{% endblock %}
 
-    <script>
-        const modal = document.getElementById("importCsvModal");
-        const mappingForm = document.getElementById("csv-mapping-form");
-        const mappingFields = document.getElementById("mapping-fields");
+{% block scripts %}
+{{ super() }}
+<script>
+    const modal = document.getElementById("importCsvModal");
+    const mappingForm = document.getElementById("csv-mapping-form");
+    const mappingFields = document.getElementById("mapping-fields");
 
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
         }
+    }
 
-        document.getElementById("csv_file").addEventListener("change", function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const text = e.target.result;
-                    const firstLineEnd = text.indexOf('\n');    
-                    const headerLine = firstLineEnd !== -1 ? text.substring(0, firstLineEnd) : text;
-                    const headers = headerLine.split(';');
+    document.getElementById("csv_file").addEventListener("change", function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const firstLineEnd = text.indexOf('\n');    
+                const headerLine = firstLineEnd !== -1 ? text.substring(0, firstLineEnd) : text;
+                const headers = headerLine.split(';');
 
-                    mappingFields.innerHTML = '';
+                mappingFields.innerHTML = '';
 
-                    const requiredFields = ['title', 'author', 'read_date'];
-                    const defaultMappings = {
-                        'title': "{{ _('Title') }}",
-                        'author': "{{ _('Author') }}",
-                        'read_date': "{{ _('Read Date') }}"
-                    };
+                const requiredFields = ['title', 'author', 'read_date', 'rating', 'review'];
+                const defaultMappings = {
+                    'title': "{{ _('Title') }}",
+                    'author': "{{ _('Author') }}",
+                    'read_date': "{{ _('Read Date') }}",
+                    'rating': "{{ _('Rating') }}",
+                    'review': "{{ _('Review') }}"
+                };
 
-                    requiredFields.forEach((field, index) => {
-                        const fieldDiv = document.createElement("div");
-                        fieldDiv.classList.add("mb-4");
+                requiredFields.forEach((field, index) => {
+                    const fieldDiv = document.createElement("div");
+                    fieldDiv.classList.add("mb-4");
 
-                        const label = document.createElement("label");
-                        label.setAttribute("for", `mapping_${field}`);
-                        label.classList.add("block", "text-sm", "font-medium", "text-gray-700");
-                        label.innerText = `${field.charAt(0).toUpperCase() + field.slice(1)}: `;
+                    const label = document.createElement("label");
+                    label.setAttribute("for", `mapping_${field}`);
+                    label.classList.add("block", "text-sm", "font-medium", "text-gray-700");
+                    label.innerText = `${field.charAt(0).toUpperCase() + field.slice(1)}: `;
 
-                        const select = document.createElement("select");
-                        select.name = `mapping_${field}`;
-                        select.id = `mapping_${field}`;
-                        select.required = true;
-                        select.classList.add("mt-1", "block", "w-full", "shadow-sm", "sm:text-sm", "border-gray-300", "rounded-md");
+                    const select = document.createElement("select");
+                    select.name = `mapping_${field}`;
+                    select.id = `mapping_${field}`;
+                    select.required = field !== 'rating' && field !== 'review';
+                    select.classList.add("mt-1", "block", "w-full", "shadow-sm", "sm:text-sm", "border-gray-300", "rounded-md");
 
-                        const defaultOption = document.createElement("option");
-                        defaultOption.value = "";
-                        defaultOption.text = "----";
-                        select.appendChild(defaultOption);
+                    const defaultOption = document.createElement("option");
+                    defaultOption.value = "";
+                    defaultOption.text = "----";
+                    select.appendChild(defaultOption);
 
-                        headers.forEach((header) => {
-                            const option = document.createElement("option");
-                            option.value = header.trim();
-                            option.text = header.trim();
-                            if (header.trim().toLowerCase() === defaultMappings[field].toLowerCase()) {
-                                option.selected = true;
-                            }
-                            select.appendChild(option);
-                        });
-
-                        fieldDiv.appendChild(label);
-                        fieldDiv.appendChild(select);
-                        mappingFields.appendChild(fieldDiv);
+                    headers.forEach((header) => {
+                        const option = document.createElement("option");
+                        option.value = header.trim();
+                        option.text = header.trim();
+                        if (header.trim().toLowerCase() === defaultMappings[field].toLowerCase()) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
                     });
 
-                };
-                reader.readAsText(file);
-            }
+                    fieldDiv.appendChild(label);
+                    fieldDiv.appendChild(select);
+                    mappingFields.appendChild(fieldDiv);
+                });
+
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    mappingForm.onsubmit = function(e) {
+        e.preventDefault();
+
+        const mappings = {};
+        const requiredFields = ['title', 'author', 'read_date', 'rating', 'review'];
+        requiredFields.forEach(field => {
+            const select = document.getElementById(`mapping_${field}`);
+            mappings[field] = select.value;
         });
 
-        mappingForm.onsubmit = function(e) {
-            e.preventDefault();
-
-            const mappings = {};
-            const requiredFields = ['title', 'author', 'read_date'];
-            requiredFields.forEach(field => {
-                const select = document.getElementById(`mapping_${field}`);
-                mappings[field] = select.value;
-            });
-
-            let hiddenInput = document.getElementById('hidden_mappings');
-            if (!hiddenInput) {
-                hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.id = 'hidden_mappings';
-                hiddenInput.name = 'mappings';
-                mappingForm.appendChild(hiddenInput);
-            }
-            hiddenInput.value = JSON.stringify(mappings);
-            mappingForm.submit();
+        let hiddenInput = document.getElementById('hidden_mappings');
+        if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.id = 'hidden_mappings';
+            hiddenInput.name = 'mappings';
+            mappingForm.appendChild(hiddenInput);
         }
-    </script>
-</div>
+        hiddenInput.value = JSON.stringify(mappings);
+        mappingForm.submit();
+    }
+</script>
 {% endblock %}
