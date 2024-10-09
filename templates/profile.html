@@ -185,7 +185,7 @@
                     const label = document.createElement("label");
                     label.setAttribute("for", `mapping_${field}`);
                     label.classList.add("block", "text-sm", "font-medium", "text-gray-700");
-                    label.innerText = `${field.charAt(0).toUpperCase() + field.slice(1)}: `;
+                    label.innerText = defaultMappings[field];
 
                     const select = document.createElement("select");
                     select.name = `mapping_${field}`;
